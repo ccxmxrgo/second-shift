@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Phase complete — ready for verification
+status: Ready to plan
 stopped_at: Completed 02-05-PLAN.md
-last_updated: "2026-09-04T10:01:58.153Z"
+last_updated: "2026-09-04T10:58:43.209Z"
 last_activity: 2026-09-04
 progress:
   total_phases: 10
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-04)
 
 **Core value:** Harvest souls → bind a villager at the Soul Altar → hand-pick its profession and its trades, tier by tier. That loop must be reliable and feel good.
-**Current focus:** Phase 02 — economy-items-soul-altar-block
+**Current focus:** Phase 3 — Menu & Screen Harness (HARD GATE) — not started
 
 ## Current Position
 
-Phase: 02 (economy-items-soul-altar-block) — COMPLETE (ready for verification)
+Phase: 3
 Next: Phase 03 — verify Phase 02, then discuss or plan
-Plan: 5 of 5 (all complete)
+Plan: Not started
 Last activity: 2026-09-04
 
 Progress: [██░░░░░░░░] 20%
@@ -36,7 +36,7 @@ Progress: [██░░░░░░░░] 20%
 
 **Velocity:**
 
-- Total plans completed: 2
+- Total plans completed: 7
 - Average duration: -
 - Total execution time: 0 hours
 
@@ -45,6 +45,7 @@ Progress: [██░░░░░░░░] 20%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01 | 2 | - | - |
+| 02 | 5 | - | - |
 
 **Recent Trend:**
 
@@ -103,7 +104,7 @@ None yet.
 
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
-| *(none)* | | | |
+| Polish | G-1: villager soul-harvest FX wants more visual impact (upward soul column + particles to player + heavier sound sting + flash). Candidate for Phase 10 (POL-05 custom SoundEvent/ParticleType) or a small vanilla-particle tweak. | Deferred | Phase 2 UAT (2026-09-04) |
 
 ## Session Continuity
 

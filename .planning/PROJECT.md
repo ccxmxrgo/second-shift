@@ -21,14 +21,13 @@ its trades at each level. If everything else is cut, this loop has to be reliabl
 <!-- Shipped and confirmed valuable. -->
 
 - [x] Compiles against NeoForge 21.1.248 and loads in the CurseForge "test" instance without crashing — *Validated in Phase 1: Skeleton & Feedback Loop* (BUILD-01…05, POL-09). Also: `runClient`/`runServer` green, an unbound `DeferredRegister` now hard-aborts the launch with a named list, and `./gradlew deployToTest` deploys the jar into the instance on demand.
+- [x] The tangible soul economy exists and behaves — *Validated in Phase 2: Economy Items & Soul Altar Block* (ECON-01/02/03, ALTAR-01/07, POL-01/03/04). Harvester (craftable, deliberately weak weapon, loses durability per reap); killing any villager with it drops exactly 1 Soul Fragment every time (6-case GameTest suite, wandering traders / zombie villagers / sword kills excluded); 4 Fragments ⇄ 1 Soul Block; Soul Altar block crafts, places, one-way-sockets a Soul Block (persists across reload, renders embedded + emissive), and breaks per D-04 (empty → drops self with a pickaxe; charged → lost entirely + ½-heart blast + cosmetic lightning). One creative tab, hand-authored assets/recipes/loot, and a 3-step advancement discovery chain gating the recipes. No GUI shipped.
 
 ### Active
 
 <!-- Current scope. All hypotheses until shipped and validated. -->
 
-- [ ] Harvester tool: killing a villager with it drops exactly 1 Soul Fragment, guaranteed
-- [ ] 4 Soul Fragments craft into 1 Soul Block
-- [ ] Soul Altar block: placing a job-site block on top and inserting a Soul Block begins binding
+- [ ] Soul Altar block: placing a job-site block on top and inserting a Soul Block begins binding *(altar block, socket, and break behaviour shipped in Phase 2; the binding trigger + job-site detection are still Active)*
 - [ ] Binding flow: choose profession (from the job-site block), name the employee, choose level-1 trades
 - [ ] Trade choices are drawn from the bound profession's real vanilla trade pool for that tier
 - [ ] Employee spawns as a `minecraft:villager` carrying a NeoForge data attachment (no custom entity type)
@@ -123,4 +122,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-04 — Phase 1 (Skeleton & Feedback Loop) complete: pinned NeoForge build, launch-both-sides, self-aborting registry guardrail, deployToTest loop.*
+*Last updated: 2026-09-04 — Phase 2 (Economy Items & Soul Altar Block) complete: Harvester soul-reap (guaranteed 1 Fragment, GameTest-covered), Fragment⇄Block crafting, Soul Altar block with one-way socket + persistence + emissive charged render + D-04 break, one creative tab, hand-authored assets/recipes, 3-step advancement discovery chain. Human UAT passed 12/12; one deferred polish item (G-1: harvest FX impact).*

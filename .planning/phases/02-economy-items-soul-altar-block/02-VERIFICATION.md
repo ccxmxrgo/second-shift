@@ -1,8 +1,10 @@
 ---
 phase: 02-economy-items-soul-altar-block
 verified: 2026-09-04T11:15:00Z
-status: human_needed
-score: 4/4 must-haves verified (codebase + automated); in-game confirmations pending
+human_verified: 2026-09-04T12:05:00Z
+status: passed
+score: 4/4 must-haves verified (codebase + automated); human UAT passed 12/12 (see 02-HUMAN-UAT.md)
+human_uat_note: "All 12 human verification items passed. Post-verification code-review fixes applied (CR-01 altar-drop blocker + WR-01/02/03) and re-checked green: ./gradlew build + runGameTestServer 8/8. One non-blocking polish item deferred — G-1: villager soul-harvest FX wants more visual impact."
 overrides_applied: 0
 mvp_mode: true
 mvp_goal_format_discrepancy: "ROADMAP Goal for Phase 2 is not in User Story form ('As a ..., I want to ..., so that ...'). The 5 plans carry a derived User Story. Verification proceeded against the 4 ROADMAP Success Criteria (the contract). Recommend running /gsd mvp-phase 2 to reformat the ROADMAP goal."
