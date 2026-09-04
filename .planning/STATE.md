@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-stopped_at: Completed 04-01-PLAN.md
-last_updated: "2026-09-04T19:28:23.654Z"
+stopped_at: Completed 04-02-PLAN.md
+last_updated: "2026-09-04T19:35:02.124Z"
 last_activity: 2026-09-04
 progress:
   total_phases: 10
   completed_phases: 3
   total_plans: 13
-  completed_plans: 10
+  completed_plans: 11
   percent: 30
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-09-04)
 
 Phase: 04 (employee-attachment-spawn) — EXECUTING
 Next: Phase 4 (Employee Attachment & Spawn) — discuss or plan
-Plan: 2 of 4
+Plan: 3 of 4
 Last activity: 2026-09-04
 
 Progress: [███░░░░░░░] 30%
@@ -63,6 +63,7 @@ Progress: [███░░░░░░░] 30%
 | Phase 03 P01 | 35min | 3 tasks | 6 files |
 | Phase 03 P02 | 25min | 3 tasks | 5 files |
 | Phase 04 P01 | 25min | 3 tasks | 5 files |
+| Phase 04 P02 | 5min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -98,6 +99,7 @@ Relevant to current work:
 - [Phase 03 UAT]: LOCKED for Phase 5 (ALTAR-02) — job-site block on top of the altar looks visually broken (full-size vanilla block on the narrow pedestal top). Replace "place a real block on top" with an item-socket mechanic: right-click the job-site block onto the altar → consumed into a second BE slot → custom BlockEntityRenderer draws it hovering + slowly spinning above the altar (enchanting-table-book technique, same renderSingleBlock approach as the charged Soul Block). Reworks ProfessionResolver.fromAbove, SoulAltarBlock.useItemOn/useWithoutItem, BindingAltarMenu.stillValid, and BindingAltarGameTests's block-placement tests — not purely additive to Phase 5. See 03-HUMAN-UAT.md Gaps G-2.
 - [Phase 04]: ModAttachments.EMPLOYEE typed as DeferredHolder<AttachmentType<?>, AttachmentType<EmployeeData>> (compiler-verified via javap), not the plan sketch's Supplier<AttachmentType<T>> shape
 - [Phase 04]: ClientEmployeeSyncDebug is a standalone Dist.CLIENT class (not folded into ClientModBusEvents) because EntityJoinLevelEvent is a game-bus event
+- [Phase 04]: EmployeeManager.bind + EmployeeGameTests: spawn ordering (profession -> xp -> offers -> name -> attachment -> addFreshEntity) is the canonical shape every later re-bind/respawn path must match — Non-negotiable per RESEARCH.md Pattern 2 (setVillagerData nulls offers on profession change)
 
 ### Pending Todos
 
@@ -125,6 +127,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-09-04T19:28:23.649Z
-Stopped at: Completed 04-01-PLAN.md
+Last session: 2026-09-04T19:35:02.118Z
+Stopped at: Completed 04-02-PLAN.md
 Resume file: None

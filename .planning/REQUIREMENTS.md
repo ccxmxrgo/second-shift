@@ -35,14 +35,14 @@ Requirements for the first shippable version. Each maps to exactly one roadmap p
 ### Employee
 
 - [x] **EMP-01**: An employee is a `minecraft:villager` carrying a serialized, client-synced `EmployeeData` attachment (name, profession, tier, chosen offers, happiness, timers) — no custom entity type
-- [ ] **EMP-02**: Employees spawn with villager XP ≥ 1 so vanilla never resets their profession to unemployed
+- [x] **EMP-02**: Employees spawn with villager XP ≥ 1 so vanilla never resets their profession to unemployed
 - [ ] **EMP-03**: Employees cannot be converted into zombie villagers
 - [ ] **EMP-04**: Employees cannot be converted by lightning into a witch
 - [ ] **EMP-05**: Employees cannot breed and never produce baby villagers
 - [ ] **EMP-06**: An employee killed by anything other than the Harvester or altar-destruction drops its Soul Block plus slimeballs
 - [ ] **EMP-07**: Employees stay within a bound area around their altar and never wander off
-- [ ] **EMP-08**: Employees are visually distinguishable from wild villagers (always-visible custom name at minimum)
-- [ ] **EMP-09**: Villagers without the `EmployeeData` attachment behave exactly as vanilla — zero side effects
+- [x] **EMP-08**: Employees are visually distinguishable from wild villagers (always-visible custom name at minimum)
+- [x] **EMP-09**: Villagers without the `EmployeeData` attachment behave exactly as vanilla — zero side effects
 
 ### Quarters & Happiness
 
@@ -157,9 +157,9 @@ Which phases cover which requirements. Populated during roadmap creation (2026-0
 | GUI-01 | Phase 3 | Complete |
 | ALTAR-03 | Phase 3 | Complete |
 | EMP-01 | Phase 4 | Complete |
-| EMP-02 | Phase 4 | Pending |
-| EMP-08 | Phase 4 | Pending |
-| EMP-09 | Phase 4 | Pending |
+| EMP-02 | Phase 4 | Complete |
+| EMP-08 | Phase 4 | Complete |
+| EMP-09 | Phase 4 | Complete |
 | ALTAR-02 | Phase 5 | Pending |
 | ALTAR-04 | Phase 5 | Pending |
 | ALTAR-05 | Phase 5 | Pending |

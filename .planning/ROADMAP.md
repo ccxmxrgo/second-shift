@@ -102,7 +102,7 @@ in a jar the user can load in the CurseForge "test" instance and verify in-game.
 **Plans**: 4 plans
 
 - [x] 04-01-PLAN.md — EmployeeData record/CODEC/STREAM_CODEC, ModAttachments registration + self-check guardrail (6th register), client-side attachment-sync diagnostic (LIGHT spike verification mechanism)
-- [ ] 04-02-PLAN.md — EmployeeManager.bind (fixed-profession spawn, EMP-02 XP floor, D-04 green always-visible name) + EmployeeNames pool + EmployeeGameTests (EMP-01/02/08/09 automated proof)
+- [x] 04-02-PLAN.md — EmployeeManager.bind (fixed-profession spawn, EMP-02 XP floor, D-04 green always-visible name) + EmployeeNames pool + EmployeeGameTests (EMP-01/02/08/09 automated proof)
 - [ ] 04-03-PLAN.md — BindEmployeePayload + ServerPayloadHandler (server-derived altar pos, atomic Soul Block slot consume) + temporary Confirm Hire button in BindingAltarScreen
 - [ ] 04-04-PLAN.md — Mandatory manual verification checkpoint: persistence round-trip, client-side sync (LIGHT spike empirical answer), Name Tag rename (D-02), wild-villager regression
 
@@ -220,7 +220,7 @@ Phases 6 and 8 are parallelizable with the 5 → 7 trade chain once Phase 4 land
 | 1. Skeleton & Feedback Loop | 2/2 | Complete    | 2026-09-04 |
 | 2. Economy Items & Soul Altar Block | 5/5 | Complete    | 2026-09-04 |
 | 3. Menu & Screen Harness (HARD GATE) | 2/2 | Complete   | 2026-09-04 |
-| 4. Employee Attachment & Spawn | 1/4 | In Progress|  |
+| 4. Employee Attachment & Spawn | 2/4 | In Progress|  |
 | 5. Profession Resolution & Trade Picker | 0/TBD | Not started | - |
 | 6. Employee Traits, Death & Firing | 0/TBD | Not started | - |
 | 7. Progression & Promotion Ritual | 0/TBD | Not started | - |
