@@ -2,9 +2,12 @@ package com.cxmxrgo.secondshift.content.block;
 
 import com.cxmxrgo.secondshift.content.blockentity.SoulAltarBlockEntity;
 import com.cxmxrgo.secondshift.registry.ModItems;
+import com.cxmxrgo.secondshift.trade.ProfessionResolver;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Containers;
@@ -13,6 +16,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
+import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
@@ -34,13 +38,17 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Soul Altar (D-01 / D-02 / ALTAR-01) — an {@link EntityBlock} pedestal that sockets one
- * Soul Block.
+ * Soul Altar (D-01 / D-02 / D-11 / ALTAR-01 / ALTAR-03) — an {@link EntityBlock} pedestal that
+ * sockets one Soul Block and opens the Binding Altar screen.
  *
- * <p><b>Socket path authored in plan 02-04.</b> Socketing is one-way (D-03): right-click a
- * charged-empty altar holding a Soul Block consumes exactly one into the BE slot. No
- * empty-hand retrieval, no hopper/dropper access (the BE exposes no {@code Capability} /
- * {@code IItemHandler}).
+ * <p><b>Socket path authored in plan 02-04; open-trigger wiring authored in plan 03-02.</b>
+ * Socketing is one-way (D-03): right-click an empty altar holding a Soul Block, with a
+ * profession-mapped job block above, sockets exactly one Soul Block into the BE slot AND opens
+ * the screen in the same click (D-01). Empty-hand right-click on an already-charged altar with a
+ * mapped job block re-opens the screen (D-02). Every invalid path (no job block, unmapped block,
+ * no Soul Block in hand on an empty altar) sends a themed action-bar message and never opens a
+ * menu or crashes (D-11). No empty-hand retrieval, no hopper/dropper access (the BE exposes no
+ * {@code Capability} / {@code IItemHandler}).
  *
  * <p>1.21.1 interaction signatures (RESEARCH Assumptions Log A4 — verified against the
  * decompiled {@code net.minecraft.world.level.block.state.BlockBehaviour}):
@@ -83,9 +91,12 @@ public class SoulAltarBlock extends Block implements EntityBlock {
     }
 
     /**
-     * D-03: one-way socket. Gate on {@code stack.is(SOUL_BLOCK_ITEM)} AND {@code be.isEmpty()};
-     * mutate the BE only on the logical server; then {@code setChanged()} +
-     * {@code sendBlockUpdated(...)} so the 02-05 renderer sees the charged state (PITFALLS §3).
+     * D-01 / D-03 / D-11: one-way socket, now gated on {@link ProfessionResolver} BEFORE the
+     * socket mutation runs — an unmapped/missing job block never consumes the player's Soul
+     * Block. Gate on {@code stack.is(SOUL_BLOCK_ITEM)} AND {@code be.isEmpty()}; mutate the BE
+     * only on the logical server; then {@code setChanged()} + {@code sendBlockUpdated(...)} so
+     * the 02-05 renderer sees the charged state (PITFALLS §3); finally open the Binding Altar
+     * screen in the same click (D-01, ALTAR-03, SC1).
      */
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
@@ -94,10 +105,16 @@ public class SoulAltarBlock extends Block implements EntityBlock {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
         if (!stack.is(ModItems.SOUL_BLOCK_ITEM.get()) || !be.isEmpty()) {
-            // D-03: one-way — no overwrite, no retrieval, empty hand does nothing.
+            // D-03/D-04: one-way — no overwrite; already-charged falls through to useWithoutItem's
+            // reopen gate (Pitfall 10).
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
         if (!level.isClientSide) {
+            if (ProfessionResolver.fromAbove(level, pos).isEmpty()) {
+                // D-11: unmapped/missing job block above an empty altar — do NOT socket.
+                player.displayClientMessage(Component.translatable("message.secondshift.altar.not_a_workstation"), true);
+                return ItemInteractionResult.CONSUME;
+            }
             be.setHeldSoulBlock(stack.copyWithCount(1));
             stack.consume(1, player);                                   // respects creative mode
             be.setChanged();
@@ -108,15 +125,45 @@ public class SoulAltarBlock extends Block implements EntityBlock {
                         pos.getX() + 0.5D, pos.getY() + 0.95D, pos.getZ() + 0.5D,
                         8, 0.18D, 0.05D, 0.18D, 0.01D);
             }
+            if (player instanceof ServerPlayer sp) {
+                sp.openMenu(be, buf -> buf.writeBlockPos(pos)); // D-01
+            }
         }
         return ItemInteractionResult.sidedSuccess(level.isClientSide);
     }
 
-    /** D-01 / D-03: no menu, no retrieval this phase. */
+    /**
+     * D-02 / D-04 / D-11: the single reopen gate. Falls through from {@link #useItemOn} whenever
+     * that method returns {@code PASS_TO_DEFAULT_BLOCK_INTERACTION} (empty hand, or a Soul Block
+     * on an already-charged altar — Pitfall 10), so the "is the altar charged + does the job
+     * block map to a profession" gate check lives exactly once, here.
+     */
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player,
                                                BlockHitResult hit) {
-        return InteractionResult.PASS;
+        if (!(level.getBlockEntity(pos) instanceof SoulAltarBlockEntity be)) {
+            return InteractionResult.PASS;
+        }
+        if (be.isEmpty()) {
+            if (!level.isClientSide) {
+                player.displayClientMessage(Component.translatable("message.secondshift.altar.no_soul_block"), true); // D-11
+            }
+            return InteractionResult.PASS;
+        }
+        if (!level.isClientSide) {
+            if (ProfessionResolver.fromAbove(level, pos).isEmpty()) {
+                // D-11: distinguish "no job block at all" from "wrong/unmapped block" above.
+                String key = PoiTypes.forState(level.getBlockState(pos.above())).isEmpty()
+                        ? "message.secondshift.altar.no_job_block"
+                        : "message.secondshift.altar.not_a_workstation";
+                player.displayClientMessage(Component.translatable(key), true);
+                return InteractionResult.CONSUME;
+            }
+            if (player instanceof ServerPlayer sp) {
+                sp.openMenu(be, buf -> buf.writeBlockPos(pos)); // D-02 reopen
+            }
+        }
+        return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
     /**
