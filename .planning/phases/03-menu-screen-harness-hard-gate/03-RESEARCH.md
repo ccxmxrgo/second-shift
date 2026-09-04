@@ -535,14 +535,14 @@ This one call gives, for free: (a) the block at `access`'s position is still `Mo
 
 **All other claims in this document are `[VERIFIED]`** — confirmed either by direct inspection of `build/moddev/artifacts/neoforge-21.1.248-sources.jar` (the exact decompiled source of the pinned NeoForge build) or by cross-reference against `.planning/research/{STACK,ARCHITECTURE,PITFALLS}.md`, which were themselves produced with `javap` against the installed jars per this project's established research methodology (see CLAUDE.md Sources list).
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Backing `Container` implementation for the display-only slot (A2 above).**
+1. **Backing `Container` implementation for the display-only slot (A2 above). — RESOLVED: option (b), `AltarSoulContainer`.** 03-01-PLAN.md Task 1 picks the dedicated wrapper class over `SoulAltarBlockEntity implements Container`, exactly per this recommendation.
    - What we know: The slot must be display-only (D-06, confirmed via `mayPickup`/`mayPlace` overrides) and must show the BE's `heldSoulBlock` field.
    - What's unclear: Whether to (a) make `SoulAltarBlockEntity implements Container` with a 1-element `getContainerSize()`, or (b) write a tiny anonymous/named `Container` wrapper class that delegates to the BE's existing `getHeldSoulBlock()`/`setHeldSoulBlock()` methods, keeping `Container` off the BE's own public interface.
    - Recommendation: Option (b) — a small dedicated wrapper — keeps `SoulAltarBlockEntity`'s public surface unchanged from Phase 2 (no new `Container` methods like `clearContent()`/`isEmpty()` that could collide with the existing `isEmpty()` semantics, which currently means "no Soul Block socketed," not "container has size 0"). Low risk either way; flag for planner's `PLAN.md` task breakdown to pick one explicitly.
 
-2. **Exact vanilla helper name for adding the 36 player-inventory slots (A1 above).**
+2. **Exact vanilla helper name for adding the 36 player-inventory slots (A1 above). — RESOLVED: no shared helper, write the loop directly.** 03-01-PLAN.md Task 1 writes the standard two `for` loops inline (as every vanilla menu does) rather than depending on an unverified named helper.
    - What we know: Every stock `AbstractContainerMenu` subclass (furnace, crafting table, etc.) has this loop; it is extremely standard 1.21.1 boilerplate.
    - What's unclear: Whether `AbstractContainerMenu` itself exposes a named helper (e.g., `addStandardInventorySlots(Inventory, int, int)`) or whether every vanilla menu just inlines the two `for` loops.
    - Recommendation: Not worth a follow-up research pass — this is copy-paste boilerplate available in any decompiled vanilla menu class (e.g. `net/minecraft/world/inventory/CraftingMenu.java` in the same sources jar) and does not block planning; the executor can grep the sources jar directly during implementation if needed.
