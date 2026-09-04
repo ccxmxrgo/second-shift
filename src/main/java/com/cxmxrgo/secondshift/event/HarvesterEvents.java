@@ -8,6 +8,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.npc.Villager;
@@ -55,13 +56,27 @@ public final class HarvesterEvents {
     @SubscribeEvent
     static void onDamagePre(LivingDamageEvent.Pre event) {
         LivingEntity target = event.getEntity();
-        if (!isHarvesterKillOfVillager(target, event.getSource())) {
+        DamageSource source = event.getSource();
+        if (!isHarvesterKillOfVillager(target, source)) {
             return;
         }
         // Post-mitigation override: guaranteed lethal past armor / Resistance V / absorption.
         // (LivingDamageEvent.Pre fires after armor + potion reductions; only absorption is
         // subtracted afterwards, so adding it back here keeps the hit lethal.)
         event.setNewDamage(target.getHealth() + target.getAbsorptionAmount() + 1.0F);
+
+        // D-07: the reap costs the Harvester one point of durability. HarvesterItem is a plain
+        // Item (no SwordItem#hurtEnemy attack path), and the kill is decided here rather than
+        // through the weapon's attack path, so per-hit damage must be applied explicitly —
+        // this is what makes durability(250) real and Unbreaking/Mending meaningful.
+        // getWeaponItem() delegates to the attacker's live main-hand stack, so this damages
+        // the actual held Harvester.
+        if (source.getEntity() instanceof LivingEntity reaper) {
+            ItemStack weapon = source.getWeaponItem();
+            if (weapon != null && weapon.getItem() instanceof HarvesterItem) {
+                weapon.hurtAndBreak(1, reaper, EquipmentSlot.MAINHAND);
+            }
+        }
     }
 
     @SubscribeEvent
