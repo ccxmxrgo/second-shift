@@ -1,10 +1,11 @@
 ---
 phase: 3
 slug: menu-screen-harness-hard-gate
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-09-04
+reviewed_at: 2026-09-04
 ---
 
 # Phase 3 — UI Design Contract
@@ -183,11 +184,11 @@ and a title this phase.
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS — title exact, 6 message keys, HR-necromancer tone, action-bar delivery locked
-- [ ] Dimension 2 Visuals: PASS — 176×166 texture, single blit, slot recesses drawn, placeholder allowed but readable
-- [ ] Dimension 3 Color: PASS — ARGB ints, single theme, accent (soul-cyan) reserved to the mod-slot glow only
-- [ ] Dimension 4 Typography: PASS — Minecraft font only, label grey `0xFF404040`, no arbitrary sizes
-- [ ] Dimension 5 Spacing: PASS — 18px slot grid, 8px margins, vanilla label positions, mod slot at (80, 35)
-- [ ] Dimension 6 Registry Safety: PASS — not applicable (no shadcn / third-party registries); texture is hand-authored in-jar
+- [x] Dimension 1 Copywriting: PASS — title exact, 6 message keys, HR-necromancer tone, action-bar delivery locked
+- [x] Dimension 2 Visuals: PASS — 176×166 texture, single blit, slot recesses drawn, placeholder allowed but readable
+- [x] Dimension 3 Color: PASS — ARGB ints, single theme, accent (soul-cyan) reserved to the mod-slot glow only
+- [x] Dimension 4 Typography: PASS — Minecraft font only, label grey `0xFF404040`, no arbitrary sizes
+- [x] Dimension 5 Spacing: PASS — 18px slot grid, 8px margins, vanilla label positions, mod slot at (80, 35)
+- [x] Dimension 6 Registry Safety: PASS — not applicable (no shadcn / third-party registries); texture is hand-authored in-jar
 
-**Approval:** pending
+**Approval:** APPROVED — gsd-ui-checker, 2026-09-04 (6/6 dimensions PASS, no recommendations)
