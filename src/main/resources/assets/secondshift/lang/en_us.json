@@ -7,6 +7,7 @@
   "itemGroup.secondshift.main": "Second Shift",
 
   "container.secondshift.binding_altar": "Binding Altar",
+  "gui.secondshift.binding_altar.confirm": "Confirm Hire",
 
   "message.secondshift.altar.no_job_block": "The position is unfilled. Set a job-site block atop the altar before you file the paperwork.",
   "message.secondshift.altar.not_a_workstation": "That block posts no job. Only a real workstation defines the role.",
