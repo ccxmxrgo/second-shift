@@ -195,14 +195,6 @@ public class SoulAltarBlock extends Block implements EntityBlock {
     }
 
     /**
-     * D-04 drop suppression. When the BE was broken while charged, the altar is lost
-     * entirely — nothing drops (not the Soul Block, not the altar block). Otherwise defer to
-     * the drops-self loot table (ALTAR-07, empty-altar path).
-     *
-     * <p>The {@code getOptionalParameter(BLOCK_ENTITY)} value is the same instance
-     * {@code playerWillDestroy} flagged: the break pipeline captures it before block removal.
-     */
-    /**
      * WR-03 safety net for non-player removal. {@link #playerWillDestroy} only runs for a
      * player break, so any other removal path (modded block breakers, {@code
      * Level.destroyBlock} from other mods, tooling) would drop the altar via the loot table
@@ -222,6 +214,14 @@ public class SoulAltarBlock extends Block implements EntityBlock {
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
 
+    /**
+     * D-04 drop suppression. When the BE was broken while charged, the altar is lost
+     * entirely — nothing drops (not the Soul Block, not the altar block). Otherwise defer to
+     * the drops-self loot table (ALTAR-07, empty-altar path).
+     *
+     * <p>The {@code getOptionalParameter(BLOCK_ENTITY)} value is the same instance
+     * {@code playerWillDestroy} flagged: the break pipeline captures it before block removal.
+     */
     @Override
     protected List<ItemStack> getDrops(BlockState state, LootParams.Builder params) {
         BlockEntity be = params.getOptionalParameter(LootContextParams.BLOCK_ENTITY);
