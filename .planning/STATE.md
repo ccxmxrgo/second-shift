@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-04)
 Phase: 3
 Next: Phase 03 — verify Phase 02, then discuss or plan
 Plan: Not started
-Last activity: 2026-09-04
+Last activity: 2026-09-04 - Completed quick task 260904-gqp: soul-harvest FX
 
 Progress: [██░░░░░░░░] 20%
 
@@ -100,11 +100,17 @@ None yet.
 - Phase 9 (happiness) is the largest net-new chunk with the least research coverage — quarters/structure detection and food-chest access need a design spike during planning.
 - EMP-07 "keep employee near altar" has no pre-researched hook — minor spike in Phase 6.
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260904-gqp | Enhance villager soul-harvest FX in HarvesterEvents (closes deferred G-1) — layered SCULK_SOUL/SOUL/FLASH + REVERSE_PORTAL stream to killer + SOUL_FIRE_FLAME/END_ROD pseudo-bolt + stacked sounds | 2026-09-04 | 28f0ca9 | [260904-gqp-enhance-villager-soul-harvest-fx-in-harv](./quick/260904-gqp-enhance-villager-soul-harvest-fx-in-harv/) |
+
 ## Deferred Items
 
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
-| Polish | G-1: villager soul-harvest FX wants more visual impact (upward soul column + particles to player + heavier sound sting + flash). Candidate for Phase 10 (POL-05 custom SoundEvent/ParticleType) or a small vanilla-particle tweak. | Deferred | Phase 2 UAT (2026-09-04) |
+| Polish | G-1: villager soul-harvest FX wants more visual impact. First pass shipped as quick task 260904-gqp (vanilla particles/sounds). Bespoke homing soul-wisp particle + custom sound sting still deferred to Phase 10 (POL-05). | Partially addressed | Phase 2 UAT (2026-09-04) |
 
 ## Session Continuity
 
