@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "secondshift:soul_block" }
+  ],
+  "result": { "id": "secondshift:soul_fragment", "count": 4 }
+}
