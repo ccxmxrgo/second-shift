@@ -1,8 +1,10 @@
 ---
 phase: 03-menu-screen-harness-hard-gate
 verified: 2026-09-04T15:45:00Z
-status: human_needed
-score: 4/4 must-haves verified
+human_verified: 2026-09-04T18:00:00Z
+status: passed
+score: 4/4 must-haves verified; human UAT passed 3/3 (see 03-HUMAN-UAT.md)
+human_uat_note: "All 3 human verification items passed. One non-blocking design gap logged (G-2): the job-site block placed on top of the altar looks visually broken given the current pedestal shape. Locked decision: replace with an item-socket + floating/spinning render mechanic in Phase 5 (ALTAR-02) — see 03-HUMAN-UAT.md Gaps and STATE.md Deferred Items."
 overrides_applied: 0
 human_verification:
   - test: "Place a real job-site block (e.g. cartography table) on top of a Soul Altar, right-click it holding a Soul Block, confirm the 'Binding Altar' screen visually opens with a legible title and a correctly-rendered panel/texture."

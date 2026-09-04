@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Phase complete — ready for verification
-stopped_at: Phase 3 UI-SPEC approved
-last_updated: "2026-09-04T14:37:54.157Z"
-last_activity: 2026-09-04
+status: Ready to plan
+stopped_at: Phase 3 complete — human UAT passed 3/3
+last_updated: "2026-09-04T18:00:00.000Z"
+last_activity: "2026-09-04 - Phase 3 (Menu & Screen Harness) complete"
 progress:
   total_phases: 10
   completed_phases: 3
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-04)
 
 **Core value:** Harvest souls → bind a villager at the Soul Altar → hand-pick its profession and its trades, tier by tier. That loop must be reliable and feel good.
-**Current focus:** Phase 03 — menu-screen-harness-hard-gate
+**Current focus:** Phase 4 — Employee Attachment & Spawn (not started)
 
 ## Current Position
 
-Phase: 03 (menu-screen-harness-hard-gate) — EXECUTING
-Next: Phase 03 — verify Phase 02, then discuss or plan
-Plan: 2 of 2
-Last activity: 2026-09-04
+Phase: 3 of 10 complete (Menu & Screen Harness — verified passed)
+Next: Phase 4 (Employee Attachment & Spawn) — discuss or plan
+Plan: Not started
+Last activity: 2026-09-04 - Phase 3 (Menu & Screen Harness) complete
 
-Progress: [██░░░░░░░░] 20%
+Progress: [███░░░░░░░] 30%
 
 ## Performance Metrics
 
@@ -94,6 +94,7 @@ Relevant to current work:
 - [Phase 03]: GUI texture generated via stdlib zlib/struct (PIL not installed) instead of installing a new package
 - [Phase ?]: Phase 3: ProfessionResolver.heldJobSite() chosen over acquirableJobSite() — identical for vanilla, matches vanilla ResetProfession semantics
 - [Phase ?]: Phase 3: useWithoutItem is the single reopen gate for D-02 and D-04 (fallthrough via PASS_TO_DEFAULT_BLOCK_INTERACTION) — no duplicated profession-gate logic
+- [Phase 03 UAT]: LOCKED for Phase 5 (ALTAR-02) — job-site block on top of the altar looks visually broken (full-size vanilla block on the narrow pedestal top). Replace "place a real block on top" with an item-socket mechanic: right-click the job-site block onto the altar → consumed into a second BE slot → custom BlockEntityRenderer draws it hovering + slowly spinning above the altar (enchanting-table-book technique, same renderSingleBlock approach as the charged Soul Block). Reworks ProfessionResolver.fromAbove, SoulAltarBlock.useItemOn/useWithoutItem, BindingAltarMenu.stillValid, and BindingAltarGameTests's block-placement tests — not purely additive to Phase 5. See 03-HUMAN-UAT.md Gaps G-2.
 
 ### Pending Todos
 
@@ -117,9 +118,10 @@ None yet.
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
 | Polish | G-1: villager soul-harvest FX wants more visual impact. First pass shipped as quick task 260904-gqp (vanilla particles/sounds). Bespoke homing soul-wisp particle + custom sound sting still deferred to Phase 10 (POL-05). | Partially addressed | Phase 2 UAT (2026-09-04) |
+| Design (locked) | G-2: job-site block on top of the altar looks visually broken (full block on a narrow pedestal). Locked replacement for Phase 5 (ALTAR-02): item-socket mechanic + hovering/spinning BER render, matching the Soul Block socket pattern. Reworks Phase 3's ProfessionResolver/SoulAltarBlock/BindingAltarMenu/BindingAltarGameTests — build when Phase 5 is planned, not purely additive. | Locked for Phase 5 | Phase 3 UAT (2026-09-04) |
 
 ## Session Continuity
 
-Last session: 2026-09-04T14:37:46.421Z
-Stopped at: Phase 3 UI-SPEC approved
+Last session: 2026-09-04T18:00:00.000Z
+Stopped at: Phase 3 complete — human UAT passed 3/3
 Resume file: None
