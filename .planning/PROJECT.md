@@ -35,7 +35,13 @@ its trades at each level. If everything else is cut, this loop has to be reliabl
 - [ ] Leveling: trading grants vanilla XP to unlock a tier; player then performs an altar ritual to choose that tier's trades
 - [ ] Employee traits: cannot be zombified, not converted by lightning, cannot breed
 - [ ] Employee drops its Soul Block (plus slime) when killed by anything other than the player's Harvester
+- [ ] Employees stay near their altar (bound area); each altar owns exactly one employee
+- [ ] Happiness system: an employee needs quarters (3×3 + door) and a stocked food chest; Unhappy/OK/Happy tiers modulate emerald prices and restock speed, and sustained neglect makes the employee quit (drops its Soul Block, reverts to a wild villager)
+- [ ] Firing is only possible by destroying the altar — a player-only ½-heart blast (no block damage), then a cosmetic lightning strike instakills the bound employee; Soul Block and job block are lost
+- [ ] Trades restock on a mod-owned timer (vanilla POI restock never reaches an altar-bound employee)
 - [ ] Compiles against NeoForge 21.1.248 and loads in the CurseForge "test" instance without crashing
+
+Full requirement list: `.planning/REQUIREMENTS.md` (52 v1 requirements).
 
 ### Out of Scope
 
@@ -51,13 +57,21 @@ its trades at each level. If everything else is cut, this loop has to be reliabl
 ## Context
 
 - **Rebuild from scratch.** A prior draft (`Documents/second-shift-m1/second-shift/`) implemented
-  the same concept but was never verified. Its compiled jar (`second-shift-0.1.0.jar`, still in
-  the test instance) crashes on client init with a `NullPointerException: Trying to access
-  unbound value: ResourceKey[minecraft:menu / secondshift:binding_altar]` during
-  `RegisterMenuScreensEvent` — the custom GUI (MenuType/Screen registration) was the failure
-  point ("nothing worked"). All old-mod code and jars are being deleted.
-- **Known risk area:** the trade-picker GUI. Menu/screen registration and client↔server sync
-  must be built incrementally and tested in isolation before layering mechanics on top.
+  the same concept. An early build crashed on client init with `NullPointerException: Trying to
+  access unbound value: ResourceKey[minecraft:menu / secondshift:binding_altar]` during
+  `RegisterMenuScreensEvent` — the `MenuType` was never actually added to the registry. Research
+  corrected the "nothing worked" framing: a *later* draft build (the `second-shift-0.1.0.jar` that
+  was in the test instance) did load and reach gameplay, but was never validated end to end. The
+  old source tree and jar have been deleted; the rebuild-from-scratch decision stands.
+- **Known risk area:** the menu/screen registration + client↔server sync. All three research docs
+  independently demand a do-nothing altar screen that opens under `runClient` as a hard gate
+  *before* any trade logic. The failure that killed the draft was a feedback-loop failure
+  (`build` / `runData` / jar-copy could not detect an unregistered menu), not a knowledge gap.
+- **Other verified landmines (see `.planning/research/`):** `@EventBusSubscriber(bus=…)` is
+  ignored in NeoForge 21.1; vanilla `updateTrades()` appends 2 random trades on level-up exactly
+  when the player should be choosing; `setVillagerData` nulls offers on profession change;
+  `ResetProfession` reverts a 0-XP employee to unemployed; `BabyEntitySpawnEvent` never fires for
+  villager breeding (breeding suppression needs a spike); 1.21.1 uses `ItemInteractionResult`.
 - **Target environment:** Minecraft 1.21.1, NeoForge 21.1.248, Java 21 (Temurin). Test target is
   the CurseForge instance "test" at `C:\Users\user\curseforge\minecraft\Instances\test\`
   (also has owo-lib, accessories, wildcard installed).
@@ -87,6 +101,10 @@ its trades at each level. If everything else is cut, this loop has to be reliabl
 | Trades sourced from vanilla profession pools, not a custom editor | Keeps scope focused; reuses existing trade balance | — Pending |
 | Leveling = vanilla trading XP unlocks a tier, altar ritual applies chosen trades | Blends familiar progression with the necromancer theme | — Pending |
 | Claude owns the Gradle build; user only tests in-game | User wants to focus on mechanics and feel, not the toolchain | — Pending |
+| Include a happiness/upkeep system (quarters + food chest → price + restock modifiers → quitting) | User wants the HR-sim depth; research flags "feed your minions" upkeep as commonly disliked in modded MC — accepted risk, revisit after playtesting | ⚠️ Revisit |
+| Firing an employee only via altar destruction (½-heart player blast + cosmetic smite kills the employee, Soul Block + job block lost) | Makes hiring a real commitment; no in-GUI undo keeps the soul cost meaningful | — Pending |
+| Menu/screen harness is a hard gate: empty altar screen must open in `runClient` before any trade logic | Every research doc calls this out; the prior draft died on an unregistered menu that the build could not catch | — Pending |
+| Toolchain: ModDevGradle 2.0.146 + Gradle 9.2.1 wrapper, Parchment 2024.11.17, from the official 1.21.1 MDK | Research-verified against live Maven metadata; right choice for a single-version solo mod | — Pending |
 
 ## Evolution
 
@@ -106,4 +124,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-04 after initialization*
+*Last updated: 2026-09-04 after research + requirements definition*
