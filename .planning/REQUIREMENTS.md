@@ -34,7 +34,7 @@ Requirements for the first shippable version. Each maps to exactly one roadmap p
 
 ### Employee
 
-- [ ] **EMP-01**: An employee is a `minecraft:villager` carrying a serialized, client-synced `EmployeeData` attachment (name, profession, tier, chosen offers, happiness, timers) — no custom entity type
+- [x] **EMP-01**: An employee is a `minecraft:villager` carrying a serialized, client-synced `EmployeeData` attachment (name, profession, tier, chosen offers, happiness, timers) — no custom entity type
 - [ ] **EMP-02**: Employees spawn with villager XP ≥ 1 so vanilla never resets their profession to unemployed
 - [ ] **EMP-03**: Employees cannot be converted into zombie villagers
 - [ ] **EMP-04**: Employees cannot be converted by lightning into a witch
@@ -156,7 +156,7 @@ Which phases cover which requirements. Populated during roadmap creation (2026-0
 | POL-04 | Phase 2 | Complete |
 | GUI-01 | Phase 3 | Complete |
 | ALTAR-03 | Phase 3 | Complete |
-| EMP-01 | Phase 4 | Pending |
+| EMP-01 | Phase 4 | Complete |
 | EMP-02 | Phase 4 | Pending |
 | EMP-08 | Phase 4 | Pending |
 | EMP-09 | Phase 4 | Pending |

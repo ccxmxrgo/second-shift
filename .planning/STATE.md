@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to plan
-stopped_at: Phase 4 context gathered
-last_updated: "2026-09-04T18:42:55.641Z"
-last_activity: 2026-09-04 - Phase 3 (Menu & Screen Harness) complete
+status: Ready to execute
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-09-04T19:28:23.654Z"
+last_activity: 2026-09-04
 progress:
   total_phases: 10
   completed_phases: 3
-  total_plans: 9
-  completed_plans: 9
+  total_plans: 13
+  completed_plans: 10
   percent: 30
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-04)
 
 **Core value:** Harvest souls → bind a villager at the Soul Altar → hand-pick its profession and its trades, tier by tier. That loop must be reliable and feel good.
-**Current focus:** Phase 4 — Employee Attachment & Spawn (not started)
+**Current focus:** Phase 04 — employee-attachment-spawn
 
 ## Current Position
 
-Phase: 3 of 10 complete (Menu & Screen Harness — verified passed)
+Phase: 04 (employee-attachment-spawn) — EXECUTING
 Next: Phase 4 (Employee Attachment & Spawn) — discuss or plan
-Plan: Not started
-Last activity: 2026-09-04 - Phase 3 (Menu & Screen Harness) complete
+Plan: 2 of 4
+Last activity: 2026-09-04
 
 Progress: [███░░░░░░░] 30%
 
@@ -62,6 +62,7 @@ Progress: [███░░░░░░░] 30%
 | Phase 02 P05 | 9min | 2 tasks | 2 files |
 | Phase 03 P01 | 35min | 3 tasks | 6 files |
 | Phase 03 P02 | 25min | 3 tasks | 5 files |
+| Phase 04 P01 | 25min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -95,6 +96,8 @@ Relevant to current work:
 - [Phase ?]: Phase 3: ProfessionResolver.heldJobSite() chosen over acquirableJobSite() — identical for vanilla, matches vanilla ResetProfession semantics
 - [Phase ?]: Phase 3: useWithoutItem is the single reopen gate for D-02 and D-04 (fallthrough via PASS_TO_DEFAULT_BLOCK_INTERACTION) — no duplicated profession-gate logic
 - [Phase 03 UAT]: LOCKED for Phase 5 (ALTAR-02) — job-site block on top of the altar looks visually broken (full-size vanilla block on the narrow pedestal top). Replace "place a real block on top" with an item-socket mechanic: right-click the job-site block onto the altar → consumed into a second BE slot → custom BlockEntityRenderer draws it hovering + slowly spinning above the altar (enchanting-table-book technique, same renderSingleBlock approach as the charged Soul Block). Reworks ProfessionResolver.fromAbove, SoulAltarBlock.useItemOn/useWithoutItem, BindingAltarMenu.stillValid, and BindingAltarGameTests's block-placement tests — not purely additive to Phase 5. See 03-HUMAN-UAT.md Gaps G-2.
+- [Phase 04]: ModAttachments.EMPLOYEE typed as DeferredHolder<AttachmentType<?>, AttachmentType<EmployeeData>> (compiler-verified via javap), not the plan sketch's Supplier<AttachmentType<T>> shape
+- [Phase 04]: ClientEmployeeSyncDebug is a standalone Dist.CLIENT class (not folded into ClientModBusEvents) because EntityJoinLevelEvent is a game-bus event
 
 ### Pending Todos
 
@@ -122,6 +125,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-09-04T18:42:55.637Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-employee-attachment-spawn/04-CONTEXT.md
+Last session: 2026-09-04T19:28:23.649Z
+Stopped at: Completed 04-01-PLAN.md
+Resume file: None
