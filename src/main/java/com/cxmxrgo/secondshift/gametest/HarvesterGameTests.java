@@ -1,6 +1,7 @@
 package com.cxmxrgo.secondshift.gametest;
 
 import com.cxmxrgo.secondshift.SecondShift;
+import com.cxmxrgo.secondshift.registry.ModBlocks;
 import com.cxmxrgo.secondshift.registry.ModItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -19,6 +20,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -80,6 +82,42 @@ public final class HarvesterGameTests {
         villager.setAbsorptionAmount(200.0F);
         hit(helper, villager, ModItems.HARVESTER.get());
         helper.succeedWhen(() -> assertReapedToOneFragment(helper, villager));
+    }
+
+    /**
+     * WR-02 regression: the guaranteed Soul Fragment must survive {@code doMobLoot=false}
+     * (which suppresses the whole {@code LivingDropsEvent} pipeline). The rule is restored
+     * once the assertion passes so sibling tests are unaffected.
+     */
+    @GameTest(template = "empty")
+    public static void harvester_kill_villager_drops_fragment_with_domobloot_false(GameTestHelper helper) {
+        helper.getLevel().getGameRules().getRule(GameRules.RULE_DOMOBLOOT)
+                .set(false, helper.getLevel().getServer());
+        Villager villager = helper.spawn(EntityType.VILLAGER, SPAWN);
+        hit(helper, villager, ModItems.HARVESTER.get());
+        helper.succeedWhen(() -> {
+            assertReapedToOneFragment(helper, villager);
+            helper.getLevel().getGameRules().getRule(GameRules.RULE_DOMOBLOOT)
+                    .set(true, helper.getLevel().getServer());
+        });
+    }
+
+    /**
+     * CR-01 regression: the Soul Altar is {@code requiresCorrectToolForDrops()}, so it only
+     * ever drops when a pickaxe is the "correct tool" — which requires membership in the
+     * {@code minecraft:mineable/pickaxe} block tag. Without that tag the altar is
+     * permanently non-recoverable once placed.
+     */
+    @GameTest(template = "empty")
+    public static void soul_altar_needs_pickaxe_to_drop(GameTestHelper helper) {
+        var altarState = ModBlocks.SOUL_ALTAR.get().defaultBlockState();
+        helper.assertTrue(
+                new ItemStack(Items.DIAMOND_PICKAXE).isCorrectToolForDrops(altarState),
+                "a pickaxe must be a correct tool for Soul Altar drops (CR-01)");
+        helper.assertFalse(
+                new ItemStack(Items.STICK).isCorrectToolForDrops(altarState),
+                "a non-tool must not drop the Soul Altar (requiresCorrectToolForDrops still enforced)");
+        helper.succeed();
     }
 
     // --- exclusions: no instakill, no Fragment (GREEN now and after 02-02) ---
