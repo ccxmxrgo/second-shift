@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
 stopped_at: Phase 2 context gathered
-last_updated: "2026-09-04T09:36:46.458Z"
+last_updated: "2026-09-04T09:43:07.175Z"
 last_activity: 2026-09-04
 progress:
   total_phases: 10
   completed_phases: 1
   total_plans: 7
-  completed_plans: 4
+  completed_plans: 5
   percent: 10
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-09-04)
 
 Phase: 02 (economy-items-soul-altar-block) — EXECUTING
 Next: Phase 2 (Economy Items & Soul Altar Block) — discuss or plan
-Plan: 3 of 5
+Plan: 4 of 5
 Last activity: 2026-09-04
 
 Progress: [█░░░░░░░░░] 10%
@@ -56,6 +56,7 @@ Progress: [█░░░░░░░░░] 10%
 | Phase 01 P02 | 8 min | 2 tasks | 5 files |
 | Phase 02 P01 | 41 min | 3 tasks | 14 files |
 | Phase 02 P02 | 12min | 2 tasks | 5 files |
+| Phase 02 P03 | 12min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,7 @@ Relevant to current work:
 - [Phase ?]: 1.21.1 has no Item.Properties#enchantable / DataComponents.ENCHANTABLE (both 1.21.2+); durability items are table-enchantable via Item#isEnchantable, override getEnchantmentValue for enchant quality
 - [Phase ?]: [Phase 02]: Villager Harvester instakill needs only LivingDamageEvent.Pre#setNewDamage(health+absorption+1) — Resistance V + absorption still one-shots, no setHealth(0)/die fallback (closes 02-RESEARCH Open Question 2)
 - [Phase ?]: [Phase 02]: DamageSource#getWeaponItem() exists on NeoForge 21.1.248 (delegates to directEntity main-hand item) — custom-weapon event gates key on it; no held-item fallback needed
+- [Phase ?]: [Phase 02]: Hand-written 1.21.1 datapack JSON proven end-to-end (recipes/advancements/loot/blockstate/models); recipe result is {id,count}, recipes stay gated with no advancement/recipes/*.json — granted only via advancement rewards.recipes
 
 ### Pending Todos
 
@@ -98,6 +100,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-09-04T09:36:40.346Z
+Last session: 2026-09-04T09:42:33.896Z
 Stopped at: Phase 2 context gathered
 Resume file: None
