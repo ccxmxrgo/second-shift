@@ -1,8 +1,8 @@
 ---
 phase: 2
 slug: economy-items-soul-altar-block
-status: draft
-nyquist_compliant: false
+status: approved
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-09-04
 ---
@@ -39,17 +39,21 @@ created: 2026-09-04
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 2-00-01 | 00 | 0 | ECON-02 | — | N/A | GameTest | `./gradlew runServer` (namespace `secondshift`) | ❌ W0 | ⬜ pending |
-| 2-00-02 | 00 | 0 | POL-01 / ALTAR-01 | — | unbound-register abort still fires | GameTest/guardrail | `ModRegistrySelfCheck` at startup | ❌ W0 | ⬜ pending |
-| 2-xx-xx | — | — | ECON-01 | — | N/A | manual (JEI) + build | `./gradlew build` + craft in `runClient` | ✅ (build) | ⬜ pending |
-| 2-xx-xx | — | — | ECON-03 | T (dupe) | shapeless lossless both directions | manual (JEI) | craft both directions in `runClient` | ❌ manual | ⬜ pending |
-| 2-xx-xx | — | — | ALTAR-01 | T (client BE mutation) | BE writes gated `!level.isClientSide`; persists across relog | manual | place altar, socket, save-quit-reload | ❌ manual | ⬜ pending |
-| 2-xx-xx | — | — | ALTAR-07 | — | empty→drops self; charged→no drops, ½-heart, cosmetic lightning | manual + build (loot table present) | break empty + charged altar in `runClient` | ❌ manual | ⬜ pending |
-| 2-xx-xx | — | — | POL-03 | — | N/A | manual + non-EN locale launch | no purple cubes; no raw `item.secondshift.*` keys | ❌ manual | ⬜ pending |
-| 2-xx-xx | — | — | POL-04 | — | N/A | manual | fresh world: emerald pickup → toast; recipe hidden until gating advancement | ❌ manual | ⬜ pending |
-| 2-xx-xx | — | — | — (client leak) | DoS | client classes never imported from common | automated | `./gradlew runServer` reaches "Done", no `NoClassDefFoundError` | ✅ | ⬜ pending |
+| 2-01-01 | 01 | 0 | ECON-02, ALTAR-01, POL-01 | — | content skeletons + item/block holders compile; `DEBUG_MARKER` gone; no `extends SwordItem` | build | `./gradlew compileJava` + grep gates | ❌ W0 | ⬜ pending |
+| 2-01-02 | 01 | 0 | POL-01, ALTAR-01, POL-03 | T-02-02, T-02-03 | all 4 registers attached + in `ModRegistrySelfCheck`; every `descriptionId` resolves in `en_us.json`; deliberate detach / missing-key aborts startup | build + runClient + runServer | `./gradlew build` + `run-until.sh runClient` + `run-until.sh runServer` | ❌ W0 | ⬜ pending |
+| 2-01-03 | 01 | 0 | ECON-02 | — | ECON-02 GameTest suite exists, discovered under `secondshift`, currently RED | GameTest | `./gradlew runGameTestServer` (asserts RED) | ❌ W0 | ⬜ pending |
+| 2-02-01 | 02 | 1 | ECON-02 | T-02-04, T-02-05, T-02-06 | instakill gated on `HarvesterItem` + exact `npc.Villager`, server-side only; `getDrops().clear()` + exactly 1 Fragment | GameTest | `./gradlew runGameTestServer` (all 6 GREEN) | ❌ W0→W1 | ⬜ pending |
+| 2-02-02 | 02 | 1 | ECON-01, POL-03 | — | Harvester + Soul Fragment real model + texture; Fragment foil | build + manual | `./gradlew build` + `runClient` visual | ✅ (build) | ⬜ pending |
+| 2-03-01 | 03 | 2 | POL-03 | — | Soul Block blockstate + block model + item model + drops-self loot table (4-file completeness) | build + manual | `./gradlew build` + JSON parse | ✅ (build) | ⬜ pending |
+| 2-03-02 | 03 | 2 | ECON-01, ECON-03 | T-02-07 | shaped Harvester; shapeless 4→1 and 1→4 lossless; `result.id` shape | build | `./gradlew build` + recipe assertion script | ✅ (build) | ⬜ pending |
+| 2-03-03 | 03 | 2 | POL-04 | T-02-08, T-02-09 | steps 1&2 advancements grant recipes via `rewards.recipes` (forward + reverse Soul Block on `first_harvest`); no auto `advancement/recipes/` | build + manual | `./gradlew build` + advancement assertion script | ✅ (build) | ⬜ pending |
+| 2-04-01 | 04 | 3 | ALTAR-01 | T-02-10, T-02-11, T-02-12 | `useItemOn`→`ItemInteractionResult`; BE mutated only `!isClientSide`; `setChanged()` + `sendBlockUpdated`; one-way, no `Capability` | build + manual (relog) | `./gradlew build` + `@Override`/signature grep | ✅ (build) | ⬜ pending |
+| 2-04-02 | 04 | 3 | ALTAR-07 | T-02-13, T-02-14 | empty → drops self; charged → `getDrops` empty + `magic()` 1.0F + `setVisualOnly` lightning; fallback is a one-line branch | build + manual | `./gradlew build` + loot/grep asserts | ✅ (build) | ⬜ pending |
+| 2-04-03 | 04 | 3 | POL-03, POL-04, ALTAR-01 | — | altar non-full-cube `elements` model + blockstate + shaped emerald recipe + "Soul Mason" advancement gates the recipe | build + manual | `./gradlew build` + recipe/advancement assertion script | ✅ (build) | ⬜ pending |
+| 2-05-01 | 05 | 4 | POL-03 | T-02-16 | client-only BER; charged render emissive `FULL_BRIGHT` + no bob; empty renders nothing; no client ref from `content/`/`event/`/`registry/` | build + manual (reload + chunk) | `./gradlew build` + leak grep | ✅ (build) | ⬜ pending |
+| 2-05-02 | 05 | 4 | — (client leak) | T-02-15 | `runServer` reaches "Done", no `NoClassDefFoundError` / `net/minecraft/client` | automated | `run-until.sh runServer` + `run-until.sh runClient` | ✅ | ⬜ pending |
 
-*The planner refines Task IDs / Plan / Wave columns once plans exist. Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+*Task IDs are `2-<plan>-<task>`. Threat refs → each plan's `<threat_model>` STRIDE register. Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
 ---
 
@@ -65,7 +69,7 @@ created: 2026-09-04
   - Register via `@GameTestHolder(SecondShift.MODID)` / `RegisterGameTestsEvent`
 - [ ] Re-add the `gameTestServer` run to `build.gradle` **only if** GameTests are written, or run via `./gradlew runServer` with the namespace enabled
 - [ ] Extend `ModRegistrySelfCheck` `Stream.of(...)` with `ModBlocks.BLOCKS`, `ModBlockEntities.BLOCK_ENTITIES`, `ModCreativeTab.TABS` (code task, but it is the guardrail infrastructure)
-- [ ] Planner decision: is the `descriptionId`/lang-key resolution self-check in scope this phase? If yes, it belongs in Wave 0 alongside the register self-check.
+- [x] Planner decision: **YES** — the `descriptionId`/lang-key resolution self-check is in scope this phase; implemented in `02-01` Task 2 (Wave 0) alongside the register self-check, verified clean on both `runClient` and `runServer` (with a documented `Dist.CLIENT` fallback if `Language` is unpopulated server-side).
 
 *Fallback if the planner judges GameTests as over-investment: the manual checklist below run via `deployToTest` (the established Phase 1 loop). Recommendation from research: write the ECON-02 GameTests — the instakill is the one genuinely custom mechanic and its edge cases are exactly what a deterministic test protects.*
 
@@ -89,11 +93,11 @@ created: 2026-09-04
 
 ## Validation Sign-Off
 
-- [ ] All tasks have automated verify (`./gradlew build`) or Wave 0 GameTest dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without an automated verify (`build` runs every commit)
-- [ ] Wave 0 covers all MISSING references (ECON-02 GameTests, register self-check extension)
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 120s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have automated verify (`./gradlew build`) or Wave 0 GameTest dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without an automated verify (`build` runs every commit)
+- [x] Wave 0 covers all MISSING references (ECON-02 GameTests, register self-check extension)
+- [x] No watch-mode flags
+- [x] Feedback latency < 120s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved 2026-09-04

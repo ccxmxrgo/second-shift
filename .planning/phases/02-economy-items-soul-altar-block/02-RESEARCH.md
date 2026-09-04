@@ -663,25 +663,32 @@ Phase 2 is greenfield content — it removes one throwaway item and adds new con
 | A9 | `Block#animateTick` with `RandomSource` is the 1.21.1 ambient-particle hook and runs client-side | Standard Stack, Soul Block | LOW — verify signature; alternative is a client BE ticker |
 | A10 | `BuildCreativeModeTabContentsEvent` / `displayItems` populate reliably for a mod-owned tab in 21.1.248 | Creative tab | LOW — standard; `displayItems` alone is sufficient, the event is optional |
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+> All five resolved during planning of `02-01`…`02-05`. Disposition noted under each.
 
 1. **Charged-altar "drops nothing including the block itself" (D-04 ⚠ planner flag).**
    - What we know: D-04 locks this reading; ALTAR-07 only guarantees the *empty* self-drop; ALTAR-06 (the bound-employee half) is Phase 6.
    - What's unclear: whether losing the altar block entirely will feel like a bug in play (vs. "Soul Block destroyed, altar drops").
    - Recommendation: implement D-04 as written (charged → no drops at all), but structure `getDrops` so flipping to "altar still drops" is a one-line change. Surface it to the user during discuss/verify.
+   - RESOLVED: implemented as written in `02-04` Task 2 — `getDrops` returns `List.of()` when the BE was charged; the `getDrops` branch is structured for a one-line fallback flip, its exact location recorded in `02-04-SUMMARY`, and it is surfaced to the user via `02-04` `<verify_time_flags>`.
 
 2. **Exact instakill hook + Resistance-V edge case.**
    - What we know: `LivingDamageEvent.Pre.setNewDamage(health + absorption + 1)` is post-mitigation and should be unconditionally lethal.
    - What's unclear: whether any vanilla/modded effect re-clamps damage *after* `LivingDamageEvent.Pre` (e.g. a `LivingDamageEvent.Post` mod, or Totem of Undying — which would trigger and save the villager... villagers can't hold totems, so N/A).
    - Recommendation: spike it in the first plan task — bind Resistance V + absorption to a test villager via command, confirm one Harvester hit kills. Fallback: also `target.setHealth(0)` + `target.die(source)` in the same handler.
+   - RESOLVED: `02-02` Task 1 uses the game-bus `LivingDamageEvent.Pre` post-mitigation override; the Resistance-V + absorption spike runs inside the RED→GREEN loop in `02-02` Task 1, with the `setHealth(0)` + `die(source)` fallback wired if the GameTest shows survival. Covered by GameTest `harvester_kill_resistance_and_absorption_villager_still_one_shot` (authored RED in `02-01` Task 3).
 
 3. **Should the descriptionId/lang-key self-check start now?** (Phase 1 Deferred Idea, carried.)
    - What we know: Phase 2 is the first phase with real translated content; the check would assert every registered object's `descriptionId` resolves in `en_us.json`.
    - Recommendation: **planner's call.** Cheap to add (~15 lines in `ModRegistrySelfCheck` or a new `FMLLoadCompleteEvent` handler) and it directly prevents the PITFALLS "untranslated key in UI" failure. Lean yes — but it's additive scope; defer to Phase 10 if the plan is already large.
+   - RESOLVED: **YES** — added this phase in `02-01` Task 2 as a second `@SubscribeEvent` handler on `FMLLoadCompleteEvent` in `ModRegistrySelfCheck`, with a documented `Dist.CLIENT` gate fallback if `Language.getInstance().has(...)` is not populated on the dedicated server. Verified clean on both `runClient` and `runServer` in `02-01` Task 2.
 
 4. **Harvester enchantability vs Looting.** D-07 says Looting is a no-op (drop fixed at 1). The drop handler ignores `Enchantments.LOOTING` entirely (it `.clear()`s and adds exactly 1) — so no code needed, but worth a one-line comment so a future reader doesn't "fix" it.
+   - RESOLVED: no code — `02-02` Task 1 step 4 adds the one-line comment on the `LivingDropsEvent` handler ("Looting is intentionally ignored (D-07) — always exactly 1"); the drop is fixed at 1 by construction.
 
 5. **Altar facing.** D-02 doesn't say the pedestal has a facing direction. A `HorizontalDirectionalBlock` (facing property) adds a blockstate variant (4 rotations) and nudges toward datagen. Recommend **no facing** for MVP (symmetric pedestal model) unless the soul-fire accents need orientation.
+   - RESOLVED: **no facing property** — single-variant blockstates (`{"variants": {"": {...}}}`) for both the Soul Block (`02-01`/`02-03`) and the Soul Altar (`02-01`/`02-04`); symmetric pedestal model.
 
 ## Environment Availability
 
