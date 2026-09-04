@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-stopped_at: Completed 04-02-PLAN.md
-last_updated: "2026-09-04T19:35:02.124Z"
+stopped_at: Completed 04-03-PLAN.md
+last_updated: "2026-09-04T19:44:24.470Z"
 last_activity: 2026-09-04
 progress:
   total_phases: 10
   completed_phases: 3
   total_plans: 13
-  completed_plans: 11
+  completed_plans: 12
   percent: 30
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-09-04)
 
 Phase: 04 (employee-attachment-spawn) — EXECUTING
 Next: Phase 4 (Employee Attachment & Spawn) — discuss or plan
-Plan: 3 of 4
+Plan: 4 of 4
 Last activity: 2026-09-04
 
 Progress: [███░░░░░░░] 30%
@@ -64,6 +64,7 @@ Progress: [███░░░░░░░] 30%
 | Phase 03 P02 | 25min | 3 tasks | 5 files |
 | Phase 04 P01 | 25min | 3 tasks | 5 files |
 | Phase 04 P02 | 5min | 2 tasks | 3 files |
+| Phase 04 P03 | 20min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -100,6 +101,7 @@ Relevant to current work:
 - [Phase 04]: ModAttachments.EMPLOYEE typed as DeferredHolder<AttachmentType<?>, AttachmentType<EmployeeData>> (compiler-verified via javap), not the plan sketch's Supplier<AttachmentType<T>> shape
 - [Phase 04]: ClientEmployeeSyncDebug is a standalone Dist.CLIENT class (not folded into ClientModBusEvents) because EntityJoinLevelEvent is a game-bus event
 - [Phase 04]: EmployeeManager.bind + EmployeeGameTests: spawn ordering (profession -> xp -> offers -> name -> attachment -> addFreshEntity) is the canonical shape every later re-bind/respawn path must match — Non-negotiable per RESEARCH.md Pattern 2 (setVillagerData nulls offers on profession change)
+- [Phase 04]: ServerPayloadHandler made public (class + method) so SecondShift.java (root package) can take a cross-package method reference for RegisterPayloadHandlersEvent registration — Compile-correctness necessity, not a behavioral change; controller-role shape (final class, private ctor) preserved
 
 ### Pending Todos
 
@@ -127,6 +129,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-09-04T19:35:02.118Z
-Stopped at: Completed 04-02-PLAN.md
+Last session: 2026-09-04T19:44:24.463Z
+Stopped at: Completed 04-03-PLAN.md
 Resume file: None
