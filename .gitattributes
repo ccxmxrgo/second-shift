@@ -1,0 +1,12 @@
+# Normalize line endings on checkin; let Git decide working-tree endings.
+* text=auto
+
+# Windows batch files must stay CRLF.
+*.bat            text eol=crlf
+
+# Shell scripts and the Gradle wrapper must stay LF or they break under sh.
+*.sh             text eol=lf
+gradlew          text eol=lf
+
+# The wrapper jar is binary — never touch it.
+gradle-wrapper.jar binary
