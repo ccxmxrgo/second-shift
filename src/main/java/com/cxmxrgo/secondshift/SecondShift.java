@@ -6,12 +6,16 @@ import com.cxmxrgo.secondshift.registry.ModBlocks;
 import com.cxmxrgo.secondshift.registry.ModCreativeTab;
 import com.cxmxrgo.secondshift.registry.ModItems;
 import com.cxmxrgo.secondshift.registry.ModMenus;
+import com.cxmxrgo.secondshift.network.BindEmployeePayload;
+import com.cxmxrgo.secondshift.network.ServerPayloadHandler;
 import com.mojang.logging.LogUtils;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.slf4j.Logger;
 
 import java.util.List;
@@ -45,6 +49,13 @@ public class SecondShift {
         ModAttachments.ATTACHMENT_TYPES.register(modBus);
 
         modBus.addListener(this::commonSetup);
+        modBus.addListener(this::registerPayloads);
+    }
+
+    private void registerPayloads(RegisterPayloadHandlersEvent event) {
+        PayloadRegistrar registrar = event.registrar("1");
+        registrar.playToServer(BindEmployeePayload.TYPE, BindEmployeePayload.STREAM_CODEC,
+                ServerPayloadHandler::handleBindEmployee);
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {
