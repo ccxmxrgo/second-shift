@@ -19,13 +19,14 @@ import net.minecraft.world.item.ItemStack;
  * before this ever compiled.
  *
  * <p>No trade/employee data, no shift-click routing (D-06) — those arrive in later phases. The
- * {@code player} field is stored now for Plan 02 Task 3's D-12 forced-close messaging; not used
- * yet.
+ * {@code owningPlayer} field is stored now for Plan 02 Task 3's D-12 forced-close messaging; not
+ * used yet. Named distinctly from {@link #stillValid(Player)}'s {@code player} parameter so the
+ * two are never ambiguous within the same scope (WR-01).
  */
 public class BindingAltarMenu extends AbstractContainerMenu {
 
     private final ContainerLevelAccess access;
-    private final Player player;
+    private final Player owningPlayer;
 
     /** D-12: guards forced-close messaging so a menu that fails {@code stillValid} across
      * multiple ticks (before the client processes the close packet) sends exactly one
@@ -46,7 +47,7 @@ public class BindingAltarMenu extends AbstractContainerMenu {
     public BindingAltarMenu(int containerId, Inventory playerInv, ContainerLevelAccess access, BlockPos pos) {
         super(ModMenus.BINDING_ALTAR.get(), containerId);
         this.access = access;
-        this.player = playerInv.player;
+        this.owningPlayer = playerInv.player;
 
         AltarSoulContainer container = new AltarSoulContainer(playerInv.player.level(), pos);
         this.addSlot(new SoulSlot(container, 0, 80, 35));
