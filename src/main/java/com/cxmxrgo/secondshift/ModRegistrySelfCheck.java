@@ -1,5 +1,6 @@
 package com.cxmxrgo.secondshift;
 
+import com.cxmxrgo.secondshift.registry.ModAttachments;
 import com.cxmxrgo.secondshift.registry.ModBlockEntities;
 import com.cxmxrgo.secondshift.registry.ModBlocks;
 import com.cxmxrgo.secondshift.registry.ModCreativeTab;
@@ -74,7 +75,7 @@ public final class ModRegistrySelfCheck {
     static void onLoadComplete(FMLLoadCompleteEvent event) {
         // D-10: add every registry/Mod* DeferredRegister to this Stream.of(...) as later
         // phases introduce them, and mirror it in the SecondShift constructor.
-        List<String> unbound = Stream.of(ModItems.ITEMS, ModBlocks.BLOCKS, ModBlockEntities.BLOCK_ENTITIES, ModCreativeTab.TABS, ModMenus.MENUS)
+        List<String> unbound = Stream.of(ModItems.ITEMS, ModBlocks.BLOCKS, ModBlockEntities.BLOCK_ENTITIES, ModCreativeTab.TABS, ModMenus.MENUS, ModAttachments.ATTACHMENT_TYPES)
                 .flatMap(dr -> dr.getEntries().stream())
                 .filter(holder -> !holder.isBound())
                 .map(holder -> holder.getId().toString())

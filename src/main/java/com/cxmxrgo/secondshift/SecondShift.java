@@ -1,5 +1,6 @@
 package com.cxmxrgo.secondshift;
 
+import com.cxmxrgo.secondshift.registry.ModAttachments;
 import com.cxmxrgo.secondshift.registry.ModBlockEntities;
 import com.cxmxrgo.secondshift.registry.ModBlocks;
 import com.cxmxrgo.secondshift.registry.ModCreativeTab;
@@ -41,6 +42,7 @@ public class SecondShift {
         ModBlockEntities.BLOCK_ENTITIES.register(modBus);
         ModCreativeTab.TABS.register(modBus);
         ModMenus.MENUS.register(modBus);
+        ModAttachments.ATTACHMENT_TYPES.register(modBus);
 
         modBus.addListener(this::commonSetup);
     }
