@@ -50,7 +50,7 @@ public final class EmployeeManager {
             throw new IllegalStateException("EntityType.VILLAGER.create returned null");
         }
 
-        BlockPos spawnPos = altarPos.above();
+        BlockPos spawnPos = altarPos.above(2);
         villager.moveTo(spawnPos.getX() + 0.5D, spawnPos.getY(), spawnPos.getZ() + 0.5D, 0.0F, 0.0F);
 
         // Profession FIRST — setVillagerData nulls offers on profession change (Pitfall 4).

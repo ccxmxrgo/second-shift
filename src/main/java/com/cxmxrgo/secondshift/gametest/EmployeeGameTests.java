@@ -12,6 +12,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.npc.VillagerProfession;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -48,14 +50,30 @@ public final class EmployeeGameTests {
         helper.assertTrue(!data.name().isBlank(), "employee name must not be blank");
         helper.assertTrue(data.profession() != null, "employee profession must not be null");
 
-        // Test 5 (Pitfall A regression) — position must be altarPos.above(), not world origin.
-        BlockPos expected = absAltarPos.above();
+        // Test 5 (Pitfall A regression) — position must be altarPos.above(2), clear of the
+        // job-site block at altarPos.above() (CR-01 fix), not world origin.
+        BlockPos expected = absAltarPos.above(2);
         helper.assertTrue(
                 Math.abs(villager.getX() - (expected.getX() + 0.5D)) < 0.01D
                         && Math.abs(villager.getY() - expected.getY()) < 0.01D
                         && Math.abs(villager.getZ() - (expected.getZ() + 0.5D)) < 0.01D,
-                "bound villager must be positioned at the center of altarPos.above(), got "
+                "bound villager must be positioned at the center of altarPos.above(2), got "
                         + villager.position() + " expected around " + expected);
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void bind_villager_does_not_overlap_job_site_block(GameTestHelper helper) {
+        BlockPos absAltarPos = helper.absolutePos(ALTAR_POS);
+        BlockPos jobSitePos = absAltarPos.above();
+        helper.setBlock(ALTAR_POS.above(), Blocks.CARTOGRAPHY_TABLE.defaultBlockState());
+
+        Villager villager = EmployeeManager.bind(helper.getLevel(), absAltarPos);
+
+        AABB jobSiteAabb = new AABB(jobSitePos);
+        helper.assertFalse(villager.getBoundingBox().intersects(jobSiteAabb),
+                "bound villager's bounding box must not overlap the job-site block at altarPos.above() (CR-01), "
+                        + "villager bb=" + villager.getBoundingBox() + " jobSite bb=" + jobSiteAabb);
         helper.succeed();
     }
 
