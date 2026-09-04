@@ -90,4 +90,13 @@ public class BindingAltarMenu extends AbstractContainerMenu {
     public ItemStack quickMoveStack(Player player, int index) {
         return ItemStack.EMPTY; // display-only slot, no shift-click routing needed (D-06)
     }
+
+    /**
+     * Plan 04-03 (T-4-01 mitigation): the server-side bind handler's ONLY source of the altar
+     * position. Never trust a client-supplied position — re-derive it here, from this menu's own
+     * {@link ContainerLevelAccess}, which was itself constructed server-side when the menu opened.
+     */
+    public ContainerLevelAccess access() {
+        return this.access;
+    }
 }
