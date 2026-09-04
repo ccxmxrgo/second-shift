@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to execute
-stopped_at: Completed 02-04-PLAN.md
-last_updated: "2026-09-04T09:55:51.768Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 02-05-PLAN.md
+last_updated: "2026-09-04T10:01:58.153Z"
 last_activity: 2026-09-04
 progress:
   total_phases: 10
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 7
-  completed_plans: 6
-  percent: 10
+  completed_plans: 7
+  percent: 20
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-09-04)
 
 ## Current Position
 
-Phase: 02 (economy-items-soul-altar-block) — EXECUTING
-Next: Phase 2 (Economy Items & Soul Altar Block) — discuss or plan
-Plan: 5 of 5
+Phase: 02 (economy-items-soul-altar-block) — COMPLETE (ready for verification)
+Next: Phase 03 — verify Phase 02, then discuss or plan
+Plan: 5 of 5 (all complete)
 Last activity: 2026-09-04
 
-Progress: [█░░░░░░░░░] 10%
+Progress: [██░░░░░░░░] 20%
 
 ## Performance Metrics
 
@@ -58,6 +58,7 @@ Progress: [█░░░░░░░░░] 10%
 | Phase 02 P02 | 12min | 2 tasks | 5 files |
 | Phase 02 P03 | 12min | 3 tasks | 10 files |
 | Phase 02 P04 | 25min | 3 tasks | 10 files |
+| Phase 02 P05 | 9min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,8 @@ Relevant to current work:
 - [Phase 02]: [Phase 02]: Soul Altar break (D-04) implemented as written — a charged altar drops NOTHING (not the Soul Block, not the altar block); one-line fallback flip marked in SoulAltarBlock#getDrops
 - [Phase 02]: [Phase 02]: 'Soul Mason' advancement uses minecraft:recipe_crafted (recipe_id secondshift:soul_block), not inventory_changed — matches D-15 step 3 'craft a Soul Block'
 - [Phase 02]: [Phase 02]: getDrops break-time suppression uses a transient BlockEntity flag (set in playerWillDestroy, read via LootContextParams.BLOCK_ENTITY) — never a Block-singleton field
+- [Phase 02]: [Phase 02]: Charged Soul Altar render is a client-only BlockEntityRenderer registered from EntityRenderersEvent.RegisterRenderers; embedded Soul Block drawn via BlockRenderDispatcher#renderSingleBlock at LightTexture.FULL_BRIGHT (no render-type trick), wisp throttled by a per-frame RandomSource roll
+- [Phase 02]: [Phase 02]: mandatory ./gradlew runServer client-class-leak gate PASSED — SoulAltarRenderer never class-loads on the dedicated server; Phase 2 complete
 
 ### Pending Todos
 
@@ -104,6 +107,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-09-04T09:55:15.148Z
-Stopped at: Completed 02-04-PLAN.md
+Last session: 2026-09-04T10:01:50.750Z
+Stopped at: Completed 02-05-PLAN.md
 Resume file: None
