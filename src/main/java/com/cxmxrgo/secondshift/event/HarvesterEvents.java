@@ -15,6 +15,7 @@ import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
@@ -108,24 +109,77 @@ public final class HarvesterEvents {
         fragment.setDefaultPickUpDelay();
         level.addFreshEntity(fragment);
 
-        // D-10: harvest FX — all vanilla, server-broadcast. No custom SoundEvent/ParticleType.
+        // D-10 / G-1: layered soul-harvest FX — all vanilla, server-broadcast, on the exact
+        // reap path (right after the Fragment spawn) so it cannot desync from the reap.
         if (level instanceof ServerLevel serverLevel) {
-            serverLevel.playSound(null, target.getX(), target.getY(), target.getZ(),
-                    SoundEvents.SOUL_ESCAPE, SoundSource.PLAYERS, 1.0F, 1.0F);
-            serverLevel.sendParticles(ParticleTypes.SOUL,
-                    target.getX(), target.getY() + target.getBbHeight() * 0.5D, target.getZ(),
-                    24, 0.3D, 0.5D, 0.3D, 0.02D);
-            if (event.getSource().getEntity() instanceof Player killer) {
-                // a few wisps drifting toward the reaper
-                double dx = killer.getX() - target.getX();
-                double dz = killer.getZ() - target.getZ();
-                serverLevel.sendParticles(ParticleTypes.SOUL,
-                        target.getX(), target.getY() + 1.0D, target.getZ(),
-                        6, 0.1D, 0.2D, 0.1D, 0.0D);
-                serverLevel.sendParticles(ParticleTypes.SOUL,
-                        target.getX() + dx * 0.4D, target.getY() + 1.2D, target.getZ() + dz * 0.4D,
-                        4, 0.1D, 0.2D, 0.1D, 0.0D);
+            Player killer = event.getSource().getEntity() instanceof Player p ? p : null;
+            playSoulHarvestFx(serverLevel, target, killer);
+        }
+    }
+
+    /**
+     * D-10 / G-1 soul-harvest FX — a layered, vanilla-only death-moment effect fired on the
+     * exact same code path as the guaranteed Soul Fragment spawn (see {@link #onDeath}), so
+     * the cosmetic burst can never desync from the actual reap.
+     *
+     * <p>All emission is server-side and fire-and-forget: {@link ServerLevel#sendParticles}
+     * broadcasts to nearby players and {@code playSound(null, ...)} is positional. On a
+     * headless dedicated server with no client / no nearby player every call is a harmless
+     * no-op, so this method never throws and carries no asserts.
+     *
+     * @param level  the server level the corpse died in
+     * @param corpse the dying villager — the FX anchor
+     * @param killer the player who landed the reap; may be {@code null} (indirect source)
+     */
+    private static void playSoulHarvestFx(ServerLevel level, LivingEntity corpse, Player killer) {
+        double x = corpse.getX();
+        double z = corpse.getZ();
+        double feetY = corpse.getY();
+        double chestY = feetY + corpse.getBbHeight() * 0.5D;
+        double topY = feetY + corpse.getBbHeight();
+
+        // Chest burst — a sculk-catalyst-style soul bloom at the heart.
+        level.sendParticles(ParticleTypes.SCULK_SOUL, x, chestY, z, 40, 0.3D, 0.4D, 0.3D, 0.02D);
+
+        // Rising SOUL column — ~2 blocks of souls lifting off the body.
+        for (int i = 0; i < 8; i++) {
+            double y = feetY + (i / 7.0D) * 2.0D;
+            level.sendParticles(ParticleTypes.SOUL, x, y, z, 2, 0.05D, 0.02D, 0.05D, 0.01D);
+        }
+
+        // Single white flash at the chest.
+        level.sendParticles(ParticleTypes.FLASH, x, chestY, z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+
+        // Soul stream to the killer, then an arrival burst at their chest.
+        if (killer != null) {
+            Vec3 from = new Vec3(x, chestY, z);
+            Vec3 to = new Vec3(killer.getX(), killer.getY() + killer.getBbHeight() * 0.5D, killer.getZ());
+            for (int j = 1; j <= 6; j++) {
+                Vec3 p = from.lerp(to, j / 6.0D);
+                level.sendParticles(ParticleTypes.REVERSE_PORTAL, p.x, p.y, p.z, 3, 0.05D, 0.05D, 0.05D, 0.02D);
             }
+            level.sendParticles(ParticleTypes.REVERSE_PORTAL, to.x, to.y, to.z, 20, 0.2D, 0.3D, 0.2D, 0.05D);
+        }
+
+        // Soul-colored pseudo-bolt — a vertical particle line dropping onto the villager.
+        // visual-only particle line — deliberately NOT a LightningBolt; 02-04 SoulAltarBlock
+        // owns the bolt-entity visual and these must read as different events.
+        for (int k = 0; k < 12; k++) {
+            double y = (topY + 6.0D) - (k / 11.0D) * 6.0D;
+            level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, x, y, z, 1, 0.02D, 0.0D, 0.02D, 0.0D);
+            level.sendParticles(ParticleTypes.END_ROD, x, y, z, 1, 0.02D, 0.0D, 0.02D, 0.0D);
+        }
+
+        // Layered sounds at the corpse (SCULK_CATALYST_BLOOM pitched down + SOUL_ESCAPE,
+        // plus a low eerie ELDER_GUARDIAN_CURSE tail).
+        level.playSound(null, x, chestY, z, SoundEvents.SCULK_CATALYST_BLOOM, SoundSource.BLOCKS, 1.0F, 0.7F);
+        level.playSound(null, x, chestY, z, SoundEvents.SOUL_ESCAPE, SoundSource.PLAYERS, 1.0F, 1.0F);
+        level.playSound(null, x, chestY, z, SoundEvents.ELDER_GUARDIAN_CURSE, SoundSource.HOSTILE, 0.25F, 1.0F);
+
+        // Sound at the killer — the soul arriving.
+        if (killer != null) {
+            level.playSound(null, killer.getX(), killer.getY(), killer.getZ(),
+                    SoundEvents.RESPAWN_ANCHOR_DEPLETE, SoundSource.PLAYERS, 0.7F, 1.2F);
         }
     }
 
