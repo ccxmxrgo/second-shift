@@ -17,7 +17,7 @@ Requirements for the first shippable version. Each maps to exactly one roadmap p
 
 ### Economy
 
-- [ ] **ECON-01**: The Harvester is a craftable tool/weapon
+- [x] **ECON-01**: The Harvester is a craftable tool/weapon
 - [x] **ECON-02**: Killing any villager with the Harvester drops exactly 1 Soul Fragment, guaranteed; no other vanilla drops are changed
 - [ ] **ECON-03**: 4 Soul Fragments craft into 1 Soul Block (vanilla shapeless recipe)
 - [ ] **ECON-04**: Killing your own employee with the Harvester yields 1 Soul Fragment only (no Soul Block, no bonus)
@@ -146,7 +146,7 @@ Which phases cover which requirements. Populated during roadmap creation (2026-0
 | BUILD-04 | Phase 1 | Complete |
 | BUILD-05 | Phase 1 | Complete |
 | POL-09 | Phase 1 | Complete |
-| ECON-01 | Phase 2 | Pending |
+| ECON-01 | Phase 2 | Complete |
 | ECON-02 | Phase 2 | Complete |
 | ECON-03 | Phase 2 | Pending |
 | ALTAR-01 | Phase 2 | Complete |

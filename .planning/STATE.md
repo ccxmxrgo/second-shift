@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
 stopped_at: Phase 2 context gathered
-last_updated: "2026-09-04T09:26:23.703Z"
+last_updated: "2026-09-04T09:36:46.458Z"
 last_activity: 2026-09-04
 progress:
   total_phases: 10
   completed_phases: 1
   total_plans: 7
-  completed_plans: 3
+  completed_plans: 4
   percent: 10
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-09-04)
 
 Phase: 02 (economy-items-soul-altar-block) — EXECUTING
 Next: Phase 2 (Economy Items & Soul Altar Block) — discuss or plan
-Plan: 2 of 5
+Plan: 3 of 5
 Last activity: 2026-09-04
 
 Progress: [█░░░░░░░░░] 10%
@@ -55,6 +55,7 @@ Progress: [█░░░░░░░░░] 10%
 | Phase 01 P01 | 55 min | 2 tasks | 13 files |
 | Phase 01 P02 | 8 min | 2 tasks | 5 files |
 | Phase 02 P01 | 41 min | 3 tasks | 14 files |
+| Phase 02 P02 | 12min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -75,6 +76,8 @@ Relevant to current work:
 - [Phase 01]: deployToTest is config-cache-safe (providers captured at config time, doLast uses Files+File not project) and absent from the build task graph
 - [Phase ?]: Phase 2 lang-key self-check reads the mod jar's own en_us.json off the classpath (not net.minecraft.locale.Language) so it runs identically on client and dedicated server
 - [Phase ?]: 1.21.1 has no Item.Properties#enchantable / DataComponents.ENCHANTABLE (both 1.21.2+); durability items are table-enchantable via Item#isEnchantable, override getEnchantmentValue for enchant quality
+- [Phase ?]: [Phase 02]: Villager Harvester instakill needs only LivingDamageEvent.Pre#setNewDamage(health+absorption+1) — Resistance V + absorption still one-shots, no setHealth(0)/die fallback (closes 02-RESEARCH Open Question 2)
+- [Phase ?]: [Phase 02]: DamageSource#getWeaponItem() exists on NeoForge 21.1.248 (delegates to directEntity main-hand item) — custom-weapon event gates key on it; no held-item fallback needed
 
 ### Pending Todos
 
@@ -95,6 +98,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-09-04T09:26:17.783Z
+Last session: 2026-09-04T09:36:40.346Z
 Stopped at: Phase 2 context gathered
 Resume file: None
