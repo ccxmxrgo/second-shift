@@ -1,0 +1,30 @@
+{
+  "criteria": {
+    "got_fragment": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          { "items": [ "secondshift:soul_fragment" ] }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [ "got_fragment" ]
+  ],
+  "rewards": {
+    "recipes": [
+      "secondshift:soul_block",
+      "secondshift:soul_fragment_from_block"
+    ]
+  },
+  "display": {
+    "icon": { "id": "secondshift:soul_fragment" },
+    "title": { "translate": "advancement.secondshift.first_harvest.title" },
+    "description": { "translate": "advancement.secondshift.first_harvest.description" },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  }
+}

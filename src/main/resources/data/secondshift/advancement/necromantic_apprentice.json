@@ -1,0 +1,27 @@
+{
+  "criteria": {
+    "got_emerald": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          { "items": [ "minecraft:emerald" ] }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [ "got_emerald" ]
+  ],
+  "rewards": {
+    "recipes": [ "secondshift:harvester" ]
+  },
+  "display": {
+    "icon": { "id": "secondshift:harvester" },
+    "title": { "translate": "advancement.secondshift.necromantic_apprentice.title" },
+    "description": { "translate": "advancement.secondshift.necromantic_apprentice.description" },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  }
+}
