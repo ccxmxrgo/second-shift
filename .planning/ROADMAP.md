@@ -83,7 +83,7 @@ in a jar the user can load in the CurseForge "test" instance and verify in-game.
 
 **Plans**: 2 plans
 
-- [ ] 03-01-PLAN.md — Menu/screen registration harness: ModMenus registry, BindingAltarMenu (ctors + stillValid + quickMoveStack), SoulSlot + AltarSoulContainer, BindingAltarScreen, RegisterMenuScreensEvent binding, SoulAltarBlockEntity as MenuProvider, D-14/D-15 guardrail extension, GUI texture
+- [x] 03-01-PLAN.md — Menu/screen registration harness: ModMenus registry, BindingAltarMenu (ctors + stillValid + quickMoveStack), SoulSlot + AltarSoulContainer, BindingAltarScreen, RegisterMenuScreensEvent binding, SoulAltarBlockEntity as MenuProvider, D-14/D-15 guardrail extension, GUI texture
 - [ ] 03-02-PLAN.md — Open-trigger wiring: ProfessionResolver (POI -> profession, no hardcoded list), SoulAltarBlock D-01/D-02/D-04/D-11 interaction logic, D-12 forced-close messaging on stillValid, BindingAltarGameTests (SC4)
 
 ### Phase 4: Employee Attachment & Spawn
@@ -213,7 +213,7 @@ Phases 6 and 8 are parallelizable with the 5 → 7 trade chain once Phase 4 land
 |-------|----------------|--------|-----------|
 | 1. Skeleton & Feedback Loop | 2/2 | Complete    | 2026-09-04 |
 | 2. Economy Items & Soul Altar Block | 5/5 | Complete    | 2026-09-04 |
-| 3. Menu & Screen Harness (HARD GATE) | 0/2 | Not started | - |
+| 3. Menu & Screen Harness (HARD GATE) | 1/2 | In Progress|  |
 | 4. Employee Attachment & Spawn | 0/TBD | Not started | - |
 | 5. Profession Resolution & Trade Picker | 0/TBD | Not started | - |
 | 6. Employee Traits, Death & Firing | 0/TBD | Not started | - |

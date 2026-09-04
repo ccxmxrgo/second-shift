@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
 stopped_at: Phase 3 UI-SPEC approved
-last_updated: "2026-09-04T13:57:56.421Z"
-last_activity: 2026-09-04 -- Phase 3 planning complete
+last_updated: "2026-09-04T14:24:54.737Z"
+last_activity: 2026-09-04
 progress:
   total_phases: 10
   completed_phases: 2
   total_plans: 9
-  completed_plans: 7
+  completed_plans: 8
   percent: 20
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-04)
 
 **Core value:** Harvest souls → bind a villager at the Soul Altar → hand-pick its profession and its trades, tier by tier. That loop must be reliable and feel good.
-**Current focus:** Phase 3 — Menu & Screen Harness (HARD GATE) — not started
+**Current focus:** Phase 03 — menu-screen-harness-hard-gate
 
 ## Current Position
 
-Phase: 3
+Phase: 03 (menu-screen-harness-hard-gate) — EXECUTING
 Next: Phase 03 — verify Phase 02, then discuss or plan
-Plan: Not started
-Last activity: 2026-09-04 -- Phase 3 planning complete
+Plan: 2 of 2
+Last activity: 2026-09-04
 
 Progress: [██░░░░░░░░] 20%
 
@@ -60,6 +60,7 @@ Progress: [██░░░░░░░░] 20%
 | Phase 02 P03 | 12min | 3 tasks | 10 files |
 | Phase 02 P04 | 25min | 3 tasks | 10 files |
 | Phase 02 P05 | 9min | 2 tasks | 2 files |
+| Phase 03 P01 | 35min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,8 @@ Relevant to current work:
 - [Phase 02]: [Phase 02]: getDrops break-time suppression uses a transient BlockEntity flag (set in playerWillDestroy, read via LootContextParams.BLOCK_ENTITY) — never a Block-singleton field
 - [Phase 02]: [Phase 02]: Charged Soul Altar render is a client-only BlockEntityRenderer registered from EntityRenderersEvent.RegisterRenderers; embedded Soul Block drawn via BlockRenderDispatcher#renderSingleBlock at LightTexture.FULL_BRIGHT (no render-type trick), wisp throttled by a per-frame RandomSource roll
 - [Phase 02]: [Phase 02]: mandatory ./gradlew runServer client-class-leak gate PASSED — SoulAltarRenderer never class-loads on the dedicated server; Phase 2 complete
+- [Phase 03]: AltarSoulContainer re-resolves the BE from level/pos per call (no caching) to stay correct across chunk/BE reloads on both sides
+- [Phase 03]: GUI texture generated via stdlib zlib/struct (PIL not installed) instead of installing a new package
 
 ### Pending Todos
 
@@ -114,6 +117,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-09-04T11:30:20.088Z
+Last session: 2026-09-04T14:21:45.472Z
 Stopped at: Phase 3 UI-SPEC approved
-Resume file: .planning/phases/03-menu-screen-harness-hard-gate/03-UI-SPEC.md
+Resume file: None

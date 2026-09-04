@@ -81,7 +81,7 @@ Requirements for the first shippable version. Each maps to exactly one roadmap p
 
 ### GUI / Menu
 
-- [ ] **GUI-01**: The altar `MenuType` + `Screen` are registered correctly and an (initially empty) altar screen opens under `runClient` without crashing — proven before any trade logic is built
+- [x] **GUI-01**: The altar `MenuType` + `Screen` are registered correctly and an (initially empty) altar screen opens under `runClient` without crashing — proven before any trade logic is built
 - [ ] **GUI-02**: The menu is server-authoritative; client-sent selections (trade indices, name) are re-validated server-side against the server's own candidate list and altar proximity
 - [ ] **GUI-03**: The altar GUI shows the bound employee's name, profession, current tier, already-chosen trades, and happiness state
 
@@ -154,7 +154,7 @@ Which phases cover which requirements. Populated during roadmap creation (2026-0
 | POL-01 | Phase 2 | Complete |
 | POL-03 | Phase 2 | Complete |
 | POL-04 | Phase 2 | Complete |
-| GUI-01 | Phase 3 | Pending |
+| GUI-01 | Phase 3 | Complete |
 | ALTAR-03 | Phase 3 | Pending |
 | EMP-01 | Phase 4 | Pending |
 | EMP-02 | Phase 4 | Pending |
