@@ -91,6 +91,65 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
 
+// --- deployToTest (D-01..D-04, D-06) --------------------------------------------
+// On-demand only: `dependsOn build`, never wired into build/assemble/check, and
+// nothing dependsOn it. Copies the freshly built jar into the CurseForge "test"
+// instance mods/ folder, replacing the previous secondshift-*.jar. A failed deploy
+// fails loudly and never touches build/libs/. Config-cache-safe: the destination
+// path, the built jar, and mod_id are all captured at configuration time and the
+// execution action never references `project`.
+def deployDestProvider = providers.gradleProperty('test_instance_mods_dir')
+def deployJarProvider = tasks.named('jar', Jar).flatMap { it.archiveFile }
+def deployModId = mod_id
+
+tasks.register('deployToTest') {
+    group = 'second shift'
+    description = 'Deploys the freshly built jar into the CurseForge "test" instance mods/ folder, on demand. Never run automatically.'
+    dependsOn tasks.named('build')
+
+    def destPathProvider = deployDestProvider
+    def jarFileProvider = deployJarProvider
+    def modId = deployModId
+
+    doLast {
+        if (!destPathProvider.isPresent()) {
+            throw new GradleException(
+                "deployToTest: test instance mods dir not found: (test_instance_mods_dir is unset). " +
+                "Set test_instance_mods_dir in gradle.properties or create the folder, then re-run.")
+        }
+        def destDir = new File(destPathProvider.get())
+        if (!destDir.isDirectory()) {
+            throw new GradleException(
+                "deployToTest: test instance mods dir not found: ${destDir}. " +
+                "Set test_instance_mods_dir in gradle.properties or create the folder, then re-run.")
+        }
+
+        def src = jarFileProvider.get().asFile
+        try {
+            // Glob-delete only "<modId>-*.jar" — never a bare *.jar, never the dashed
+            // "second-shift-*.jar" (D-05), never recursive.
+            def stale = destDir.listFiles({ File dir, String name ->
+                name ==~ /\Q${modId}\E-.*\.jar/
+            } as FilenameFilter)
+            stale?.each { f ->
+                if (!f.delete()) {
+                    throw new IOException("could not delete stale jar ${f}")
+                }
+            }
+            java.nio.file.Files.copy(
+                src.toPath(),
+                new File(destDir, src.name).toPath(),
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+        } catch (IOException e) {
+            throw new GradleException(
+                "deployToTest: could not write to ${destDir} - close Minecraft (it locks mods/*.jar) " +
+                "and re-run. build/libs/${src.name} is unchanged.", e)
+        }
+
+        println "deployToTest: deployed ${src.name} -> ${destDir.absolutePath}"
+    }
+}
+
 idea {
     module {
         downloadSources = true
