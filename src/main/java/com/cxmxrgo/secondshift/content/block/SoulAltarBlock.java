@@ -7,6 +7,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
@@ -154,6 +155,26 @@ public class SoulAltarBlock extends Block implements EntityBlock {
      * <p>The {@code getOptionalParameter(BLOCK_ENTITY)} value is the same instance
      * {@code playerWillDestroy} flagged: the break pipeline captures it before block removal.
      */
+    /**
+     * WR-03 safety net for non-player removal. {@link #playerWillDestroy} only runs for a
+     * player break, so any other removal path (modded block breakers, {@code
+     * Level.destroyBlock} from other mods, tooling) would drop the altar via the loot table
+     * while silently voiding the socketed Soul Block held in the BE. Here we drop that stack
+     * as an {@link net.minecraft.world.entity.item.ItemEntity} for every removal that is
+     * <em>not</em> the deliberate D-04 charged-break suppression ({@code wasBrokenWhileCharged()}),
+     * then clear it so a re-entrant removal cannot double-drop.
+     */
+    @Override
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (!state.is(newState.getBlock())
+                && level.getBlockEntity(pos) instanceof SoulAltarBlockEntity be
+                && !be.isEmpty() && !be.wasBrokenWhileCharged()) {
+            Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), be.getHeldSoulBlock());
+            be.setHeldSoulBlock(ItemStack.EMPTY);
+        }
+        super.onRemove(state, level, pos, newState, movedByPiston);
+    }
+
     @Override
     protected List<ItemStack> getDrops(BlockState state, LootParams.Builder params) {
         BlockEntity be = params.getOptionalParameter(LootContextParams.BLOCK_ENTITY);
