@@ -2,13 +2,16 @@ package com.cxmxrgo.secondshift.client;
 
 import com.cxmxrgo.secondshift.SecondShift;
 import com.cxmxrgo.secondshift.client.render.SoulAltarRenderer;
+import com.cxmxrgo.secondshift.client.screen.BindingAltarScreen;
 import com.cxmxrgo.secondshift.registry.ModBlockEntities;
+import com.cxmxrgo.secondshift.registry.ModMenus;
 import com.mojang.logging.LogUtils;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import org.slf4j.Logger;
 
 /**
@@ -18,7 +21,9 @@ import org.slf4j.Logger;
  * {@code Dist.CLIENT} class isolation — the dedicated server must never load this class.
  * It registers the charged-altar {@link SoulAltarRenderer} from
  * {@link EntityRenderersEvent.RegisterRenderers} (D-05 / POL-03); this is the only place
- * {@code SoulAltarRenderer} may be named.
+ * {@code SoulAltarRenderer} may be named. It also binds {@code secondshift:binding_altar} to
+ * {@link BindingAltarScreen} from {@link RegisterMenuScreensEvent} (GUI-01) — the only place
+ * {@code BindingAltarScreen} may be named.
  *
  * <p>{@code Bus.MOD} is set explicitly for parity with the canonical refs; FML derives
  * it regardless ({@code FMLClientSetupEvent} and {@code EntityRenderersEvent} are both
@@ -40,5 +45,11 @@ public final class ClientModBusEvents {
     static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(ModBlockEntities.SOUL_ALTAR_BE.get(), SoulAltarRenderer::new);
         LOGGER.info("[SecondShift] registered SoulAltarRenderer for secondshift:soul_altar");
+    }
+
+    @SubscribeEvent
+    static void onRegisterScreens(RegisterMenuScreensEvent event) {
+        event.register(ModMenus.BINDING_ALTAR.get(), BindingAltarScreen::new);
+        LOGGER.info("[SecondShift] registered BindingAltarScreen for secondshift:binding_altar");
     }
 }
