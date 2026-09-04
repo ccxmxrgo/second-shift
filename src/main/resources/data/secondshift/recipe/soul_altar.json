@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "D": { "item": "minecraft:blackstone" },
+    "E": { "item": "minecraft:emerald" },
+    "S": { "item": "minecraft:soul_soil" },
+    "B": { "item": "minecraft:bone" }
+  },
+  "pattern": [
+    "DED",
+    "DSD",
+    "DBD"
+  ],
+  "result": { "id": "secondshift:soul_altar", "count": 1 }
+}

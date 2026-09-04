@@ -47,5 +47,11 @@ public final class ModItems {
     public static final DeferredItem<net.minecraft.world.item.BlockItem> SOUL_BLOCK_ITEM =
             ITEMS.registerSimpleBlockItem("soul_block", ModBlocks.SOUL_BLOCK, new Item.Properties());
 
+    // ALTAR-01 / D-06: the Soul Altar's BlockItem — the crafting result, the loot-table drop,
+    // and the creative-tab entry (ModCreativeTab already lists ModBlocks.SOUL_ALTAR, which
+    // resolves to this item). Uses the block's descriptionId (block.secondshift.soul_altar).
+    public static final DeferredItem<net.minecraft.world.item.BlockItem> SOUL_ALTAR_ITEM =
+            ITEMS.registerSimpleBlockItem("soul_altar", ModBlocks.SOUL_ALTAR, new Item.Properties());
+
     private ModItems() {}
 }

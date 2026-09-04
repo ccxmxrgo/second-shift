@@ -1,0 +1,25 @@
+{
+  "criteria": {
+    "crafted_soul_block": {
+      "trigger": "minecraft:recipe_crafted",
+      "conditions": {
+        "recipe_id": "secondshift:soul_block"
+      }
+    }
+  },
+  "requirements": [
+    [ "crafted_soul_block" ]
+  ],
+  "rewards": {
+    "recipes": [ "secondshift:soul_altar" ]
+  },
+  "display": {
+    "icon": { "id": "secondshift:soul_altar" },
+    "title": { "translate": "advancement.secondshift.soul_mason.title" },
+    "description": { "translate": "advancement.secondshift.soul_mason.description" },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  }
+}
