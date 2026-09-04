@@ -32,7 +32,7 @@ covered by Plan 04-04's mandatory manual verification checkpoint instead.
 
 ## Sampling Rate
 
-- **After every task commit:** `./gradlew compileJava` (fast compile-correctness check); `./gradlew runGameTestServer` for any task touching `EmployeeManager`/`ModAttachments`/spawn logic (Plan 04-02 Tasks 2-3)
+- **After every task commit:** `./gradlew compileJava` (fast compile-correctness check); `./gradlew runGameTestServer` for any task touching `EmployeeManager`/`ModAttachments`/spawn logic (Plan 04-02 Task 2, which writes `EmployeeManager.bind` and `EmployeeGameTests` together and verifies with the full GameTest suite)
 - **After every plan wave:** `./gradlew runGameTestServer` (full suite) + `./gradlew runServer` (client-class-leak gate)
 - **Before `/gsd:verify-work`:** Full GameTest suite green (19/19) AND Plan 04-04's manual checkpoint approved
 - **Max feedback latency:** ~10 seconds (GameTest suite runtime)
@@ -47,8 +47,7 @@ covered by Plan 04-04's mandatory manual verification checkpoint instead.
 | 04-01-02 | 01 | 1 | EMP-01 | T-4-03 (indirect) | 6th register hard-aborts if unbound | integration | `./gradlew runServer` (+ manual D-14 detach proof) | ❌ W0 (created this task) | ⬜ pending |
 | 04-01-03 | 01 | 1 | EMP-01 | T-4-03 | `hasData` gated before any `getData` read | compile + manual (log inspection deferred to 04-04) | `./gradlew runServer` (class-leak) | ❌ W0 (created this task) | ⬜ pending |
 | 04-02-01 | 02 | 2 | EMP-01 (support) | — | N/A | compile | `./gradlew compileJava` | ❌ W0 (created this task) | ⬜ pending |
-| 04-02-02 | 02 | 2 | EMP-01, EMP-02, EMP-08 | T-4-04 | never mutates an existing entity, only constructs new | GameTest | `./gradlew runGameTestServer --tests "*EmployeeGameTests*"` | ❌ W0 (created together with 04-02-03) | ⬜ pending |
-| 04-02-03 | 02 | 2 | EMP-01, EMP-02, EMP-08, EMP-09 | T-4-04 | wild-villager regression proven per test | GameTest | `./gradlew runGameTestServer` | ❌ W0 (created this task) | ⬜ pending |
+| 04-02-02 | 02 | 2 | EMP-01, EMP-02, EMP-08, EMP-09 | T-4-04 | never mutates an existing entity, only constructs new; wild-villager regression proven per test | GameTest | `./gradlew runGameTestServer` (full suite — task writes `EmployeeManager.bind` and `EmployeeGameTests.java` together, single end-of-task verify; see revision note below) | ❌ W0 (created this task) | ⬜ pending |
 | 04-03-01 | 03 | 3 | EMP-01 (trigger) | T-4-01 (payload has zero fields) | no client-position field exists to spoof | compile | `./gradlew compileJava` | ❌ W0 (created this task) | ⬜ pending |
 | 04-03-02 | 03 | 3 | EMP-01 (trigger) | T-4-01, T-4-02, T-4-03 | server re-derives pos from menu; atomic slot consume before bind | compile (behavior proven manually in 04-04) | `./gradlew compileJava` | ❌ W0 (created this task) | ⬜ pending |
 | 04-03-03 | 03 | 3 | EMP-01 (trigger) | — | N/A (client UI only) | compile + manual | `./gradlew compileJava` | ❌ W0 (created this task) | ⬜ pending |
@@ -56,18 +55,25 @@ covered by Plan 04-04's mandatory manual verification checkpoint instead.
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
+**Revision note (post plan-checker review):** 04-02's original Task 2 ("EmployeeManager.bind")
+and Task 3 ("EmployeeGameTests") were merged into a single Task 2 (`04-02-02`) so the task's
+`<verify>` never invokes a `--tests` filter against a not-yet-created test class. The row above
+now covers both the implementation and its GameTest proof as one Nyquist sample point; there is
+no longer a separate `04-02-03` row.
+
 ---
 
 ## Wave 0 Requirements
 
 - [x] No dedicated test-framework install needed — `./gradlew runGameTestServer` already exists and covers this phase's automatable surface (proven in Phase 2/3).
-- [ ] `gametest/EmployeeGameTests.java` — created in Plan 04-02 Task 3, covering EMP-01/EMP-02/EMP-08/EMP-09 spawn-correctness assertions. Not yet on disk at planning time — this IS this phase's Wave 0 deliverable, produced inline with the implementation task it verifies (matches this codebase's established Phase 2 idiom of shipping GameTest coverage in the same or an adjacent task, not a separate pre-implementation RED-only plan).
+- [ ] `gametest/EmployeeGameTests.java` — created in Plan 04-02 Task 2 (merged with `EmployeeManager.bind`'s implementation, per the revision note above), covering EMP-01/EMP-02/EMP-08/EMP-09 spawn-correctness assertions. Not yet on disk at planning time — this IS this phase's Wave 0 deliverable, produced inline with the implementation task it verifies (matches this codebase's established Phase 2 idiom of shipping GameTest coverage in the same or an adjacent task, not a separate pre-implementation RED-only plan).
 
-No separate Wave 0 plan is needed: this phase's implementation tasks (Plan 04-02 Tasks 2-3) ship
-their GameTest coverage together, following the project's established pattern (Phase 2's
-`HarvesterGameTests` was written as a RED scaffold in 02-01 and turned GREEN in 02-02; this phase's
-`EmployeeGameTests` is written and turned GREEN together in 04-02 since there is no separate
-scaffold-then-implement split for a brand-new method with no pre-existing partial implementation).
+No separate Wave 0 plan is needed: this phase's implementation task (Plan 04-02 Task 2) ships
+its GameTest coverage together with the implementation, following the project's established
+pattern (Phase 2's `HarvesterGameTests` was written as a RED scaffold in 02-01 and turned GREEN in
+02-02; this phase's `EmployeeGameTests` is written and turned GREEN together in a single 04-02 task
+since there is no separate scaffold-then-implement split for a brand-new method with no
+pre-existing partial implementation).
 
 ---
 
@@ -88,10 +94,11 @@ scaffold-then-implement split for a brand-new method with no pre-existing partia
 ## Validation Sign-Off
 
 - [x] All tasks have `<automated>` verify or Wave 0 dependencies (Plan 04-04's single task uses `<human-check>` per its checkpoint type, which is the documented exception for `checkpoint:human-verify` tasks)
-- [x] Sampling continuity: no 3 consecutive tasks without automated verify (04-01's 3 tasks and 04-02's 3 tasks are each automated; 04-03's 3 tasks are automated at compile-level with behavior proof deferred to the single manual checkpoint in 04-04, which is its own plan, not 3+ consecutive manual tasks)
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify (04-01's 3 tasks and 04-02's 2 tasks are each automated; 04-03's 3 tasks are automated at compile-level with behavior proof deferred to the single manual checkpoint in 04-04, which is its own plan, not 3+ consecutive manual tasks)
 - [x] Wave 0 covers all MISSING references (`EmployeeGameTests.java` is the one MISSING file, and it is created within the phase's own Wave 2 plan, per the note above)
 - [x] No watch-mode flags anywhere in this document
 - [x] Feedback latency < 10s for automated checks; manual checkpoint latency is developer-paced (acceptable per Nyquist rules for `checkpoint:human-verify` gates)
 - [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** approved 2026-09-04 (planner self-certification against the Nyquist checklist above; final developer sign-off happens at Plan 04-04's checkpoint during execution)
+**Approval:** approved 2026-09-04 (planner self-certification against the Nyquist checklist above; final developer sign-off happens at Plan 04-04's checkpoint during execution). Revised 2026-09-04 to merge 04-02 Tasks 2/3 per plan-checker blocker finding.
+</content>

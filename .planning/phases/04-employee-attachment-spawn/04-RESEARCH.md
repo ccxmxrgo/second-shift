@@ -547,9 +547,9 @@ which is a verification gap, not a stale-documentation gap.
 
 **If this table is empty:** N/A — see entries above.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Does `EntityType.VILLAGER.create(level)`'s returned entity have a valid `level()` reference before `addFreshEntity`?**
+1. **RESOLVED — treated as LOW risk, verify at build/compile time.** Does `EntityType.VILLAGER.create(level)`'s returned entity have a valid `level()` reference before `addFreshEntity`?**
    - What we know: `create(Level)` constructs the entity with the given level reference stored
      (standard vanilla entity-construction pattern — the level is a constructor parameter chain,
      not something set later by `addFreshEntity`).
@@ -564,7 +564,7 @@ which is a verification gap, not a stale-documentation gap.
      workaround (materialize offers after `addFreshEntity`, `setOffers` again) is cheap. No
      dedicated spike needed — note in the plan as a fallback-if-observed.
 
-2. **Exact `EntityType<T>#create` overload available in 1.21.1** (`create(Level)` vs.
+2. **RESOLVED — cheap to resolve at implementation time, compiler enforces correctness.** Exact `EntityType<T>#create` overload available in 1.21.1** (`create(Level)` vs.
    `create(ServerLevelAccessor, EntitySpawnReason)` vs. other 1.21.x variants).
    - What we know: ARCHITECTURE.md's Slice 5 pseudocode uses `EntityType.VILLAGER.create(level)`.
      STACK.md did not `javap` this specific method signature (it verified `Villager`/
