@@ -39,7 +39,9 @@ in a jar the user can load in the CurseForge "test" instance and verify in-game.
   2. `./gradlew runClient` reaches the main menu and `./gradlew runServer` reaches "Done", both with the mod loaded.
   3. Temporarily un-registering a `DeferredRegister` makes startup abort with a named list of the unbound entries instead of a later cryptic crash.
   4. Each build lands in the test instance's `mods/` folder replacing the prior jar, with no duplicate-modid failure; `pack.mcmeta` is `pack_format` 48 and data folders use singular 1.21 names.
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] 01-01-PLAN.md — Pinned NeoForge 1.21.1 / MDG 2.0.146 skeleton: MDK bootstrap, `@Mod` entrypoint, first real `DeferredRegister` + `debug_marker`, `FMLLoadCompleteEvent` unbound-registry self-check, `runClient`/`runServer` green, `pack.mcmeta` format 48
+- [ ] 01-02-PLAN.md — On-demand `deployToTest` deploy loop into the CurseForge "test" instance (glob-replace, fail-loud), legacy dashed-jar cleanup, `run/mods` FML-scan check, in-instance load verification
 
 ### Phase 2: Economy Items & Soul Altar Block
 **Goal**: The soul economy items and the Soul Altar block exist, craft with vanilla recipes, and behave — with zero GUI risk.
@@ -170,7 +172,7 @@ Phases 6 and 8 are parallelizable with the 5 → 7 trade chain once Phase 4 land
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Skeleton & Feedback Loop | 0/TBD | Not started | - |
+| 1. Skeleton & Feedback Loop | 0/2 | Not started | - |
 | 2. Economy Items & Soul Altar Block | 0/TBD | Not started | - |
 | 3. Menu & Screen Harness (HARD GATE) | 0/TBD | Not started | - |
 | 4. Employee Attachment & Spawn | 0/TBD | Not started | - |
