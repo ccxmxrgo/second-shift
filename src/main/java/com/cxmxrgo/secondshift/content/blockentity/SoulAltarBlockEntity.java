@@ -37,12 +37,28 @@ public class SoulAltarBlockEntity extends BlockEntity {
 
     private ItemStack heldSoulBlock = ItemStack.EMPTY;
 
+    /**
+     * Transient (never persisted): set by {@code SoulAltarBlock#playerWillDestroy} when the
+     * altar is broken while charged, read back moments later by {@code SoulAltarBlock#getDrops}
+     * off the same BE instance (the break pipeline captures the BE before block removal and
+     * passes it through {@code LootContextParams.BLOCK_ENTITY}). D-04 drop suppression.
+     */
+    private transient boolean brokenWhileCharged = false;
+
     public SoulAltarBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.SOUL_ALTAR_BE.get(), pos, state);
     }
 
     public boolean isEmpty() {
         return heldSoulBlock.isEmpty();
+    }
+
+    public boolean wasBrokenWhileCharged() {
+        return brokenWhileCharged;
+    }
+
+    public void markBrokenWhileCharged() {
+        this.brokenWhileCharged = true;
     }
 
     public ItemStack getHeldSoulBlock() {

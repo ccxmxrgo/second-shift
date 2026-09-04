@@ -10,6 +10,8 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
@@ -19,11 +21,16 @@ import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * Soul Altar (D-01 / D-02 / ALTAR-01) — an {@link EntityBlock} pedestal that sockets one
@@ -109,5 +116,52 @@ public class SoulAltarBlock extends Block implements EntityBlock {
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player,
                                                BlockHitResult hit) {
         return InteractionResult.PASS;
+    }
+
+    /**
+     * D-04 charged-altar break. Runs server-side before the BE is removed, and has the
+     * {@link Player} ref. If the altar holds a Soul Block: spawn a visual-only
+     * {@link LightningBolt} (flash + thunder, no fire, no collateral), deal exactly half a
+     * heart of armour-bypassing magic damage to the breaking player only, mark the BE so
+     * {@link #getDrops} suppresses everything, and clear the socketed stack (the Soul Block
+     * is destroyed).
+     *
+     * <p>ALTAR-06 (a charged-altar break ALSO instakilling the bound employee) is Phase 6 —
+     * no {@code EmployeeData} attachment exists yet; do not add it here.
+     */
+    @Override
+    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        if (!level.isClientSide
+                && level.getBlockEntity(pos) instanceof SoulAltarBlockEntity be && !be.isEmpty()) {
+            LightningBolt bolt = EntityType.LIGHTNING_BOLT.create(level);
+            if (bolt != null) {
+                bolt.moveTo(Vec3.atBottomCenterOf(pos));
+                bolt.setVisualOnly(true);                               // flash + thunder only — no fire, no damage
+                level.addFreshEntity(bolt);
+            }
+            player.hurt(level.damageSources().magic(), 1.0F);           // half a heart, breaking player only
+            be.markBrokenWhileCharged();                                // read by getDrops off this same BE instance
+            be.setHeldSoulBlock(ItemStack.EMPTY);                       // the Soul Block is destroyed
+        }
+        return super.playerWillDestroy(level, pos, state, player);
+    }
+
+    /**
+     * D-04 drop suppression. When the BE was broken while charged, the altar is lost
+     * entirely — nothing drops (not the Soul Block, not the altar block). Otherwise defer to
+     * the drops-self loot table (ALTAR-07, empty-altar path).
+     *
+     * <p>The {@code getOptionalParameter(BLOCK_ENTITY)} value is the same instance
+     * {@code playerWillDestroy} flagged: the break pipeline captures it before block removal.
+     */
+    @Override
+    protected List<ItemStack> getDrops(BlockState state, LootParams.Builder params) {
+        BlockEntity be = params.getOptionalParameter(LootContextParams.BLOCK_ENTITY);
+        if (be instanceof SoulAltarBlockEntity altar && altar.wasBrokenWhileCharged()) {
+            // >>> D-04 FALLBACK: change the next line to `return super.getDrops(state, params);`
+            // >>> to make a charged break drop the altar block (only the Soul Block is destroyed).
+            return List.of();
+        }
+        return super.getDrops(state, params);
     }
 }
