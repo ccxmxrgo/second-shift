@@ -41,7 +41,7 @@ its trades at each level. If everything else is cut, this loop has to be reliabl
 - [ ] Trades restock on a mod-owned timer (vanilla POI restock never reaches an altar-bound employee)
 - [ ] Compiles against NeoForge 21.1.248 and loads in the CurseForge "test" instance without crashing
 
-Full requirement list: `.planning/REQUIREMENTS.md` (52 v1 requirements).
+Full requirement list: `.planning/REQUIREMENTS.md` (60 v1 requirements).
 
 ### Out of Scope
 

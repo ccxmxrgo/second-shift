@@ -136,17 +136,76 @@ Explicitly excluded. Documented to prevent scope creep.
 
 ## Traceability
 
-Which phases cover which requirements. Populated during roadmap creation.
+Which phases cover which requirements. Populated during roadmap creation (2026-09-04).
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| _(filled by roadmapper)_ | | |
+| BUILD-01 | Phase 1 | Pending |
+| BUILD-02 | Phase 1 | Pending |
+| BUILD-03 | Phase 1 | Pending |
+| BUILD-04 | Phase 1 | Pending |
+| BUILD-05 | Phase 1 | Pending |
+| POL-09 | Phase 1 | Pending |
+| ECON-01 | Phase 2 | Pending |
+| ECON-02 | Phase 2 | Pending |
+| ECON-03 | Phase 2 | Pending |
+| ALTAR-01 | Phase 2 | Pending |
+| ALTAR-07 | Phase 2 | Pending |
+| POL-01 | Phase 2 | Pending |
+| POL-03 | Phase 2 | Pending |
+| POL-04 | Phase 2 | Pending |
+| GUI-01 | Phase 3 | Pending |
+| ALTAR-03 | Phase 3 | Pending |
+| EMP-01 | Phase 4 | Pending |
+| EMP-02 | Phase 4 | Pending |
+| EMP-08 | Phase 4 | Pending |
+| EMP-09 | Phase 4 | Pending |
+| ALTAR-02 | Phase 5 | Pending |
+| ALTAR-04 | Phase 5 | Pending |
+| ALTAR-05 | Phase 5 | Pending |
+| PICK-01 | Phase 5 | Pending |
+| PICK-02 | Phase 5 | Pending |
+| PICK-03 | Phase 5 | Pending |
+| PICK-04 | Phase 5 | Pending |
+| PICK-05 | Phase 5 | Pending |
+| PICK-06 | Phase 5 | Pending |
+| PICK-07 | Phase 5 | Pending |
+| PICK-08 | Phase 5 | Pending |
+| GUI-02 | Phase 5 | Pending |
+| GUI-03 | Phase 5 | Pending |
+| EMP-03 | Phase 6 | Pending |
+| EMP-04 | Phase 6 | Pending |
+| EMP-05 | Phase 6 | Pending |
+| EMP-06 | Phase 6 | Pending |
+| EMP-07 | Phase 6 | Pending |
+| ECON-04 | Phase 6 | Pending |
+| ALTAR-06 | Phase 6 | Pending |
+| PROG-01 | Phase 7 | Pending |
+| PROG-02 | Phase 7 | Pending |
+| PROG-03 | Phase 7 | Pending |
+| PROG-04 | Phase 7 | Pending |
+| STOCK-01 | Phase 8 | Pending |
+| STOCK-02 | Phase 8 | Pending |
+| STOCK-03 | Phase 8 | Pending |
+| HAPP-01 | Phase 9 | Pending |
+| HAPP-02 | Phase 9 | Pending |
+| HAPP-03 | Phase 9 | Pending |
+| HAPP-04 | Phase 9 | Pending |
+| HAPP-05 | Phase 9 | Pending |
+| HAPP-06 | Phase 9 | Pending |
+| HAPP-07 | Phase 9 | Pending |
+| STOCK-04 | Phase 9 | Pending |
+| POL-02 | Phase 10 | Pending |
+| POL-05 | Phase 10 | Pending |
+| POL-06 | Phase 10 | Pending |
+| POL-07 | Phase 10 | Pending |
+| POL-08 | Phase 10 | Pending |
 
 **Coverage:**
-- v1 requirements: 52 total
-- Mapped to phases: 0
-- Unmapped: 52 ⚠️
+- v1 requirements: 60 total (the earlier "52" summary count was stale — the enumerated list above has always had 60)
+- Mapped to phases: 60
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-09-04*
-*Last updated: 2026-09-04 after initial definition*
+*Last updated: 2026-09-04 after roadmap creation — traceability populated, coverage 60/60*
