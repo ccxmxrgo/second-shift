@@ -2,8 +2,10 @@ package com.cxmxrgo.secondshift.menu;
 
 import com.cxmxrgo.secondshift.registry.ModBlocks;
 import com.cxmxrgo.secondshift.registry.ModMenus;
+import com.cxmxrgo.secondshift.trade.ProfessionResolver;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -24,6 +26,11 @@ public class BindingAltarMenu extends AbstractContainerMenu {
 
     private final ContainerLevelAccess access;
     private final Player player;
+
+    /** D-12: guards forced-close messaging so a menu that fails {@code stillValid} across
+     * multiple ticks (before the client processes the close packet) sends exactly one
+     * action-bar message, not one per failing tick. */
+    private boolean forcedCloseMessageSent = false;
 
     /** Client ctor — bound by {@code IMenuTypeExtension.create(BindingAltarMenu::new)}. */
     public BindingAltarMenu(int containerId, Inventory playerInv, RegistryFriendlyByteBuf extraData) {
@@ -54,9 +61,28 @@ public class BindingAltarMenu extends AbstractContainerMenu {
         }
     }
 
+    /**
+     * D-12 forced-close messaging: on the tick {@code stillValid} first flips to {@code false}
+     * (altar broken, job block removed, or player > ~8 blocks away — SC4), send exactly one
+     * themed action-bar message naming the reason before the container closes.
+     */
     @Override
     public boolean stillValid(Player player) {
-        return AbstractContainerMenu.stillValid(this.access, player, ModBlocks.SOUL_ALTAR.get());
+        boolean valid = AbstractContainerMenu.stillValid(this.access, player, ModBlocks.SOUL_ALTAR.get());
+        if (!valid && !forcedCloseMessageSent && !player.level().isClientSide()) {
+            String key = this.access.evaluate((level, pos) -> {
+                if (!level.getBlockState(pos).is(ModBlocks.SOUL_ALTAR.get())) {
+                    return "message.secondshift.altar.closed.altar_gone";
+                }
+                if (ProfessionResolver.fromAbove(level, pos).isEmpty()) {
+                    return "message.secondshift.altar.closed.job_gone";
+                }
+                return "message.secondshift.altar.closed.too_far";
+            }, "message.secondshift.altar.closed.altar_gone");
+            player.displayClientMessage(Component.translatable(key), true);
+            forcedCloseMessageSent = true;
+        }
+        return valid;
     }
 
     @Override
