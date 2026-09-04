@@ -119,6 +119,7 @@ None yet.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260904-gqp | Enhance villager soul-harvest FX in HarvesterEvents (closes deferred G-1) — layered SCULK_SOUL/SOUL/FLASH + REVERSE_PORTAL stream to killer + SOUL_FIRE_FLAME/END_ROD pseudo-bolt + stacked sounds | 2026-09-04 | 28f0ca9 | [260904-gqp-enhance-villager-soul-harvest-fx-in-harv](./quick/260904-gqp-enhance-villager-soul-harvest-fx-in-harv/) |
+| 260905-0yg | Fix CR-01 (bound villager spawn overlaps job-site block — now spawns at altarPos.above(2)) and the client-side EmployeeData sync diagnostic's structurally-always-false synchronous hasData check (now a bounded 20-tick ClientTickEvent.Post poll) | 2026-09-05 | c7aec01 | [260905-0yg-fix-cr-01-spawn-position-overlap-and-cli](./quick/260905-0yg-fix-cr-01-spawn-position-overlap-and-cli/) |
 
 ## Deferred Items
 
@@ -129,6 +130,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-09-04T19:44:24.463Z
-Stopped at: Completed 04-03-PLAN.md
+Last session: 2026-09-05T00:00:00.000Z
+Stopped at: Completed quick task 260905-0yg
 Resume file: None
