@@ -33,8 +33,15 @@ bin/
 .DS_Store
 
 ### Minecraft Modding ###
-run/
+# Ignore run/ contents but NOT the run/ dir itself, so the run/mods/ placeholder
+# below can be re-included (git can't re-include under a fully-excluded parent).
+run/*
 !**/src/**/run/
+# Keep the dev mods/ dir as a placeholder (D-12: FML scans run/mods/ — later phases
+# can drop dev-parity mod jars here). The jars themselves stay ignored.
+!run/mods/
+run/mods/*
+!run/mods/.gitkeep
 **/src/generated/**/.cache/
 repo/
 !**/src/**/repo/
