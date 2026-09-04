@@ -16,7 +16,7 @@ in a jar the user can load in the CurseForge "test" instance and verify in-game.
 
 ## Phases
 
-- [ ] **Phase 1: Skeleton & Feedback Loop** - Pinned NeoForge build that launches and catches its own registration bugs
+- [x] **Phase 1: Skeleton & Feedback Loop** - Pinned NeoForge build that launches and catches its own registration bugs (completed 2026-09-04)
 - [ ] **Phase 2: Economy Items & Soul Altar Block** - Harvester, Soul Fragment/Block, and the Soul Altar block exist and behave
 - [ ] **Phase 3: Menu & Screen Harness (HARD GATE)** - Empty "Binding Altar" screen opens under runClient with no crash
 - [ ] **Phase 4: Employee Attachment & Spawn** - Binding spawns a persistent, named employee villager with synced EmployeeData
@@ -45,7 +45,7 @@ in a jar the user can load in the CurseForge "test" instance and verify in-game.
 **Plans**: 2 plans
 
 - [x] 01-01-PLAN.md — Pinned NeoForge 1.21.1 / MDG 2.0.146 skeleton: MDK bootstrap, `@Mod` entrypoint, first real `DeferredRegister` + `debug_marker`, `FMLLoadCompleteEvent` unbound-registry self-check, `runClient`/`runServer` green, `pack.mcmeta` format 48
-- [ ] 01-02-PLAN.md — On-demand `deployToTest` deploy loop into the CurseForge "test" instance (glob-replace, fail-loud), legacy dashed-jar cleanup, `run/mods` FML-scan check, in-instance load verification
+- [x] 01-02-PLAN.md — On-demand `deployToTest` deploy loop into the CurseForge "test" instance (glob-replace, fail-loud), legacy dashed-jar cleanup, `run/mods` FML-scan check, in-instance load verification
 
 ### Phase 2: Economy Items & Soul Altar Block
 
@@ -203,7 +203,7 @@ Phases 6 and 8 are parallelizable with the 5 → 7 trade chain once Phase 4 land
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Skeleton & Feedback Loop | 1/2 | In Progress|  |
+| 1. Skeleton & Feedback Loop | 2/2 | Complete   | 2026-09-04 |
 | 2. Economy Items & Soul Altar Block | 0/TBD | Not started | - |
 | 3. Menu & Screen Harness (HARD GATE) | 0/TBD | Not started | - |
 | 4. Employee Attachment & Spawn | 0/TBD | Not started | - |

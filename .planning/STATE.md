@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Phase 1 context gathered
-last_updated: "2026-09-04T03:26:20.013Z"
+status: verifying
+stopped_at: Completed 01-02-PLAN.md — Phase 1 code complete, ready for verification
+last_updated: "2026-09-04T03:33:06.642Z"
 last_activity: 2026-09-04
 progress:
   total_phases: 10
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
-  percent: 0
+  completed_plans: 2
+  percent: 10
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-09-04)
 
 Phase: 01 (skeleton-feedback-loop) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-09-04
 
 Progress: [░░░░░░░░░░] 0%
@@ -53,6 +53,7 @@ Progress: [░░░░░░░░░░] 0%
 
 *Updated after each plan completion*
 | Phase 01 P01 | 55 min | 2 tasks | 13 files |
+| Phase 01 P02 | 8 min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -69,6 +70,8 @@ Relevant to current work:
 - [Phase 01]: Self-check throws directly from the FMLLoadCompleteEvent handler (not via enqueueWork) so an unbound register is a fatal hard abort, not a soft broken-mod state — enqueueWork swallows the exception; verified on runClient + runServer
 - [Phase 01]: runData is not a self-check surface on MDG 2.0.146 / NeoForge 21.1.248 (no FMLCommonSetupEvent / FMLLoadCompleteEvent); guardrail proven on runClient + runServer
 - [Phase 01]: MDG 2.0.146 writes dev run logs to run/logs/latest.log + run/logs/debug.log (not runs/<name>/logs/)
+- [Phase 01]: D-12 resolved YES: FML scans run/mods/ (FMLPaths MODSDIR) — a jar dropped there loads with deps enforced; later phases can use it for dev-parity mods
+- [Phase 01]: deployToTest is config-cache-safe (providers captured at config time, doLast uses Files+File not project) and absent from the build task graph
 
 ### Pending Todos
 
@@ -89,6 +92,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-09-04T03:25:56.382Z
-Stopped at: Phase 1 context gathered
+Last session: 2026-09-04T03:33:06.635Z
+Stopped at: Completed 01-02-PLAN.md — Phase 1 code complete, ready for verification
 Resume file: None

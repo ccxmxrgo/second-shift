@@ -12,8 +12,8 @@ Requirements for the first shippable version. Each maps to exactly one roadmap p
 - [x] **BUILD-01**: Mod compiles against NeoForge 21.1.248 / Minecraft 1.21.1 (Java 21) via the Gradle wrapper; `./gradlew build` produces a loadable jar
 - [x] **BUILD-02**: `./gradlew runClient` reaches the main menu with the mod loaded; `./gradlew runServer` starts clean
 - [x] **BUILD-03**: A startup self-check aborts loading with a named list of any unbound DeferredRegister entry (guards the registration bug that killed the prior draft)
-- [ ] **BUILD-04**: The built jar loads in the CurseForge "test" instance alongside owo-lib / accessories / wildcard without crashing
-- [ ] **BUILD-05**: Each build is deployed into the test instance's `mods/` folder (replacing the previous build) so the user can test in-game
+- [x] **BUILD-04**: The built jar loads in the CurseForge "test" instance alongside owo-lib / accessories / wildcard without crashing
+- [x] **BUILD-05**: Each build is deployed into the test instance's `mods/` folder (replacing the previous build) so the user can test in-game
 
 ### Economy
 
@@ -143,8 +143,8 @@ Which phases cover which requirements. Populated during roadmap creation (2026-0
 | BUILD-01 | Phase 1 | Complete |
 | BUILD-02 | Phase 1 | Complete |
 | BUILD-03 | Phase 1 | Complete |
-| BUILD-04 | Phase 1 | Pending |
-| BUILD-05 | Phase 1 | Pending |
+| BUILD-04 | Phase 1 | Complete |
+| BUILD-05 | Phase 1 | Complete |
 | POL-09 | Phase 1 | Complete |
 | ECON-01 | Phase 2 | Pending |
 | ECON-02 | Phase 2 | Pending |
