@@ -1,12 +1,19 @@
 package com.cxmxrgo.secondshift.content.blockentity;
 
+import com.cxmxrgo.secondshift.menu.BindingAltarMenu;
 import com.cxmxrgo.secondshift.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -27,8 +34,12 @@ import net.minecraft.world.level.block.state.BlockState;
  * codec-driven — {@code ItemStack#save(HolderLookup.Provider)} returns a {@code Tag},
  * {@code ItemStack#parse(HolderLookup.Provider, Tag)} returns {@code Optional<ItemStack>}.
  * Verified against the decompiled {@code net.minecraft.world.item.ItemStack}.
+ *
+ * <p><b>Plan 03-01 addition:</b> now {@link MenuProvider} — {@link #createMenu} constructs a
+ * {@link BindingAltarMenu} against this BE's position (GUI-01). No block-interaction trigger is
+ * wired yet (that is Plan 02 / ALTAR-03); this only makes the BE a valid open target.
  */
-public class SoulAltarBlockEntity extends BlockEntity {
+public class SoulAltarBlockEntity extends BlockEntity implements MenuProvider {
 
     /** Bump when the persisted NBT shape changes; read back for future migrations (D-17). */
     private static final int DATA_VERSION = 1;
@@ -98,5 +109,16 @@ public class SoulAltarBlockEntity extends BlockEntity {
     @Override
     public Packet<ClientGamePacketListener> getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public Component getDisplayName() {
+        return Component.translatable("container.secondshift.binding_altar");
+    }
+
+    @Override
+    public AbstractContainerMenu createMenu(int containerId, Inventory playerInv, Player player) {
+        return new BindingAltarMenu(containerId, playerInv,
+                ContainerLevelAccess.create(this.getLevel(), this.getBlockPos()), this.getBlockPos());
     }
 }

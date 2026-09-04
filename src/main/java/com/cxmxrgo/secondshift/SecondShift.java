@@ -4,7 +4,9 @@ import com.cxmxrgo.secondshift.registry.ModBlockEntities;
 import com.cxmxrgo.secondshift.registry.ModBlocks;
 import com.cxmxrgo.secondshift.registry.ModCreativeTab;
 import com.cxmxrgo.secondshift.registry.ModItems;
+import com.cxmxrgo.secondshift.registry.ModMenus;
 import com.mojang.logging.LogUtils;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -38,6 +40,7 @@ public class SecondShift {
         ModBlocks.BLOCKS.register(modBus);
         ModBlockEntities.BLOCK_ENTITIES.register(modBus);
         ModCreativeTab.TABS.register(modBus);
+        ModMenus.MENUS.register(modBus);
 
         modBus.addListener(this::commonSetup);
     }
@@ -54,6 +57,8 @@ public class SecondShift {
                     ModBlockEntities.BLOCK_ENTITIES.getEntries().size(),
                     ModCreativeTab.TABS.getEntries().size(),
                     ids);
+            LOGGER.info("[SecondShift] menu registered: {}",
+                    BuiltInRegistries.MENU.getKey(ModMenus.BINDING_ALTAR.get()));
         });
     }
 }

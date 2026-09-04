@@ -4,6 +4,7 @@ import com.cxmxrgo.secondshift.registry.ModBlockEntities;
 import com.cxmxrgo.secondshift.registry.ModBlocks;
 import com.cxmxrgo.secondshift.registry.ModCreativeTab;
 import com.cxmxrgo.secondshift.registry.ModItems;
+import com.cxmxrgo.secondshift.registry.ModMenus;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.minecraft.world.item.Item;
@@ -72,7 +73,7 @@ public final class ModRegistrySelfCheck {
     static void onLoadComplete(FMLLoadCompleteEvent event) {
         // D-10: add every registry/Mod* DeferredRegister to this Stream.of(...) as later
         // phases introduce them, and mirror it in the SecondShift constructor.
-        List<String> unbound = Stream.of(ModItems.ITEMS, ModBlocks.BLOCKS, ModBlockEntities.BLOCK_ENTITIES, ModCreativeTab.TABS)
+        List<String> unbound = Stream.of(ModItems.ITEMS, ModBlocks.BLOCKS, ModBlockEntities.BLOCK_ENTITIES, ModCreativeTab.TABS, ModMenus.MENUS)
                 .flatMap(dr -> dr.getEntries().stream())
                 .filter(holder -> !holder.isBound())
                 .map(holder -> holder.getId().toString())

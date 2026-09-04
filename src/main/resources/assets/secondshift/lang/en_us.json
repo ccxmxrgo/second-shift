@@ -6,6 +6,8 @@
 
   "itemGroup.secondshift.main": "Second Shift",
 
+  "container.secondshift.binding_altar": "Binding Altar",
+
   "advancement.secondshift.necromantic_apprentice.title": "Necromantic Apprentice",
   "advancement.secondshift.necromantic_apprentice.description": "Hold an emerald and feel the payroll calling. Forge a Harvester — emeralds, bone, and soul soil — and go collect what the village owes you.",
   "advancement.secondshift.first_harvest.title": "First Harvest",
