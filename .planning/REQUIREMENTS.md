@@ -26,7 +26,7 @@ Requirements for the first shippable version. Each maps to exactly one roadmap p
 
 - [x] **ALTAR-01**: The Soul Altar is a craftable block backed by a block entity
 - [ ] **ALTAR-02**: Placing a vanilla job-site block on top of the altar sets the target profession for binding
-- [ ] **ALTAR-03**: Inserting a Soul Block into an altar that has a job block on top opens the binding GUI
+- [x] **ALTAR-03**: Inserting a Soul Block into an altar that has a job block on top opens the binding GUI
 - [ ] **ALTAR-04**: Completing a bind consumes the Soul Block and the job-site block into the altar and spawns the employee
 - [ ] **ALTAR-05**: Each altar is bound to exactly one employee and persists that link across save/load
 - [ ] **ALTAR-06**: Destroying a bound altar consumes (does not drop) the Soul Block and job block, deals 1 damage to the breaking player only with no block or environment damage, and 0.5s later a cosmetic lightning strike (visual + thunder, no fire, no collateral damage) instakills the bound employee
@@ -155,7 +155,7 @@ Which phases cover which requirements. Populated during roadmap creation (2026-0
 | POL-03 | Phase 2 | Complete |
 | POL-04 | Phase 2 | Complete |
 | GUI-01 | Phase 3 | Complete |
-| ALTAR-03 | Phase 3 | Pending |
+| ALTAR-03 | Phase 3 | Complete |
 | EMP-01 | Phase 4 | Pending |
 | EMP-02 | Phase 4 | Pending |
 | EMP-08 | Phase 4 | Pending |

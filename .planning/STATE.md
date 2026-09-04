@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to execute
+status: Phase complete — ready for verification
 stopped_at: Phase 3 UI-SPEC approved
-last_updated: "2026-09-04T14:24:54.737Z"
+last_updated: "2026-09-04T14:37:54.157Z"
 last_activity: 2026-09-04
 progress:
   total_phases: 10
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 9
-  completed_plans: 8
-  percent: 20
+  completed_plans: 9
+  percent: 30
 ---
 
 # Project State
@@ -61,6 +61,7 @@ Progress: [██░░░░░░░░] 20%
 | Phase 02 P04 | 25min | 3 tasks | 10 files |
 | Phase 02 P05 | 9min | 2 tasks | 2 files |
 | Phase 03 P01 | 35min | 3 tasks | 6 files |
+| Phase 03 P02 | 25min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -91,6 +92,8 @@ Relevant to current work:
 - [Phase 02]: [Phase 02]: mandatory ./gradlew runServer client-class-leak gate PASSED — SoulAltarRenderer never class-loads on the dedicated server; Phase 2 complete
 - [Phase 03]: AltarSoulContainer re-resolves the BE from level/pos per call (no caching) to stay correct across chunk/BE reloads on both sides
 - [Phase 03]: GUI texture generated via stdlib zlib/struct (PIL not installed) instead of installing a new package
+- [Phase ?]: Phase 3: ProfessionResolver.heldJobSite() chosen over acquirableJobSite() — identical for vanilla, matches vanilla ResetProfession semantics
+- [Phase ?]: Phase 3: useWithoutItem is the single reopen gate for D-02 and D-04 (fallthrough via PASS_TO_DEFAULT_BLOCK_INTERACTION) — no duplicated profession-gate logic
 
 ### Pending Todos
 
@@ -117,6 +120,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-09-04T14:21:45.472Z
+Last session: 2026-09-04T14:37:46.421Z
 Stopped at: Phase 3 UI-SPEC approved
 Resume file: None
