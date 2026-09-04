@@ -2,6 +2,7 @@ package com.cxmxrgo.secondshift.content.blockentity;
 
 import com.cxmxrgo.secondshift.menu.BindingAltarMenu;
 import com.cxmxrgo.secondshift.registry.ModBlockEntities;
+import com.cxmxrgo.secondshift.registry.ModItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -76,8 +77,24 @@ public class SoulAltarBlockEntity extends BlockEntity implements MenuProvider {
         return heldSoulBlock;
     }
 
+    /**
+     * CR-01: validated at the point where the stack enters persistent state — not only at the
+     * {@link com.cxmxrgo.secondshift.menu.SoulSlot} UI layer. Accepts {@code null}/empty or
+     * exactly a {@link ModItems#SOUL_BLOCK_ITEM} stack; anything else (e.g. an arbitrary item
+     * written via a non-click-routed {@code Container} write, such as the creative-mode
+     * set-slot packet) is silently rejected so the "always empty or exactly one Soul Block"
+     * invariant holds for every current and future caller of this method, not just
+     * {@code SoulAltarBlock#useItemOn}.
+     */
     public void setHeldSoulBlock(ItemStack stack) {
-        this.heldSoulBlock = stack == null ? ItemStack.EMPTY : stack;
+        if (stack == null || stack.isEmpty()) {
+            this.heldSoulBlock = ItemStack.EMPTY;
+            return;
+        }
+        if (!stack.is(ModItems.SOUL_BLOCK_ITEM.get())) {
+            return; // reject anything that isn't empty or a Soul Block
+        }
+        this.heldSoulBlock = stack;
     }
 
     @Override
