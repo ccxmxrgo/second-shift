@@ -9,9 +9,9 @@ Requirements for the first shippable version. Each maps to exactly one roadmap p
 
 ### Build & Feedback Loop
 
-- [ ] **BUILD-01**: Mod compiles against NeoForge 21.1.248 / Minecraft 1.21.1 (Java 21) via the Gradle wrapper; `./gradlew build` produces a loadable jar
-- [ ] **BUILD-02**: `./gradlew runClient` reaches the main menu with the mod loaded; `./gradlew runServer` starts clean
-- [ ] **BUILD-03**: A startup self-check aborts loading with a named list of any unbound DeferredRegister entry (guards the registration bug that killed the prior draft)
+- [x] **BUILD-01**: Mod compiles against NeoForge 21.1.248 / Minecraft 1.21.1 (Java 21) via the Gradle wrapper; `./gradlew build` produces a loadable jar
+- [x] **BUILD-02**: `./gradlew runClient` reaches the main menu with the mod loaded; `./gradlew runServer` starts clean
+- [x] **BUILD-03**: A startup self-check aborts loading with a named list of any unbound DeferredRegister entry (guards the registration bug that killed the prior draft)
 - [ ] **BUILD-04**: The built jar loads in the CurseForge "test" instance alongside owo-lib / accessories / wildcard without crashing
 - [ ] **BUILD-05**: Each build is deployed into the test instance's `mods/` folder (replacing the previous build) so the user can test in-game
 
@@ -95,7 +95,7 @@ Requirements for the first shippable version. Each maps to exactly one roadmap p
 - [ ] **POL-06**: A `ModConfigSpec` + config screen exposes at least: Soul Fragment drop count, restock interval, happiness thresholds, and each trait-immunity toggle
 - [ ] **POL-07**: HR flavour — per-tier job titles (e.g. Intern → Associate → Senior → Lead → Principal) surfaced in the employee name and/or altar GUI
 - [ ] **POL-08**: Every invalid state has a themed `Component.translatable` message: no job block, no Soul Block, unmapped job block, empty pool, altar with no valid quarters
-- [ ] **POL-09**: `pack.mcmeta` uses `pack_format` 48; datapack files use the singular 1.21 folder names (`recipe/`, `loot_table/`, `advancement/`)
+- [x] **POL-09**: `pack.mcmeta` uses `pack_format` 48; datapack files use the singular 1.21 folder names (`recipe/`, `loot_table/`, `advancement/`)
 
 ## v2 Requirements
 
@@ -140,12 +140,12 @@ Which phases cover which requirements. Populated during roadmap creation (2026-0
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BUILD-01 | Phase 1 | Pending |
-| BUILD-02 | Phase 1 | Pending |
-| BUILD-03 | Phase 1 | Pending |
+| BUILD-01 | Phase 1 | Complete |
+| BUILD-02 | Phase 1 | Complete |
+| BUILD-03 | Phase 1 | Complete |
 | BUILD-04 | Phase 1 | Pending |
 | BUILD-05 | Phase 1 | Pending |
-| POL-09 | Phase 1 | Pending |
+| POL-09 | Phase 1 | Complete |
 | ECON-01 | Phase 2 | Pending |
 | ECON-02 | Phase 2 | Pending |
 | ECON-03 | Phase 2 | Pending |
@@ -202,6 +202,7 @@ Which phases cover which requirements. Populated during roadmap creation (2026-0
 | POL-08 | Phase 10 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 60 total (the earlier "52" summary count was stale — the enumerated list above has always had 60)
 - Mapped to phases: 60
 - Unmapped: 0 ✓

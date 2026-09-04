@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Phase 1 planned (2 plans, verified)
-last_updated: "2026-09-04T02:10:00.000Z"
-last_activity: 2026-09-04 — Phase 1 planned — 2 plans in 2 waves, MVP/Walking Skeleton, SKELETON.md written; plan-checker 0 blockers, 8 warnings fixed in revision iteration 1
+status: executing
+stopped_at: Phase 1 context gathered
+last_updated: "2026-09-04T03:26:20.013Z"
+last_activity: 2026-09-04
 progress:
   total_phases: 10
   completed_phases: 0
   total_plans: 2
-  completed_plans: 0
+  completed_plans: 1
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-04)
 
 **Core value:** Harvest souls → bind a villager at the Soul Altar → hand-pick its profession and its trades, tier by tier. That loop must be reliable and feel good.
-**Current focus:** Phase 1 — Skeleton & Feedback Loop
+**Current focus:** Phase 01 — skeleton-feedback-loop
 
 ## Current Position
 
-Phase: 1 of 10 (Skeleton & Feedback Loop)
-Plan: 0 of 2 in current phase
+Phase: 01 (skeleton-feedback-loop) — EXECUTING
+Plan: 2 of 2
 Status: Ready to execute
-Last activity: 2026-09-04 — Phase 1 planned (2 plans, 2 waves) + plan-checker pass (0 blockers)
+Last activity: 2026-09-04
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -52,6 +52,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: -
 
 *Updated after each plan completion*
+| Phase 01 P01 | 55 min | 2 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -65,6 +66,9 @@ Relevant to current work:
 - Toolchain pinned: NeoForge 21.1.248 / ModDevGradle 2.0.146 / Gradle 9.2.1 wrapper / Parchment 2024.11.17, from the official 1.21.1 MDK.
 - Employees = `minecraft:villager` + `EmployeeData` attachment; behaviour lives in game-bus handlers guarded by `hasData(EMPLOYEE)`, never a subclass.
 - Happiness/upkeep system is IN scope but flagged "revisit after playtesting" (Phase 9).
+- [Phase 01]: Self-check throws directly from the FMLLoadCompleteEvent handler (not via enqueueWork) so an unbound register is a fatal hard abort, not a soft broken-mod state — enqueueWork swallows the exception; verified on runClient + runServer
+- [Phase 01]: runData is not a self-check surface on MDG 2.0.146 / NeoForge 21.1.248 (no FMLCommonSetupEvent / FMLLoadCompleteEvent); guardrail proven on runClient + runServer
+- [Phase 01]: MDG 2.0.146 writes dev run logs to run/logs/latest.log + run/logs/debug.log (not runs/<name>/logs/)
 
 ### Pending Todos
 
@@ -85,6 +89,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-09-04T01:25:41.424Z
+Last session: 2026-09-04T03:25:56.382Z
 Stopped at: Phase 1 context gathered
-Resume file: .planning/phases/01-skeleton-feedback-loop/01-CONTEXT.md
+Resume file: None
