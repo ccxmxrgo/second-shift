@@ -30,7 +30,7 @@ Requirements for the first shippable version. Each maps to exactly one roadmap p
 - [ ] **ALTAR-04**: Completing a bind consumes the Soul Block and the job-site block into the altar and spawns the employee
 - [ ] **ALTAR-05**: Each altar is bound to exactly one employee and persists that link across save/load
 - [ ] **ALTAR-06**: Destroying a bound altar consumes (does not drop) the Soul Block and job block, deals 1 damage to the breaking player only with no block or environment damage, and 0.5s later a cosmetic lightning strike (visual + thunder, no fire, no collateral damage) instakills the bound employee
-- [ ] **ALTAR-07**: An unbound altar breaks normally and drops itself
+- [x] **ALTAR-07**: An unbound altar breaks normally and drops itself
 
 ### Employee
 
@@ -150,7 +150,7 @@ Which phases cover which requirements. Populated during roadmap creation (2026-0
 | ECON-02 | Phase 2 | Complete |
 | ECON-03 | Phase 2 | Complete |
 | ALTAR-01 | Phase 2 | Complete |
-| ALTAR-07 | Phase 2 | Pending |
+| ALTAR-07 | Phase 2 | Complete |
 | POL-01 | Phase 2 | Complete |
 | POL-03 | Phase 2 | Complete |
 | POL-04 | Phase 2 | Complete |

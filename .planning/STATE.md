@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-stopped_at: Phase 2 context gathered
-last_updated: "2026-09-04T09:43:07.175Z"
+stopped_at: Completed 02-04-PLAN.md
+last_updated: "2026-09-04T09:55:51.768Z"
 last_activity: 2026-09-04
 progress:
   total_phases: 10
   completed_phases: 1
   total_plans: 7
-  completed_plans: 5
+  completed_plans: 6
   percent: 10
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-09-04)
 
 Phase: 02 (economy-items-soul-altar-block) — EXECUTING
 Next: Phase 2 (Economy Items & Soul Altar Block) — discuss or plan
-Plan: 4 of 5
+Plan: 5 of 5
 Last activity: 2026-09-04
 
 Progress: [█░░░░░░░░░] 10%
@@ -57,6 +57,7 @@ Progress: [█░░░░░░░░░] 10%
 | Phase 02 P01 | 41 min | 3 tasks | 14 files |
 | Phase 02 P02 | 12min | 2 tasks | 5 files |
 | Phase 02 P03 | 12min | 3 tasks | 10 files |
+| Phase 02 P04 | 25min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -80,6 +81,9 @@ Relevant to current work:
 - [Phase ?]: [Phase 02]: Villager Harvester instakill needs only LivingDamageEvent.Pre#setNewDamage(health+absorption+1) — Resistance V + absorption still one-shots, no setHealth(0)/die fallback (closes 02-RESEARCH Open Question 2)
 - [Phase ?]: [Phase 02]: DamageSource#getWeaponItem() exists on NeoForge 21.1.248 (delegates to directEntity main-hand item) — custom-weapon event gates key on it; no held-item fallback needed
 - [Phase ?]: [Phase 02]: Hand-written 1.21.1 datapack JSON proven end-to-end (recipes/advancements/loot/blockstate/models); recipe result is {id,count}, recipes stay gated with no advancement/recipes/*.json — granted only via advancement rewards.recipes
+- [Phase 02]: [Phase 02]: Soul Altar break (D-04) implemented as written — a charged altar drops NOTHING (not the Soul Block, not the altar block); one-line fallback flip marked in SoulAltarBlock#getDrops
+- [Phase 02]: [Phase 02]: 'Soul Mason' advancement uses minecraft:recipe_crafted (recipe_id secondshift:soul_block), not inventory_changed — matches D-15 step 3 'craft a Soul Block'
+- [Phase 02]: [Phase 02]: getDrops break-time suppression uses a transient BlockEntity flag (set in playerWillDestroy, read via LootContextParams.BLOCK_ENTITY) — never a Block-singleton field
 
 ### Pending Todos
 
@@ -100,6 +104,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-09-04T09:42:33.896Z
-Stopped at: Phase 2 context gathered
+Last session: 2026-09-04T09:55:15.148Z
+Stopped at: Completed 02-04-PLAN.md
 Resume file: None

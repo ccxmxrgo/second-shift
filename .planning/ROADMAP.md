@@ -65,7 +65,7 @@ in a jar the user can load in the CurseForge "test" instance and verify in-game.
 - [x] 02-01-PLAN.md — Wave 0 foundation: all 4 DeferredRegisters (items/blocks/BE type/creative tab) + content skeleton classes, delete debug_marker, one-block wiring, self-check extended to 4 registers + a new descriptionId/lang-key check, complete en_us.json, ECON-02 GameTest scaffold (RED)
 - [x] 02-02-PLAN.md — Slice: Harvester reaps villager souls — game-bus LivingDamageEvent.Pre instakill + LivingDropsEvent exactly-1-Fragment swap (turns the ECON-02 GameTests GREEN), Resistance-V spike, Harvester + Soul Fragment models/textures/foil
 - [x] 02-03-PLAN.md — Slice: soul economy crafting + discovery chain — Soul Block block assets + loot table, Harvester (shaped) + Soul Block ⇄ 4 Fragment (shapeless) recipes, hand-written advancement chain steps 1-2 gating the Harvester and Soul Block recipes (D-15/D-17)
-- [ ] 02-04-PLAN.md — Slice: Soul Altar block — useItemOn one-way socket + BE sync, D-04 break behaviour (empty drops self; charged drops nothing + half-heart + cosmetic lightning), altar model/blockstate/recipe + "Soul Mason" advancement (step 3)
+- [x] 02-04-PLAN.md — Slice: Soul Altar block — useItemOn one-way socket + BE sync, D-04 break behaviour (empty drops self; charged drops nothing + half-heart + cosmetic lightning), altar model/blockstate/recipe + "Soul Mason" advancement (step 3)
 - [ ] 02-05-PLAN.md — Slice: charged-altar render — client-only BlockEntityRenderer (embedded emissive Soul Block + wisp, no bob) registered from EntityRenderersEvent.RegisterRenderers, plus the phase's mandatory `./gradlew runServer` client-class-leak gate
 
 ### Phase 3: Menu & Screen Harness (HARD GATE)
@@ -210,7 +210,7 @@ Phases 6 and 8 are parallelizable with the 5 → 7 trade chain once Phase 4 land
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Skeleton & Feedback Loop | 2/2 | Complete    | 2026-09-04 |
-| 2. Economy Items & Soul Altar Block | 3/5 | In Progress|  |
+| 2. Economy Items & Soul Altar Block | 4/5 | In Progress|  |
 | 3. Menu & Screen Harness (HARD GATE) | 0/TBD | Not started | - |
 | 4. Employee Attachment & Spawn | 0/TBD | Not started | - |
 | 5. Profession Resolution & Trade Picker | 0/TBD | Not started | - |
