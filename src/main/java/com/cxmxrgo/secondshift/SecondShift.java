@@ -1,5 +1,8 @@
 package com.cxmxrgo.secondshift;
 
+import com.cxmxrgo.secondshift.registry.ModBlockEntities;
+import com.cxmxrgo.secondshift.registry.ModBlocks;
+import com.cxmxrgo.secondshift.registry.ModCreativeTab;
 import com.cxmxrgo.secondshift.registry.ModItems;
 import com.mojang.logging.LogUtils;
 import net.neoforged.bus.api.IEventBus;
@@ -32,6 +35,9 @@ public class SecondShift {
         // (D-08/D-10). Each new registry/Mod* class MUST be added here and to
         // ModRegistrySelfCheck.
         ModItems.ITEMS.register(modBus);
+        ModBlocks.BLOCKS.register(modBus);
+        ModBlockEntities.BLOCK_ENTITIES.register(modBus);
+        ModCreativeTab.TABS.register(modBus);
 
         modBus.addListener(this::commonSetup);
     }
@@ -42,7 +48,12 @@ public class SecondShift {
                     .map(holder -> holder.getId().toString())
                     .sorted()
                     .toList();
-            LOGGER.info("[SecondShift] common setup - {} item(s) registered: {}", ids.size(), ids);
+            LOGGER.info("[SecondShift] common setup - {} item(s), {} block(s), {} block-entity type(s), {} creative tab(s) registered: {}",
+                    ids.size(),
+                    ModBlocks.BLOCKS.getEntries().size(),
+                    ModBlockEntities.BLOCK_ENTITIES.getEntries().size(),
+                    ModCreativeTab.TABS.getEntries().size(),
+                    ids);
         });
     }
 }

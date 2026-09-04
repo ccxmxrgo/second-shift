@@ -1,1 +1,15 @@
-{}
+{
+  "item.secondshift.harvester": "Harvester",
+  "item.secondshift.soul_fragment": "Soul Fragment",
+  "block.secondshift.soul_block": "Soul Block",
+  "block.secondshift.soul_altar": "Soul Altar",
+
+  "itemGroup.secondshift.main": "Second Shift",
+
+  "advancement.secondshift.necromantic_apprentice.title": "Necromantic Apprentice",
+  "advancement.secondshift.necromantic_apprentice.description": "Hold an emerald and feel the payroll calling. Forge a Harvester — emeralds, bone, and soul soil — and go collect what the village owes you.",
+  "advancement.secondshift.first_harvest.title": "First Harvest",
+  "advancement.secondshift.first_harvest.description": "You reaped a villager and pocketed their Soul Fragment. Keep at it — four make something more solid.",
+  "advancement.secondshift.soul_mason.title": "Soul Mason",
+  "advancement.secondshift.soul_mason.description": "Four fragments, one Soul Block. Now build the Soul Altar and set a job-site block on top to open a position."
+}
