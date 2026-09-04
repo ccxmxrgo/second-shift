@@ -1,12 +1,12 @@
 ---
 phase: 01-skeleton-feedback-loop
-verified: 2026-09-04T05:00:00Z
-status: human_needed
-score: 8/9 must-haves verified (1 partially — deploy done, in-instance launch pending human)
+verified: 2026-09-04T04:00:00Z
+status: passed
+score: 9/9 must-haves verified
 overrides_applied: 0
 re_verification:
-  previous_status: none
-  note: initial verification
+  previous_status: human_needed
+  note: "both human_verification items resolved 2026-09-04 — see 01-HUMAN-UAT.md (status: resolved). UAT#1: instance latest.log shows Second Shift in the Mod List alongside owo/accessories/wildcard + common-setup line, no unbound entries. UAT#2: deployToTest fails with the 'close Minecraft' GradleException when the destination jar is locked; build/libs jar unchanged."
 human_verification:
   - test: "Launch the CurseForge \"test\" instance from the CurseForge app; wait for the main menu; open Mods."
     expected: "\"Second Shift\" is listed alongside owo-lib, accessories, and wildcard; the game reaches the main menu with no crash / no error screen; C:/Users/user/curseforge/minecraft/Instances/test/logs/latest.log contains \"[SecondShift] common setup\" and no \"Unbound registry entries\"."
@@ -19,9 +19,9 @@ human_verification:
 # Phase 1: Skeleton & Feedback Loop — Verification Report
 
 **Phase Goal:** A pinned NeoForge 1.21.1 skeleton that builds, launches on both sides, deploys itself into the test instance, and aborts loudly on any unbound registry entry.
-**Verified:** 2026-09-04T05:00:00Z
-**Status:** human_needed
-**Re-verification:** No — initial verification
+**Verified:** 2026-09-04T04:00:00Z
+**Status:** passed (re-verified — both human UAT items resolved, see 01-HUMAN-UAT.md)
+**Re-verification:** Yes — was `human_needed`, both in-app checks since confirmed
 
 > **Mode note:** ROADMAP marks this phase `mode: mvp`, but the phase goal is an infrastructure statement, not an "As a … I want … so that …" user story. Verification proceeded goal-backward against the ROADMAP Success Criteria (the explicit contract) rather than refusing on the user-story guard. No User Flow Coverage table is produced because there is no user story.
 

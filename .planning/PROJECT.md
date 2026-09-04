@@ -20,7 +20,7 @@ its trades at each level. If everything else is cut, this loop has to be reliabl
 
 <!-- Shipped and confirmed valuable. -->
 
-(None yet — ship to validate)
+- [x] Compiles against NeoForge 21.1.248 and loads in the CurseForge "test" instance without crashing — *Validated in Phase 1: Skeleton & Feedback Loop* (BUILD-01…05, POL-09). Also: `runClient`/`runServer` green, an unbound `DeferredRegister` now hard-aborts the launch with a named list, and `./gradlew deployToTest` deploys the jar into the instance on demand.
 
 ### Active
 
@@ -39,7 +39,6 @@ its trades at each level. If everything else is cut, this loop has to be reliabl
 - [ ] Happiness system: an employee needs quarters (3×3 + door) and a stocked food chest; Unhappy/OK/Happy tiers modulate emerald prices and restock speed, and sustained neglect makes the employee quit (drops its Soul Block, reverts to a wild villager)
 - [ ] Firing is only possible by destroying the altar — a player-only ½-heart blast (no block damage), then a cosmetic lightning strike instakills the bound employee; Soul Block and job block are lost
 - [ ] Trades restock on a mod-owned timer (vanilla POI restock never reaches an altar-bound employee)
-- [ ] Compiles against NeoForge 21.1.248 and loads in the CurseForge "test" instance without crashing
 
 Full requirement list: `.planning/REQUIREMENTS.md` (60 v1 requirements).
 
@@ -124,4 +123,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-04 after research + requirements definition*
+*Last updated: 2026-09-04 — Phase 1 (Skeleton & Feedback Loop) complete: pinned NeoForge build, launch-both-sides, self-aborting registry guardrail, deployToTest loop.*
