@@ -18,6 +18,7 @@ import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
 
 /**
@@ -35,10 +36,13 @@ import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
  * unconditionally lethal. The pre-mitigation incoming-damage hook is deliberately not
  * used — Resistance V can survive even {@code Float.MAX_VALUE} before mitigation.
  *
- * <p><b>D-10 fragment drop</b> — a separate {@link LivingDropsEvent} handler:
- * {@code getDrops().clear()} then add exactly one Fragment {@link ItemEntity}. Looting is
- * intentionally ignored (D-07). Non-Harvester kills never touch the drop collection, so
- * vanilla villager loot is unchanged.
+ * <p><b>D-10 fragment drop</b> — spawned from {@link LivingDeathEvent} (not
+ * {@link LivingDropsEvent}) so the guarantee survives {@code doMobLoot=false} and any mod
+ * that cancels/consumes {@code LivingDropsEvent}: exactly one Fragment {@link ItemEntity}
+ * added via {@code level.addFreshEntity(...)}. A separate {@link LivingDropsEvent} handler
+ * only calls {@code getDrops().clear()} to strip vanilla drops. Looting is intentionally
+ * ignored (D-07). Non-Harvester kills never touch either path, so vanilla villager loot is
+ * unchanged.
  *
  * <p><b>D-09 target scope</b> — {@code target instanceof net.minecraft.world.entity.npc.Villager}
  * exactly (includes babies; excludes the wandering trader, whose class does not extend
@@ -79,22 +83,30 @@ public final class HarvesterEvents {
         }
     }
 
+    /**
+     * D-08 / D-10 guaranteed Soul Fragment. Spawned from {@link LivingDeathEvent} rather
+     * than {@link LivingDropsEvent} so the guarantee is <b>not</b> gated by the
+     * {@code doMobLoot} game rule or {@code shouldDropLoot()} (both of which suppress the
+     * entire {@code LivingDropsEvent} pipeline). {@code onDrops} still runs, but only to
+     * strip vanilla drops. A cancelled death means no reap, so bail on {@code isCanceled()}.
+     */
     @SubscribeEvent
-    static void onDrops(LivingDropsEvent event) {
+    static void onDeath(LivingDeathEvent event) {
+        if (event.isCanceled()) {
+            return;
+        }
         LivingEntity target = event.getEntity();
         if (!isHarvesterKillOfVillager(target, event.getSource())) {
-            return; // non-Harvester kill: leave vanilla drops untouched (ECON-02)
+            return;
         }
 
-        // ECON-02: replace, don't append. Looting is intentionally ignored (D-07) —
-        // always exactly 1 Fragment.
-        event.getDrops().clear();
         Level level = target.level();
+        // ECON-02: always exactly 1 Fragment. Looting is intentionally ignored (D-07).
         ItemEntity fragment = new ItemEntity(level,
                 target.getX(), target.getY() + 0.5D, target.getZ(),
                 new ItemStack(ModItems.SOUL_FRAGMENT.get()));
         fragment.setDefaultPickUpDelay();
-        event.getDrops().add(fragment);
+        level.addFreshEntity(fragment);
 
         // D-10: harvest FX — all vanilla, server-broadcast. No custom SoundEvent/ParticleType.
         if (level instanceof ServerLevel serverLevel) {
@@ -115,6 +127,21 @@ public final class HarvesterEvents {
                         4, 0.1D, 0.2D, 0.1D, 0.0D);
             }
         }
+    }
+
+    /**
+     * D-10 drop scrub. The Fragment itself is spawned in {@link #onDeath}; this handler only
+     * strips any vanilla drops the villager would otherwise leave. Runs independently of
+     * {@link #onDeath} — with {@code doMobLoot=false} it simply never fires (nothing to
+     * scrub) and the Fragment still drops.
+     */
+    @SubscribeEvent
+    static void onDrops(LivingDropsEvent event) {
+        LivingEntity target = event.getEntity();
+        if (!isHarvesterKillOfVillager(target, event.getSource())) {
+            return; // non-Harvester kill: leave vanilla drops untouched (ECON-02)
+        }
+        event.getDrops().clear();
     }
 
     /**
