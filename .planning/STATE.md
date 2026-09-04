@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Executing Phase 02
+status: Ready to execute
 stopped_at: Phase 2 context gathered
-last_updated: "2026-09-04T08:42:47.954Z"
-last_activity: 2026-09-04 -- Phase 02 execution started
+last_updated: "2026-09-04T09:26:23.703Z"
+last_activity: 2026-09-04
 progress:
   total_phases: 10
   completed_phases: 1
   total_plans: 7
-  completed_plans: 2
+  completed_plans: 3
   percent: 10
 ---
 
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-09-04)
 
 Phase: 02 (economy-items-soul-altar-block) — EXECUTING
 Next: Phase 2 (Economy Items & Soul Altar Block) — discuss or plan
-Plan: 1 of 5
-Last activity: 2026-09-04 -- Phase 02 execution started
+Plan: 2 of 5
+Last activity: 2026-09-04
 
 Progress: [█░░░░░░░░░] 10%
 
@@ -54,6 +54,7 @@ Progress: [█░░░░░░░░░] 10%
 *Updated after each plan completion*
 | Phase 01 P01 | 55 min | 2 tasks | 13 files |
 | Phase 01 P02 | 8 min | 2 tasks | 5 files |
+| Phase 02 P01 | 41 min | 3 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,8 @@ Relevant to current work:
 - [Phase 01]: MDG 2.0.146 writes dev run logs to run/logs/latest.log + run/logs/debug.log (not runs/<name>/logs/)
 - [Phase 01]: D-12 resolved YES: FML scans run/mods/ (FMLPaths MODSDIR) — a jar dropped there loads with deps enforced; later phases can use it for dev-parity mods
 - [Phase 01]: deployToTest is config-cache-safe (providers captured at config time, doLast uses Files+File not project) and absent from the build task graph
+- [Phase ?]: Phase 2 lang-key self-check reads the mod jar's own en_us.json off the classpath (not net.minecraft.locale.Language) so it runs identically on client and dedicated server
+- [Phase ?]: 1.21.1 has no Item.Properties#enchantable / DataComponents.ENCHANTABLE (both 1.21.2+); durability items are table-enchantable via Item#isEnchantable, override getEnchantmentValue for enchant quality
 
 ### Pending Todos
 
@@ -92,6 +95,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-09-04T04:32:52.778Z
+Last session: 2026-09-04T09:26:17.783Z
 Stopped at: Phase 2 context gathered
-Resume file: .planning/phases/02-economy-items-soul-altar-block/02-CONTEXT.md
+Resume file: None

@@ -18,13 +18,13 @@ Requirements for the first shippable version. Each maps to exactly one roadmap p
 ### Economy
 
 - [ ] **ECON-01**: The Harvester is a craftable tool/weapon
-- [ ] **ECON-02**: Killing any villager with the Harvester drops exactly 1 Soul Fragment, guaranteed; no other vanilla drops are changed
+- [x] **ECON-02**: Killing any villager with the Harvester drops exactly 1 Soul Fragment, guaranteed; no other vanilla drops are changed
 - [ ] **ECON-03**: 4 Soul Fragments craft into 1 Soul Block (vanilla shapeless recipe)
 - [ ] **ECON-04**: Killing your own employee with the Harvester yields 1 Soul Fragment only (no Soul Block, no bonus)
 
 ### Altar & Binding
 
-- [ ] **ALTAR-01**: The Soul Altar is a craftable block backed by a block entity
+- [x] **ALTAR-01**: The Soul Altar is a craftable block backed by a block entity
 - [ ] **ALTAR-02**: Placing a vanilla job-site block on top of the altar sets the target profession for binding
 - [ ] **ALTAR-03**: Inserting a Soul Block into an altar that has a job block on top opens the binding GUI
 - [ ] **ALTAR-04**: Completing a bind consumes the Soul Block and the job-site block into the altar and spawns the employee
@@ -87,9 +87,9 @@ Requirements for the first shippable version. Each maps to exactly one roadmap p
 
 ### Polish
 
-- [ ] **POL-01**: A creative mode tab contains every mod item and block
+- [x] **POL-01**: A creative mode tab contains every mod item and block
 - [ ] **POL-02**: Complete `en_us.json` covering every item, block, GUI title, button, tooltip, chat message, config entry, and advancement
-- [ ] **POL-03**: Every item and block has a model and texture (placeholder quality acceptable; missing is not)
+- [x] **POL-03**: Every item and block has a model and texture (placeholder quality acceptable; missing is not)
 - [ ] **POL-04**: Crafting recipes use vanilla recipe types (appear in JEI/EMI automatically) and emit recipe-unlock advancements
 - [ ] **POL-05**: Harvest, bind, and promotion each have sound + particle feedback
 - [ ] **POL-06**: A `ModConfigSpec` + config screen exposes at least: Soul Fragment drop count, restock interval, happiness thresholds, and each trait-immunity toggle
@@ -147,12 +147,12 @@ Which phases cover which requirements. Populated during roadmap creation (2026-0
 | BUILD-05 | Phase 1 | Complete |
 | POL-09 | Phase 1 | Complete |
 | ECON-01 | Phase 2 | Pending |
-| ECON-02 | Phase 2 | Pending |
+| ECON-02 | Phase 2 | Complete |
 | ECON-03 | Phase 2 | Pending |
-| ALTAR-01 | Phase 2 | Pending |
+| ALTAR-01 | Phase 2 | Complete |
 | ALTAR-07 | Phase 2 | Pending |
-| POL-01 | Phase 2 | Pending |
-| POL-03 | Phase 2 | Pending |
+| POL-01 | Phase 2 | Complete |
+| POL-03 | Phase 2 | Complete |
 | POL-04 | Phase 2 | Pending |
 | GUI-01 | Phase 3 | Pending |
 | ALTAR-03 | Phase 3 | Pending |
