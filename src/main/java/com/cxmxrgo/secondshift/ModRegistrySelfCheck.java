@@ -65,7 +65,8 @@ public final class ModRegistrySelfCheck {
             "advancement.secondshift.first_harvest.title",
             "advancement.secondshift.first_harvest.description",
             "advancement.secondshift.soul_mason.title",
-            "advancement.secondshift.soul_mason.description");
+            "advancement.secondshift.soul_mason.description",
+            "container.secondshift.binding_altar");
 
     private ModRegistrySelfCheck() {}
 
