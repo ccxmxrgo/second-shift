@@ -1,8 +1,8 @@
 package com.cxmxrgo.secondshift.menu;
 
+import com.cxmxrgo.secondshift.content.blockentity.SoulAltarBlockEntity;
 import com.cxmxrgo.secondshift.registry.ModBlocks;
 import com.cxmxrgo.secondshift.registry.ModMenus;
-import com.cxmxrgo.secondshift.trade.ProfessionResolver;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -75,7 +75,7 @@ public class BindingAltarMenu extends AbstractContainerMenu {
                 if (!level.getBlockState(pos).is(ModBlocks.SOUL_ALTAR.get())) {
                     return "message.secondshift.altar.closed.altar_gone";
                 }
-                if (ProfessionResolver.fromAbove(level, pos).isEmpty()) {
+                if (level.getBlockEntity(pos) instanceof SoulAltarBlockEntity be && be.isJobItemEmpty()) {
                     return "message.secondshift.altar.closed.job_gone";
                 }
                 return "message.secondshift.altar.closed.too_far";
