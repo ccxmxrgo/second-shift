@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to plan
-stopped_at: Phase 5 UI-SPEC approved
-last_updated: "2026-09-05T00:37:45.638Z"
+status: Ready to execute
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-09-05T01:22:17.805Z"
 last_activity: 2026-09-05
 progress:
   total_phases: 10
   completed_phases: 4
-  total_plans: 13
-  completed_plans: 13
+  total_plans: 20
+  completed_plans: 14
   percent: 40
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-04)
 
 **Core value:** Harvest souls → bind a villager at the Soul Altar → hand-pick its profession and its trades, tier by tier. That loop must be reliable and feel good.
-**Current focus:** Phase 04 — employee-attachment-spawn
+**Current focus:** Phase 05 — profession-resolution-trade-picker
 
 ## Current Position
 
-Phase: 5
+Phase: 05 (profession-resolution-trade-picker) — EXECUTING
 Next: Phase 4 (Employee Attachment & Spawn) — discuss or plan
-Plan: Not started
+Plan: 2 of 7
 Last activity: 2026-09-05
 
 Progress: [███░░░░░░░] 30%
@@ -66,6 +66,7 @@ Progress: [███░░░░░░░] 30%
 | Phase 04 P01 | 25min | 3 tasks | 5 files |
 | Phase 04 P02 | 5min | 2 tasks | 3 files |
 | Phase 04 P03 | 20min | 3 tasks | 6 files |
+| Phase 05 P01 | 35min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -103,6 +104,8 @@ Relevant to current work:
 - [Phase 04]: ClientEmployeeSyncDebug is a standalone Dist.CLIENT class (not folded into ClientModBusEvents) because EntityJoinLevelEvent is a game-bus event
 - [Phase 04]: EmployeeManager.bind + EmployeeGameTests: spawn ordering (profession -> xp -> offers -> name -> attachment -> addFreshEntity) is the canonical shape every later re-bind/respawn path must match — Non-negotiable per RESEARCH.md Pattern 2 (setVillagerData nulls offers on profession change)
 - [Phase 04]: ServerPayloadHandler made public (class + method) so SecondShift.java (root package) can take a cross-package method reference for RegisterPayloadHandlersEvent registration — Compile-correctness necessity, not a behavioral change; controller-role shape (final class, private ctor) preserved
+- [Phase ?]: SoundEvents.ITEM_FRAME_ADD_ITEM is a plain SoundEvent (not a Holder) in this mapped API surface — call directly, no .get()/.value()
+- [Phase ?]: GameTest coverage for an already-bound altar sets up state via direct BE setters, not two real socket interactions — completing both sockets via useItemOn triggers a real openMenu packet the GameTest mock player cannot receive
 
 ### Pending Todos
 
@@ -131,6 +134,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-09-05T00:37:45.632Z
-Stopped at: Phase 5 UI-SPEC approved
-Resume file: .planning/phases/05-profession-resolution-trade-picker/05-UI-SPEC.md
+Last session: 2026-09-05T01:22:17.799Z
+Stopped at: Completed 05-01-PLAN.md
+Resume file: None
