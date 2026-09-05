@@ -6,7 +6,7 @@ import com.cxmxrgo.secondshift.registry.ModBlocks;
 import com.cxmxrgo.secondshift.registry.ModCreativeTab;
 import com.cxmxrgo.secondshift.registry.ModItems;
 import com.cxmxrgo.secondshift.registry.ModMenus;
-import com.cxmxrgo.secondshift.network.BindEmployeePayload;
+import com.cxmxrgo.secondshift.network.SelectTradesPayload;
 import com.cxmxrgo.secondshift.network.ServerPayloadHandler;
 import com.mojang.logging.LogUtils;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -54,8 +54,8 @@ public class SecondShift {
 
     private void registerPayloads(RegisterPayloadHandlersEvent event) {
         PayloadRegistrar registrar = event.registrar("1");
-        registrar.playToServer(BindEmployeePayload.TYPE, BindEmployeePayload.STREAM_CODEC,
-                ServerPayloadHandler::handleBindEmployee);
+        registrar.playToServer(SelectTradesPayload.TYPE, SelectTradesPayload.STREAM_CODEC,
+                ServerPayloadHandler::handleSelectTrades);
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {

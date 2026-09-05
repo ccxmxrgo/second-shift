@@ -2,7 +2,7 @@ package com.cxmxrgo.secondshift.client.screen;
 
 import com.cxmxrgo.secondshift.SecondShift;
 import com.cxmxrgo.secondshift.menu.BindingAltarMenu;
-import com.cxmxrgo.secondshift.network.BindEmployeePayload;
+import com.cxmxrgo.secondshift.network.SelectTradesPayload;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -22,10 +22,12 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * ({@code menu/}, {@code content/}). It is constructed only from
  * {@code ClientModBusEvents.onRegisterScreens} via {@code RegisterMenuScreensEvent}.
  *
- * <p><b>Plan 04-03:</b> the "Confirm Hire" button below is deliberately throwaway UI (D-01) — no
- * name-entry field, no trade preview — superseded by Phase 5's real trade picker. The payload it
- * sends ({@link BindEmployeePayload}) and the server-side handler it exercises are NOT throwaway;
- * this button is only the temporary trigger for permanent plumbing.
+ * <p><b>Plan 05-05:</b> the "Confirm Hire" button below still derives an interim placeholder
+ * selection (the first up-to-2 candidate offers, empty name string) — this selection logic is
+ * deliberately throwaway, superseded by Plan 05-06's real name-field + click-to-toggle candidate
+ * rows. The {@link SelectTradesPayload} it sends and the server-side handler it exercises are NOT
+ * throwaway; this button is only the temporary trigger for permanent plumbing (mirrors Phase 4's
+ * exact "throwaway trigger now, real UI next plan" pattern).
  */
 public class BindingAltarScreen extends AbstractContainerScreen<BindingAltarMenu> {
 
@@ -43,7 +45,15 @@ public class BindingAltarScreen extends AbstractContainerScreen<BindingAltarMenu
         super.init();
         this.addRenderableWidget(Button.builder(
                         Component.translatable("gui.secondshift.binding_altar.confirm"),
-                        btn -> PacketDistributor.sendToServer(new BindEmployeePayload()))
+                        btn -> {
+                            // Interim placeholder selection (Plan 05-06 replaces this with the real
+                            // name-field + click-to-toggle candidate rows). Empty name string
+                            // triggers the server-side blank-fallback to the pre-filled default
+                            // (D-03).
+                            int n = Math.min(2, this.getMenu().getCandidateOffers().size());
+                            int[] indices = java.util.stream.IntStream.range(0, n).toArray();
+                            PacketDistributor.sendToServer(new SelectTradesPayload(indices, ""));
+                        })
                 .bounds(leftPos + 8, topPos + 60, 80, 20)
                 .build());
     }
