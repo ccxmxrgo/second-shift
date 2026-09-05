@@ -1,16 +1,25 @@
 package com.cxmxrgo.secondshift.menu;
 
 import com.cxmxrgo.secondshift.content.blockentity.SoulAltarBlockEntity;
+import com.cxmxrgo.secondshift.employee.EmployeeNames;
 import com.cxmxrgo.secondshift.registry.ModBlocks;
 import com.cxmxrgo.secondshift.registry.ModMenus;
+import com.cxmxrgo.secondshift.trade.ProfessionResolver;
+import com.cxmxrgo.secondshift.trade.TradePoolCache;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.trading.MerchantOffer;
+
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Binding Altar container menu (D-05 / D-06 / D-16 / GUI-01) — the load-bearing half of the HARD
@@ -60,6 +69,65 @@ public class BindingAltarMenu extends AbstractContainerMenu {
         for (int col = 0; col < 9; col++) {
             this.addSlot(new net.minecraft.world.inventory.Slot(playerInv, col, 8 + col * 18, 142));
         }
+
+        // Plan 05-04 (PICK-02/04/07/08): one-time tier-1 candidate + default-name materialization.
+        // Only the server-side branch ever rolls or reads real candidate data (threat T-05-06) —
+        // the client-side menu construction never sees the BE at all in this code path.
+        if (!playerInv.player.level().isClientSide()
+                && playerInv.player.level().getBlockEntity(pos) instanceof SoulAltarBlockEntity be
+                && !be.isEmployeeBound() && be.bothSocketsFilled() && !be.candidatesRolled()) {
+            Optional<VillagerProfession> profession = ProfessionResolver.fromItem(be.getHeldJobItem());
+            if (profession.isPresent() && playerInv.player.level() instanceof ServerLevel serverLevel) {
+                be.setCandidateOffers(TradePoolCache.rollTier1Candidates(serverLevel, pos, profession.get()));
+                be.setDefaultName(EmployeeNames.pickRandom(serverLevel.getRandom()));
+            } else {
+                // Defensive — should be unreachable given bothSocketsFilled implies a valid job
+                // item was accepted at socket time. Still flips candidatesRolled() true so this
+                // branch does not re-attempt on every reopen.
+                be.setCandidateOffers(List.of());
+            }
+        }
+    }
+
+    /**
+     * Plan 05-04 (GUI-03): re-resolves the block entity fresh on every call, mirroring {@code
+     * AltarSoulContainer}'s "no caching" pattern — never caches the BE reference across calls.
+     */
+    private SoulAltarBlockEntity resolveBlockEntity() {
+        return this.access.evaluate((level, pos) ->
+                level.getBlockEntity(pos) instanceof SoulAltarBlockEntity be ? be : null).orElse(null);
+    }
+
+    /** The materialized tier-1 candidate offers, or an empty list if not yet rolled/unresolvable. */
+    public List<MerchantOffer> getCandidateOffers() {
+        SoulAltarBlockEntity be = resolveBlockEntity();
+        return be == null ? List.of() : be.getCandidateOffers();
+    }
+
+    /** {@code true} when the tier-1 pool has 2 or fewer candidates (auto-lock, still shows all). */
+    public boolean isAutoLocked() {
+        return getCandidateOffers().size() <= 2;
+    }
+
+    /** The profession resolved from the altar's socketed job item, or empty if unresolvable. */
+    public Optional<VillagerProfession> getProfession() {
+        SoulAltarBlockEntity be = resolveBlockEntity();
+        return be == null ? Optional.empty() : ProfessionResolver.fromItem(be.getHeldJobItem());
+    }
+
+    /** Always 1 this phase; PROG-04's tier advancement is Phase 7. */
+    public int getTier() {
+        return 1;
+    }
+
+    /** The generated default employee name, or {@code ""} if unresolvable/not yet rolled. */
+    public String getDefaultName() {
+        SoulAltarBlockEntity be = resolveBlockEntity();
+        if (be == null) {
+            return "";
+        }
+        String name = be.getDefaultName();
+        return name == null ? "" : name;
     }
 
     /**
