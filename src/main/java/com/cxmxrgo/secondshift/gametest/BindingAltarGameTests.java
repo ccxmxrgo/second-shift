@@ -15,10 +15,14 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.trading.ItemCost;
+import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -194,6 +198,119 @@ public final class BindingAltarGameTests {
                 "reloaded BE must still hold the socketed job item after a save/load round trip");
         helper.assertTrue(reloaded.isEmployeeBound(),
                 "reloaded BE must still be employee-bound after a save/load round trip");
+        helper.succeed();
+    }
+
+    /**
+     * Plan 05-04 (PICK-02/04/07/08, GUI-03): sets up a fully-socketed, unbound altar directly on
+     * the BE (both sockets filled, not yet employee-bound) — avoids driving the real two-socket
+     * interaction sequence, which triggers a real {@code openMenu} packet the GameTest mock player
+     * cannot receive (same rationale as {@link #binding_altar_occupied_altar_refuses_to_open}).
+     * Uses {@code Blocks.LECTERN} (Librarian job site) since Librarian has a real, >2-sized tier-1
+     * pool.
+     */
+    private static SoulAltarBlockEntity setupFullySocketedAltar(GameTestHelper helper, BlockPos absAltarPos) {
+        SoulAltarBlockEntity be = (SoulAltarBlockEntity) helper.getLevel().getBlockEntity(absAltarPos);
+        be.setHeldJobItem(new ItemStack(Blocks.LECTERN.asItem()));
+        be.setHeldSoulBlock(new ItemStack(ModItems.SOUL_BLOCK_ITEM.get()));
+        be.setChanged();
+        return be;
+    }
+
+    private static boolean offersEqual(MerchantOffer a, MerchantOffer b) {
+        return ItemStack.matches(a.getResult(), b.getResult())
+                && ItemStack.matches(a.getCostA(), b.getCostA())
+                && ItemStack.matches(a.getCostB(), b.getCostB())
+                && a.getMaxUses() == b.getMaxUses()
+                && a.getXp() == b.getXp();
+    }
+
+    @GameTest(template = "empty")
+    public static void binding_altar_menu_construction_rolls_candidates_and_default_name(GameTestHelper helper) {
+        helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());
+        BlockPos absAltarPos = helper.absolutePos(ALTAR_POS);
+        SoulAltarBlockEntity be = setupFullySocketedAltar(helper, absAltarPos);
+
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        player.teleportTo(absAltarPos.getX() + 0.5D, absAltarPos.getY(), absAltarPos.getZ() + 0.5D);
+
+        new BindingAltarMenu(0, player.getInventory(),
+                ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
+
+        helper.assertTrue(!be.getCandidateOffers().isEmpty(),
+                "constructing the menu against a fully-socketed altar must roll a non-empty tier-1 pool");
+        helper.assertTrue(be.getDefaultName() != null && !be.getDefaultName().isBlank(),
+                "constructing the menu must also roll a non-blank default name");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void binding_altar_menu_reconstruction_does_not_reroll(GameTestHelper helper) {
+        helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());
+        BlockPos absAltarPos = helper.absolutePos(ALTAR_POS);
+        SoulAltarBlockEntity be = setupFullySocketedAltar(helper, absAltarPos);
+
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        player.teleportTo(absAltarPos.getX() + 0.5D, absAltarPos.getY(), absAltarPos.getZ() + 0.5D);
+
+        new BindingAltarMenu(0, player.getInventory(),
+                ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
+        List<MerchantOffer> firstRoll = List.copyOf(be.getCandidateOffers());
+
+        // Second construction against the same BE/pos must not re-roll.
+        new BindingAltarMenu(1, player.getInventory(),
+                ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
+        List<MerchantOffer> secondRoll = be.getCandidateOffers();
+
+        helper.assertTrue(firstRoll.size() == secondRoll.size(),
+                "reopening the menu must not change the stored candidate list size");
+        for (int i = 0; i < firstRoll.size(); i++) {
+            helper.assertTrue(offersEqual(firstRoll.get(i), secondRoll.get(i)),
+                    "reopening the menu must not change candidate list contents at index " + i);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void binding_altar_isautolocked_reflects_candidate_count(GameTestHelper helper) {
+        helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());
+        BlockPos absAltarPos = helper.absolutePos(ALTAR_POS);
+        SoulAltarBlockEntity be = setupFullySocketedAltar(helper, absAltarPos);
+
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        player.teleportTo(absAltarPos.getX() + 0.5D, absAltarPos.getY(), absAltarPos.getZ() + 0.5D);
+
+        BindingAltarMenu menu = new BindingAltarMenu(0, player.getInventory(),
+                ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
+
+        MerchantOffer offerA = new MerchantOffer(new ItemCost(Items.EMERALD), new ItemStack(Items.BREAD), 1, 1, 0.05F);
+        MerchantOffer offerB = new MerchantOffer(new ItemCost(Items.EMERALD), new ItemStack(Items.PAPER), 1, 1, 0.05F);
+        MerchantOffer offerC = new MerchantOffer(new ItemCost(Items.EMERALD), new ItemStack(Items.BOOK), 1, 1, 0.05F);
+
+        be.setCandidateOffers(List.of(offerA, offerB));
+        helper.assertTrue(menu.isAutoLocked(), "a 2-candidate pool must be reported as auto-locked");
+
+        be.setCandidateOffers(List.of(offerA, offerB, offerC));
+        helper.assertTrue(!menu.isAutoLocked(), "a 3-candidate pool must not be reported as auto-locked");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void binding_altar_getprofession_and_gettier(GameTestHelper helper) {
+        helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());
+        BlockPos absAltarPos = helper.absolutePos(ALTAR_POS);
+        setupFullySocketedAltar(helper, absAltarPos);
+
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        player.teleportTo(absAltarPos.getX() + 0.5D, absAltarPos.getY(), absAltarPos.getZ() + 0.5D);
+
+        BindingAltarMenu menu = new BindingAltarMenu(0, player.getInventory(),
+                ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
+
+        helper.assertTrue(menu.getProfession().equals(Optional.of(VillagerProfession.LIBRARIAN)),
+                "menu.getProfession() must resolve the Librarian profession from the socketed Lectern, got "
+                        + menu.getProfession());
+        helper.assertTrue(menu.getTier() == 1, "menu.getTier() must always be 1 this phase");
         helper.succeed();
     }
 }
