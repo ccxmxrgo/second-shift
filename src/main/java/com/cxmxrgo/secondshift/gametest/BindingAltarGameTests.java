@@ -339,4 +339,48 @@ public final class BindingAltarGameTests {
         helper.assertTrue(menu.getTier() == 1, "menu.getTier() must always be 1 this phase");
         helper.succeed();
     }
+
+    /**
+     * Round-3 checkpoint fix (Phase 5 checkpoint debug, "Nothing to Offer" for a Librarian bind):
+     * {@code candidatesRolled()} treats any non-null {@code candidateOffers} — including an empty
+     * {@code List.of()} — as "already rolled". Simulates a BE instance whose first-ever roll (for
+     * whatever reason) landed on an empty list, then clears and re-fills a socket exactly like a
+     * real unsocket/re-socket would, and confirms the altar rolls a genuinely fresh, non-stale,
+     * non-empty pool afterward instead of staying stuck showing nothing forever.
+     */
+    @GameTest(template = "empty")
+    public static void soul_altar_reset_candidates_on_socket_empty_allows_fresh_reroll(GameTestHelper helper) {
+        helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());
+        BlockPos absAltarPos = helper.absolutePos(ALTAR_POS);
+        SoulAltarBlockEntity be = setupFullySocketedAltar(helper, absAltarPos);
+
+        // Simulate a stale, permanently-stuck empty roll from an earlier session on this same BE.
+        be.setCandidateOffers(List.of());
+        be.setDefaultName("StaleName");
+        helper.assertTrue(be.candidatesRolled(), "an empty list must still count as rolled (pre-fix behavior)");
+
+        // Clear both sockets exactly like a real unsocket path would.
+        be.setHeldJobItem(ItemStack.EMPTY);
+        be.setHeldSoulBlock(ItemStack.EMPTY);
+        helper.assertTrue(!be.candidatesRolled(),
+                "clearing a socket must reset candidatesRolled() so a re-socketing always re-rolls");
+
+        // Re-fill both sockets with a real Librarian job item and construct a fresh menu.
+        be.setHeldJobItem(new ItemStack(Blocks.LECTERN.asItem()));
+        be.setHeldSoulBlock(new ItemStack(ModItems.SOUL_BLOCK_ITEM.get()));
+        be.setChanged();
+
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        player.teleportTo(absAltarPos.getX() + 0.5D, absAltarPos.getY(), absAltarPos.getZ() + 0.5D);
+
+        new BindingAltarMenu(0, player.getInventory(),
+                ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
+
+        helper.assertTrue(!be.getCandidateOffers().isEmpty(),
+                "re-socketing after a socket-empty transition must roll a fresh, non-empty tier-1 pool, "
+                        + "not reuse the stale empty roll");
+        helper.assertTrue(be.getDefaultName() != null && !"StaleName".equals(be.getDefaultName()),
+                "re-socketing must also roll a fresh default name, not reuse the stale one");
+        helper.succeed();
+    }
 }

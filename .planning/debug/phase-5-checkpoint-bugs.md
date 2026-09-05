@@ -1,9 +1,48 @@
 ---
-status: awaiting_human_verify
+status: investigating
 trigger: "Phase 5 (profession-resolution-trade-picker) manual verification checkpoint (Plan 05-07) found 4 real bugs during real-client testing on 'Second Shift' (Minecraft 1.21.1 NeoForge 21.1.248 mod)."
 created: 2026-09-05
 updated: 2026-09-05
 ---
+
+## Human Re-Verification (2026-09-05, round 3 result)
+
+User confirmed round 3's UI fix WORKS — screenshot shows the inventory grid, Confirm button, and
+candidate-list region cleanly separated with no overlap.
+
+Two NEW issues found from the screenshot:
+
+1. **BLOCKING — Empty trade pool.** Screen shows "Nothing to Offer / This position has nothing to
+   offer yet. No trades are on file for this role." for a Librarian ("Bibliotecário" — client is in
+   pt_br locale) bind. This should never happen for Librarian — it has a large real tier-1 pool
+   (TradePoolCacheGameTests specifically picked Librarian because of this). Leading hypothesis:
+   `SoulAltarBlockEntity`'s transient `candidateOffers`/`defaultName` fields are rolled EXACTLY ONCE
+   per BE instance, gated by `!be.candidatesRolled()` in `BindingAltarMenu`'s constructor (by
+   design — "roll once per bind session, never re-roll on screen reopen", per 05-RESEARCH.md
+   Finding 1). But NOTHING ever resets `candidateOffers`/`defaultName` back to null when the
+   sockets are later emptied (e.g. after a rejected/failed confirm attempt during earlier rounds of
+   this same debugging session, or any other socket-clearing path) — `candidatesRolled()` returns
+   `candidateOffers != null`, and an EMPTY list still counts as "rolled" (`candidateOffers != null`
+   is true even for `List.of()`). This specific altar block entity was very likely used across
+   multiple failed test attempts in earlier rounds of this same session; if its very first roll
+   ever happened to produce/store an empty list (e.g. during an earlier round where a bug was still
+   present), it is now permanently stuck showing empty for that BE instance, even though
+   `TradePoolCache.rollTier1Candidates` and `ProfessionResolver.fromItem` are both independently
+   confirmed working via GameTest. Fix: reset `candidateOffers`/`defaultName` back to null in
+   `SoulAltarBlockEntity` whenever a socket transitions to empty (in `setHeldSoulBlock`/
+   `setHeldJobItem` when the new stack is empty), so a fresh re-socketing always re-rolls instead of
+   reusing a stale/empty result from a prior session on the same BE instance. Verify with a GameTest
+   that rolls once, clears a socket, re-fills it, and confirms a fresh (non-stale) roll happens.
+
+2. **Minor/cosmetic — heading overlaps "Happiness: N/A".** The profession-name heading
+   (`BindingAltarScreen.renderLabels`, scaled 1.5x, drawn at local x=8) is dynamically wide based on
+   the translated profession name's string length/font metrics. "Happiness: N/A" is placed at a
+   fixed x=120, y=6 — for a long profession name (worse in non-English locales, e.g. "Bibliotecário"
+   vs "Librarian"), the heading visually runs into the Happiness text, as seen in the screenshot.
+   Fix: either measure the heading's actual rendered width at 1.5x scale and place "Happiness: N/A"
+   dynamically after it with a margin, or move "Happiness: N/A" to a row below the heading instead
+   of sharing the same header row (simpler, avoids width-measurement complexity, and this field is
+   a static placeholder until Phase 9 anyway — not worth over-engineering).
 
 ## Symptoms
 
@@ -31,6 +70,72 @@ updated: 2026-09-05
 ## Current Focus
 
 status: awaiting_human_verify
+
+reasoning_checkpoint (round-3 addendum, Empty trade pool / "Nothing to Offer"):
+  hypothesis: "SoulAltarBlockEntity's candidatesRolled() treats ANY non-null candidateOffers
+    (including an empty List.of()) as 'already rolled, never re-roll' by design, and nothing ever
+    reset candidateOffers/defaultName back to null when a socket emptied — so a BE instance whose
+    very first roll ever happened to land on an empty list is permanently stuck showing 'Nothing to
+    Offer', even for a job item (Lectern/Librarian) whose real trade pool is independently proven
+    non-empty."
+  confirming_evidence:
+    - "Direct read of SoulAltarBlock.useItemOn: the ONLY path that ever calls
+      be.setHeldJobItem(nonEmptyStack) is gated on ProfessionResolver.fromItem(stack).isPresent()
+      — a resolvable job item is guaranteed at the moment of socketing, so
+      BindingAltarMenu's 'defensive/should be unreachable' empty-list branch (profession.isEmpty())
+      is indeed unreachable via the real interaction path, confirming the empty roll did not come
+      from an invalid job item."
+    - "TradePoolCache.rollTier1Candidates can only return an empty list if the throwaway villager
+      fails to construct, the profession has no tier-1 array, or every listing's getOffer() returns
+      null — none apply to Librarian, whose tier-1 pool is independently proven non-empty by
+      TradePoolCacheGameTests and by this session's own binding_altar_menu_construction_rolls_
+      candidates_and_default_name test."
+    - "candidatesRolled() source: `return candidateOffers != null;` — confirmed via direct read,
+      List.of() satisfies this exactly like a real roll would."
+  falsification_test: "If a BRAND NEW altar (never used in an earlier round of this debug session)
+    reproduced the same 'Nothing to Offer' for a fresh Librarian bind, this hypothesis would be
+    refuted (would point back at TradePoolCache/ProfessionResolver instead, already independently
+    disproven). Reasoned from source (no live client available in this environment): a fresh BE's
+    candidateOffers starts null, so BindingAltarMenu's constructor branch always executes
+    TradePoolCache.rollTier1Candidates for it — which is proven non-empty for Librarian — so a
+    brand-new altar would NOT reproduce this; it is specific to a BE instance reused/stuck from an
+    earlier round of this same debugging session."
+  fix_rationale: "Reset candidateOffers/defaultName back to null in SoulAltarBlockEntity whenever
+    either socket (Soul Block or job item) transitions to empty (inside setHeldSoulBlock/
+    setHeldJobItem's existing empty-stack branch) — addresses the root cause (a stale roll
+    surviving a socket-empty transition) rather than papering over the symptom (e.g. special-casing
+    Librarian or clearing on bind-confirm only). A fresh re-socketing after ANY unsocket now always
+    starts a genuinely new roll session, regardless of how the prior stale/empty result got there."
+  blind_spots: "Could not reproduce the exact historical sequence that produced the original stale
+    empty roll on the user's real altar (several earlier, since-fixed rounds of this same debug
+    session are the most likely cause) — the fix is validated by construction (any empty roll now
+    self-heals on next re-socket) rather than by reproducing the original trigger. Not able to
+    visually confirm in a real client from this environment — flagged for human re-verification."
+
+reasoning_checkpoint (round-3 addendum, heading/Happiness overlap):
+  hypothesis: "The profession-name heading (BindingAltarScreen.renderLabels, scaled 1.5x, drawn at
+    local x=8) is dynamically wide based on the translated name's length, while 'Happiness: N/A'
+    sat at a fixed x=120/y=6 sharing the same header row — a long/translated name (pt_br
+    'Bibliotecário') visually runs into it."
+  confirming_evidence:
+    - "Direct read of BindingAltarScreen.renderLabels: heading drawn via pose translate(8,3)/scale
+      1.5x with no width measurement or clamping; 'Happiness: N/A' drawn unconditionally at a fixed
+      (120, 6) on the exact same visual row."
+  falsification_test: "If the heading were fixed-width or truncated to guarantee it never passes
+    x=120, the overlap would not occur — confirmed via source read that no such clamp exists."
+  fix_rationale: "Moved 'Happiness: N/A' off the header row entirely, to local (100, 34) — the
+    fixed 6px gap between the name box's bottom (y=34) and the candidate-list recess's top (y=40),
+    which is guaranteed empty regardless of heading length or locale. Avoids measuring the
+    heading's rendered width per the parent task's explicit simplicity guidance for a static
+    Phase-9 placeholder."
+  blind_spots: "Not able to visually confirm in a real client from this environment — flagged for
+    human re-verification. The 6px gap is tight for a full text glyph row; a 1-2px visual touch
+    against the candidate-list recess border is possible but is a minor cosmetic detail, not a
+    text-on-text overlap."
+
+next_action: Awaiting human re-verification in the real client of (1) a fresh Librarian bind now
+showing real trade candidates instead of "Nothing to Offer", and (2) the "Happiness: N/A"
+placeholder no longer overlapping the profession heading (including in pt_br locale).
 
 Round 3 complete. User confirmed Bug C fixed. The 2 remaining round-2 items (Bug A texture
 desync, silent selection-rejection) are now fixed and self-verified:
@@ -330,12 +435,55 @@ fix: |
   the screen silently closing. Every other early-return path in the method (stale/malicious
   send, altar gone, double-confirm race, unreachable profession-empty) retains the original
   close-unconditionally behavior.
+root_cause: |
+  Round-3 addendum, Empty trade pool ("Nothing to Offer" for a Librarian bind):
+  SoulAltarBlockEntity.candidatesRolled() treats any non-null candidateOffers — including an
+  empty List.of() — as "already rolled, never re-roll" (the intended "roll once per bind
+  session" design), but nothing ever reset candidateOffers/defaultName back to null when a
+  socket later emptied. A BE instance whose very first roll ever happened to land on an empty
+  list (most likely from an earlier, since-fixed round of this same debug session) was
+  therefore permanently stuck showing "Nothing to Offer" on every subsequent re-socketing, even
+  though TradePoolCache.rollTier1Candidates and ProfessionResolver.fromItem are both
+  independently proven correct for Librarian. Confirmed unreachable via the real interaction
+  path: SoulAltarBlock.useItemOn only ever calls setHeldJobItem with a non-empty stack after
+  ProfessionResolver.fromItem(stack).isPresent() already succeeded, so an invalid/unresolvable
+  job item cannot be the cause of an empty roll for a real Lectern socketing.
+  Round-3 addendum, heading/"Happiness: N/A" overlap: the profession-name heading
+  (BindingAltarScreen.renderLabels, scaled 1.5x) has no width clamp and "Happiness: N/A" shared
+  its exact header row at a fixed x=120 — a long/translated name (pt_br "Bibliotecário") visually
+  ran into it.
+fix: |
+  Round-3 addendum, Empty trade pool: SoulAltarBlockEntity.setHeldSoulBlock/setHeldJobItem now
+  reset both candidateOffers and defaultName back to null whenever the respective socket
+  transitions to empty (added a private resetRolledCandidates() helper called from both
+  methods' existing empty-stack branch), so any fresh re-socketing after an unsocket always
+  starts a genuinely new roll session instead of reusing a stale/empty result left over from a
+  prior occupant of the same BE instance.
+  Round-3 addendum, heading/Happiness overlap: moved "Happiness: N/A" off the header row
+  entirely to local (100, 34) — the fixed 6px gap between the name box's bottom (y=34) and the
+  candidate-list recess's top (y=40), which is guaranteed clear regardless of heading length or
+  locale. Deliberately avoids measuring the heading's rendered width, per the explicit guidance
+  that this is a static Phase-9 placeholder not worth that complexity.
+verification: |
+  Round-3 addendum:
+  ./gradlew compileJava — clean build, no errors.
+  ./gradlew runGameTestServer — 43/43 tests pass (42 prior + 1 new:
+  soul_altar_reset_candidates_on_socket_empty_allows_fresh_reroll, which simulates a stale
+  empty roll, clears both sockets, re-fills them with a real Lectern/Librarian job item, and
+  confirms a fresh non-empty candidate list and non-stale default name are rolled).
+  ./gradlew runServer — starts cleanly ("Done (0.434s)!"), no client-class leak.
+  ./gradlew deployToTest — deployed secondshift-0.1.0.jar to the CurseForge test instance.
+  Both fixes are self-verified programmatically (GameTest for the reroll fix; source-level
+  layout reasoning for the label move, no client available in this environment) but still
+  require human re-verification of the real-client result (see Current Focus).
 files_changed:
   - src/main/java/com/cxmxrgo/secondshift/menu/BindingAltarMenu.java
   - src/main/java/com/cxmxrgo/secondshift/client/screen/BindingAltarScreen.java
   - src/main/java/com/cxmxrgo/secondshift/employee/EmployeeManager.java
   - src/main/java/com/cxmxrgo/secondshift/client/render/SoulAltarRenderer.java
   - src/main/java/com/cxmxrgo/secondshift/network/ServerPayloadHandler.java
+  - src/main/java/com/cxmxrgo/secondshift/content/blockentity/SoulAltarBlockEntity.java (round
+    3 addendum: reset transient candidateOffers/defaultName on socket-empty)
   - src/main/java/com/cxmxrgo/secondshift/gametest/BindingAltarGameTests.java
   - src/main/java/com/cxmxrgo/secondshift/gametest/ServerPayloadHandlerGameTests.java
   - src/main/java/com/cxmxrgo/secondshift/gametest/EmployeeGameTests.java

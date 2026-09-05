@@ -129,8 +129,12 @@ public class BindingAltarScreen extends AbstractContainerScreen<BindingAltarMenu
         }
 
         // GUI-03: happiness has nothing real to show until Phase 9 — static muted placeholder only.
-        // Bug A fix (Phase 5 checkpoint): moved from y=160 (now inside the shifted inventory grid)
-        // to the header row, right of the title text, where there is guaranteed clear space.
-        guiGraphics.drawString(this.font, "Happiness: N/A", 120, 6, COLOR_MUTED, false);
+        // Round-3 checkpoint fix: previously shared the header row with the profession heading at a
+        // fixed x=120 — a long/translated profession name (e.g. pt_br "Bibliotecário", scaled 1.5x)
+        // visually ran into it. Moved to its own dedicated row below both the heading and the name
+        // field, in the small fixed gap between the name box's bottom (local y=34) and the
+        // candidate-list recess's top (local y=40) — deliberately avoids measuring the heading's
+        // rendered width (a static Phase-9 placeholder isn't worth that complexity).
+        guiGraphics.drawString(this.font, "Happiness: N/A", 100, 34, COLOR_MUTED, false);
     }
 }

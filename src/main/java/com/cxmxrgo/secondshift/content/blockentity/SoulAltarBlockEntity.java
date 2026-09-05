@@ -113,6 +113,7 @@ public class SoulAltarBlockEntity extends BlockEntity implements MenuProvider {
     public void setHeldSoulBlock(ItemStack stack) {
         if (stack == null || stack.isEmpty()) {
             this.heldSoulBlock = ItemStack.EMPTY;
+            resetRolledCandidates(); // round-3 fix: a socket emptying invalidates any prior roll
             return;
         }
         if (!stack.is(ModItems.SOUL_BLOCK_ITEM.get())) {
@@ -136,6 +137,7 @@ public class SoulAltarBlockEntity extends BlockEntity implements MenuProvider {
     public void setHeldJobItem(ItemStack stack) {
         if (stack == null || stack.isEmpty()) {
             this.heldJobItem = ItemStack.EMPTY;
+            resetRolledCandidates(); // round-3 fix: a socket emptying invalidates any prior roll
             return;
         }
         this.heldJobItem = stack;
@@ -173,6 +175,22 @@ public class SoulAltarBlockEntity extends BlockEntity implements MenuProvider {
 
     public void setDefaultName(String name) {
         this.defaultName = name;
+    }
+
+    /**
+     * Round-3 checkpoint fix: {@link #candidatesRolled()} treats ANY non-null
+     * {@link #candidateOffers} — including an empty {@code List.of()} — as "already rolled,
+     * never re-roll" (Plan 05-01's "roll once per bind session" design). Without this reset, a BE
+     * instance whose very first roll ever happened to land on an empty list (e.g. a transient
+     * failure during an earlier, since-fixed code path) would be stuck showing "Nothing to Offer"
+     * forever, even after being fully unsocketed and re-filled with a job item that has a perfectly
+     * good real trade pool. Clearing both transient fields whenever either socket transitions to
+     * empty ensures a fresh re-socketing always starts a genuinely new roll session instead of
+     * reusing a stale result left over from a previous occupant of this BE instance.
+     */
+    private void resetRolledCandidates() {
+        this.candidateOffers = null;
+        this.defaultName = null;
     }
 
     @Override
