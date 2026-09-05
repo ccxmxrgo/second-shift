@@ -122,7 +122,17 @@ in a jar the user can load in the CurseForge "test" instance and verify in-game.
   4. A job block that maps to no profession, or a profession with an empty tier pool, shows a themed message and never crashes; a modded job-site block resolves to its profession.
   5. Each altar holds exactly one employee — a second bind is refused — and the altar/employee link survives save/load.
 
-**Plans**: TBD
+**Plans**: 7 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — G-2 socket mechanic: SoulAltarBlockEntity dual-slot + occupancy/session-data contract, ProfessionResolver.fromItem, SoulAltarBlock interaction rewrite, BindingAltarMenu.stillValid update
+- [ ] 05-02-PLAN.md — TradePoolCache: real vanilla tier-1 pool materialization via a throwaway villager, Finding 1's null/side-effect handling, librarian one-enchanted-book invariant
+- [ ] 05-03-PLAN.md — G-2 hovering/spinning job-item render (SoulAltarRenderer)
+- [ ] 05-04-PLAN.md — BindingAltarMenu real candidate materialization (roll-once via TradePoolCache), GUI-03 accessor contract
+- [ ] 05-05-PLAN.md — SelectTradesPayload trust-boundary rewrite (GUI-02) + EmployeeManager's real bind signature, replacing BindEmployeePayload
+- [ ] 05-06-PLAN.md — Real BindingAltarScreen UI: name field, click-to-toggle candidate rows, Confirm wiring, lang/guardrail sweep
+- [ ] 05-07-PLAN.md — Manual verification checkpoint: G-2 render distinctness, Binding Altar screen contents, enchanted-book trade display
+
 **UI hint**: yes
 **Risks**: Spike `ItemListing.getOffer(realVillager, random)` for side effects and null returns across every profession x tier — write it as a GameTest asserting no exception, no null leak, and preview offer == committed offer. Server must re-validate chosen indices and altar proximity against its own candidate list — never trust the client payload. Enforce bind order: `setVillagerData` -> `refreshBrain` -> `setVillagerXp` -> `setOffers` last.
 
@@ -221,7 +231,7 @@ Phases 6 and 8 are parallelizable with the 5 → 7 trade chain once Phase 4 land
 | 2. Economy Items & Soul Altar Block | 5/5 | Complete    | 2026-09-04 |
 | 3. Menu & Screen Harness (HARD GATE) | 2/2 | Complete   | 2026-09-04 |
 | 4. Employee Attachment & Spawn | 4/4 | Complete    | 2026-09-05 |
-| 5. Profession Resolution & Trade Picker | 0/TBD | Not started | - |
+| 5. Profession Resolution & Trade Picker | 0/7 | Planned | - |
 | 6. Employee Traits, Death & Firing | 0/TBD | Not started | - |
 | 7. Progression & Promotion Ritual | 0/TBD | Not started | - |
 | 8. Mod-Owned Restock | 0/TBD | Not started | - |
