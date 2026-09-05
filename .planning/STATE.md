@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
 stopped_at: Completed 05-01-PLAN.md
-last_updated: "2026-09-05T01:22:17.805Z"
+last_updated: "2026-09-05T01:28:02.591Z"
 last_activity: 2026-09-05
 progress:
   total_phases: 10
   completed_phases: 4
   total_plans: 20
-  completed_plans: 14
+  completed_plans: 15
   percent: 40
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-09-04)
 
 Phase: 05 (profession-resolution-trade-picker) — EXECUTING
 Next: Phase 4 (Employee Attachment & Spawn) — discuss or plan
-Plan: 2 of 7
+Plan: 3 of 7
 Last activity: 2026-09-05
 
 Progress: [███░░░░░░░] 30%
@@ -67,6 +67,7 @@ Progress: [███░░░░░░░] 30%
 | Phase 04 P02 | 5min | 2 tasks | 3 files |
 | Phase 04 P03 | 20min | 3 tasks | 6 files |
 | Phase 05 P01 | 35min | 3 tasks | 6 files |
+| Phase 05 P02 | 15min | - tasks | - files |
 
 ## Accumulated Context
 
@@ -106,6 +107,7 @@ Relevant to current work:
 - [Phase 04]: ServerPayloadHandler made public (class + method) so SecondShift.java (root package) can take a cross-package method reference for RegisterPayloadHandlersEvent registration — Compile-correctness necessity, not a behavioral change; controller-role shape (final class, private ctor) preserved
 - [Phase ?]: SoundEvents.ITEM_FRAME_ADD_ITEM is a plain SoundEvent (not a Holder) in this mapped API surface — call directly, no .get()/.value()
 - [Phase ?]: GameTest coverage for an already-bound altar sets up state via direct BE setters, not two real socket interactions — completing both sockets via useItemOn triggers a real openMenu packet the GameTest mock player cannot receive
+- [Phase ?]: List.of()/List.copyOf() immutable lists throw NPE from contains(null) by JDK design - use Stream#anyMatch(Objects::isNull) for null-leak checks instead
 
 ### Pending Todos
 
@@ -134,6 +136,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-09-05T01:22:17.799Z
+Last session: 2026-09-05T01:28:02.582Z
 Stopped at: Completed 05-01-PLAN.md
 Resume file: None
