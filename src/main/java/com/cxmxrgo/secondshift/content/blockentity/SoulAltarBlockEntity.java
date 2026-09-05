@@ -16,8 +16,11 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+
+import java.util.List;
 
 /**
  * Soul Altar block entity (D-01 / D-03 / ALTAR-01).
@@ -43,11 +46,32 @@ import net.minecraft.world.level.block.state.BlockState;
 public class SoulAltarBlockEntity extends BlockEntity implements MenuProvider {
 
     /** Bump when the persisted NBT shape changes; read back for future migrations (D-17). */
-    private static final int DATA_VERSION = 1;
+    private static final int DATA_VERSION = 2;
     private static final String KEY_SOUL_BLOCK = "SoulBlock";
     private static final String KEY_DATA_VERSION = "DataVersion";
+    private static final String KEY_JOB_ITEM = "JobItem";
+    private static final String KEY_EMPLOYEE_BOUND = "EmployeeBound";
 
     private ItemStack heldSoulBlock = ItemStack.EMPTY;
+
+    /**
+     * Plan 05-01 (G-2): the second held-item socket — the job-site item right-clicked onto the
+     * altar. Mirrors {@link #heldSoulBlock}'s exact persistence/getter/setter idiom. No item-type
+     * validation here (validated at the {@code SoulAltarBlock} call site — same division of
+     * responsibility as the Soul Block slot).
+     */
+    private ItemStack heldJobItem = ItemStack.EMPTY;
+
+    /** Plan 05-01 (D-04 / ALTAR-05): one employee per altar. Persisted unconditionally. */
+    private boolean employeeBound = false;
+
+    /**
+     * Plan 05-01: transient (never persisted) session fields for the trade-candidate roll that
+     * later plans in this phase build against. {@code null} candidateOffers means "not yet
+     * rolled this session" — regenerated if the BE reloads before a bind completes.
+     */
+    private transient List<MerchantOffer> candidateOffers = null;
+    private transient String defaultName = null;
 
     /**
      * Transient (never persisted): set by {@code SoulAltarBlock#playerWillDestroy} when the
@@ -97,6 +121,60 @@ public class SoulAltarBlockEntity extends BlockEntity implements MenuProvider {
         this.heldSoulBlock = stack;
     }
 
+    public boolean isJobItemEmpty() {
+        return heldJobItem.isEmpty();
+    }
+
+    public ItemStack getHeldJobItem() {
+        return heldJobItem;
+    }
+
+    /**
+     * No item-type validation here — validated at the {@code SoulAltarBlock} call site (same
+     * division of responsibility as {@link #setHeldSoulBlock}).
+     */
+    public void setHeldJobItem(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            this.heldJobItem = ItemStack.EMPTY;
+            return;
+        }
+        this.heldJobItem = stack;
+    }
+
+    /** True once both the Soul Block and job-item sockets are filled (G-2 open trigger). */
+    public boolean bothSocketsFilled() {
+        return !isEmpty() && !isJobItemEmpty();
+    }
+
+    public boolean isEmployeeBound() {
+        return employeeBound;
+    }
+
+    public void setEmployeeBound(boolean bound) {
+        this.employeeBound = bound;
+    }
+
+    /** {@code true} once {@link #candidateOffers} has been rolled for this session. */
+    public boolean candidatesRolled() {
+        return candidateOffers != null;
+    }
+
+    public List<MerchantOffer> getCandidateOffers() {
+        return candidateOffers == null ? List.of() : candidateOffers;
+    }
+
+    public void setCandidateOffers(List<MerchantOffer> offers) {
+        this.candidateOffers = offers;
+    }
+
+    public String getDefaultName() {
+        return defaultName;
+    }
+
+    public void setDefaultName(String name) {
+        this.defaultName = name;
+    }
+
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
@@ -104,6 +182,10 @@ public class SoulAltarBlockEntity extends BlockEntity implements MenuProvider {
         if (!heldSoulBlock.isEmpty()) {
             tag.put(KEY_SOUL_BLOCK, heldSoulBlock.save(registries));
         }
+        if (!heldJobItem.isEmpty()) {
+            tag.put(KEY_JOB_ITEM, heldJobItem.save(registries));
+        }
+        tag.putBoolean(KEY_EMPLOYEE_BOUND, employeeBound);
     }
 
     @Override
@@ -114,6 +196,13 @@ public class SoulAltarBlockEntity extends BlockEntity implements MenuProvider {
         } else {
             heldSoulBlock = ItemStack.EMPTY;
         }
+        if (tag.contains(KEY_JOB_ITEM)) {
+            heldJobItem = ItemStack.parse(registries, tag.getCompound(KEY_JOB_ITEM)).orElse(ItemStack.EMPTY);
+        } else {
+            heldJobItem = ItemStack.EMPTY;
+        }
+        // D-17: pre-Phase-5 saves lack this key — getBoolean defaults to false, backward compatible.
+        employeeBound = tag.getBoolean(KEY_EMPLOYEE_BOUND);
     }
 
     @Override
