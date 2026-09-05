@@ -3,6 +3,7 @@ package com.cxmxrgo.secondshift.client.render;
 import com.cxmxrgo.secondshift.content.blockentity.SoulAltarBlockEntity;
 import com.cxmxrgo.secondshift.registry.ModBlocks;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -13,6 +14,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -48,6 +50,12 @@ public class SoulAltarRenderer implements BlockEntityRenderer<SoulAltarBlockEnti
     private static final float EMBED_SCALE = 0.5F;
     /** Average frames between soul wisps (RandomSource roll) — keeps the wisp slow + sparse (D-05). */
     private static final int WISP_ROLL = 50;
+    /** Vertical placement of the hovering job-item socket render — well above the embedded Soul Block (G-2). */
+    private static final double HOVER_Y = 1.35D;
+    /** Scale of the hovering job-item render — smaller than the embedded Soul Block, visually distinct. */
+    private static final float HOVER_SCALE = 0.4F;
+    /** Degrees of Y-axis rotation applied per game tick to the hovering job-item render. */
+    private static final float SPIN_DEG_PER_TICK = 1.0F;
 
     @SuppressWarnings("unused") // ctx matches the BlockEntityRendererProvider::new reference
     public SoulAltarRenderer(BlockEntityRendererProvider.Context ctx) {
@@ -71,6 +79,22 @@ public class SoulAltarRenderer implements BlockEntityRenderer<SoulAltarBlockEnti
         // FULL_BRIGHT packed light -> emissive, eye-of-ender style even in shadow (D-05). No bob / no spin.
         blockRenderer.renderSingleBlock(soulBlock, pose, buffers, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
         pose.popPose();
+
+        if (!be.isJobItemEmpty() && be.getHeldJobItem().getItem() instanceof BlockItem blockItem) {
+            BlockState jobState = blockItem.getBlock().defaultBlockState();
+            long gameTime = be.getLevel() != null ? be.getLevel().getGameTime() : 0L;
+            float angle = (gameTime + partialTick) * SPIN_DEG_PER_TICK;
+
+            pose.pushPose();
+            // Hover well above the embedded Soul Block, slowly spinning — visually distinct, ambient-lit
+            // (not emissive) since this is a normal held block, not a charged artifact (G-2 / UI-SPEC).
+            pose.translate(CENTRE, HOVER_Y, CENTRE);
+            pose.mulPose(Axis.YP.rotationDegrees(angle));
+            pose.scale(HOVER_SCALE, HOVER_SCALE, HOVER_SCALE);
+            pose.translate(-0.5D, -0.5D, -0.5D);
+            blockRenderer.renderSingleBlock(jobState, pose, buffers, packedLight, OverlayTexture.NO_OVERLAY);
+            pose.popPose();
+        }
 
         emitWisp(be);
     }
