@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to plan
-stopped_at: Phase 5 context gathered
-last_updated: "2026-09-05T00:15:52.156Z"
+stopped_at: Phase 5 UI-SPEC approved
+last_updated: "2026-09-05T00:37:45.638Z"
 last_activity: 2026-09-05
 progress:
   total_phases: 10
@@ -131,6 +131,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-09-05T00:15:52.149Z
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-profession-resolution-trade-picker/05-CONTEXT.md
+Last session: 2026-09-05T00:37:45.632Z
+Stopped at: Phase 5 UI-SPEC approved
+Resume file: .planning/phases/05-profession-resolution-trade-picker/05-UI-SPEC.md
