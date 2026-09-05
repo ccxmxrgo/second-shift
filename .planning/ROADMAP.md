@@ -19,7 +19,7 @@ in a jar the user can load in the CurseForge "test" instance and verify in-game.
 - [x] **Phase 1: Skeleton & Feedback Loop** - Pinned NeoForge build that launches and catches its own registration bugs (completed 2026-09-04)
 - [x] **Phase 2: Economy Items & Soul Altar Block** - Harvester, Soul Fragment/Block, and the Soul Altar block exist and behave (completed 2026-09-04)
 - [x] **Phase 3: Menu & Screen Harness (HARD GATE)** - Empty "Binding Altar" screen opens under runClient with no crash (completed 2026-09-04)
-- [ ] **Phase 4: Employee Attachment & Spawn** - Binding spawns a persistent, named employee villager with synced EmployeeData
+- [x] **Phase 4: Employee Attachment & Spawn** - Binding spawns a persistent, named employee villager with synced EmployeeData (completed 2026-09-04)
 - [ ] **Phase 5: Profession Resolution & Trade Picker** - Hand-pick an employee's profession and tier-1 trades from the real vanilla pool
 - [ ] **Phase 6: Employee Traits, Death & Firing** - Employees are conversion/breed-immune, recoverable on death, removable only via altar destruction
 - [ ] **Phase 7: Progression & Promotion Ritual** - Vanilla XP unlocks tiers; the player picks each tier's trades at the altar, never seeing unchosen trades
@@ -104,7 +104,7 @@ in a jar the user can load in the CurseForge "test" instance and verify in-game.
 - [x] 04-01-PLAN.md — EmployeeData record/CODEC/STREAM_CODEC, ModAttachments registration + self-check guardrail (6th register), client-side attachment-sync diagnostic (LIGHT spike verification mechanism)
 - [x] 04-02-PLAN.md — EmployeeManager.bind (fixed-profession spawn, EMP-02 XP floor, D-04 green always-visible name) + EmployeeNames pool + EmployeeGameTests (EMP-01/02/08/09 automated proof)
 - [x] 04-03-PLAN.md — BindEmployeePayload + ServerPayloadHandler (server-derived altar pos, atomic Soul Block slot consume) + temporary Confirm Hire button in BindingAltarScreen
-- [ ] 04-04-PLAN.md — Mandatory manual verification checkpoint: persistence round-trip, client-side sync (LIGHT spike empirical answer), Name Tag rename (D-02), wild-villager regression
+- [x] 04-04-PLAN.md — Mandatory manual verification checkpoint: persistence round-trip, client-side sync (LIGHT spike empirical answer), Name Tag rename (D-02), wild-villager regression
 
 **Risks**: LIGHT spike — verify `AttachmentType.Builder#sync` actually fires for entities in 21.1.248 (docs contradict the API); fallback is a manual clientbound payload. Add an `EmployeeData` version field before first use.
 
@@ -220,7 +220,7 @@ Phases 6 and 8 are parallelizable with the 5 → 7 trade chain once Phase 4 land
 | 1. Skeleton & Feedback Loop | 2/2 | Complete    | 2026-09-04 |
 | 2. Economy Items & Soul Altar Block | 5/5 | Complete    | 2026-09-04 |
 | 3. Menu & Screen Harness (HARD GATE) | 2/2 | Complete   | 2026-09-04 |
-| 4. Employee Attachment & Spawn | 3/4 | In Progress|  |
+| 4. Employee Attachment & Spawn | 4/4 | Complete    | 2026-09-05 |
 | 5. Profession Resolution & Trade Picker | 0/TBD | Not started | - |
 | 6. Employee Traits, Death & Firing | 0/TBD | Not started | - |
 | 7. Progression & Promotion Ritual | 0/TBD | Not started | - |

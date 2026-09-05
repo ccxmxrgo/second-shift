@@ -51,7 +51,7 @@ covered by Plan 04-04's mandatory manual verification checkpoint instead.
 | 04-03-01 | 03 | 3 | EMP-01 (trigger) | T-4-01 (payload has zero fields) | no client-position field exists to spoof | compile | `./gradlew compileJava` | ❌ W0 (created this task) | ⬜ pending |
 | 04-03-02 | 03 | 3 | EMP-01 (trigger) | T-4-01, T-4-02, T-4-03 | server re-derives pos from menu; atomic slot consume before bind | compile (behavior proven manually in 04-04) | `./gradlew compileJava` | ❌ W0 (created this task) | ⬜ pending |
 | 04-03-03 | 03 | 3 | EMP-01 (trigger) | — | N/A (client UI only) | compile + manual | `./gradlew compileJava` | ❌ W0 (created this task) | ⬜ pending |
-| 04-04-01 | 04 | 4 | EMP-01, EMP-02, EMP-08, EMP-09 | T-4-01, T-4-02 (real-world proof) | full loop confirmed in real client | manual (human-check) | N/A — checkpoint | N/A | ⬜ pending |
+| 04-04-01 | 04 | 4 | EMP-01, EMP-02, EMP-08, EMP-09 | T-4-01, T-4-02 (real-world proof) | full loop confirmed in real client | manual (human-check) | N/A — checkpoint | N/A | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -101,4 +101,6 @@ pre-existing partial implementation).
 - [x] `nyquist_compliant: true` set in frontmatter
 
 **Approval:** approved 2026-09-04 (planner self-certification against the Nyquist checklist above; final developer sign-off happens at Plan 04-04's checkpoint during execution). Revised 2026-09-04 to merge 04-02 Tasks 2/3 per plan-checker blocker finding.
+
+**Checkpoint closed: approved 2026-09-05.** All 7 manual verification steps passed on re-test after two bugs (CR-01 spawn-overlap, sync-diagnostic timing) were found and fixed via quick task 260905-0yg. The LIGHT spike is resolved: entity attachment sync confirmed working in NeoForge 21.1.248. See `04-04-SUMMARY.md` for full detail.
 </content>
