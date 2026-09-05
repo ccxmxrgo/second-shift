@@ -263,6 +263,13 @@ same shape to `SelectTradesPayload`, with these concrete additions:
      employee-bound invariant, not a new mechanism.
    - Set `employeeBound = true` inside that same atomic lambda, immediately after
      `EmployeeManager.bind(...)` returns successfully, before `sp.closeContainer()`.
+   - **Ordering caveat (do not set the flag early):** `employeeBound` must NEVER be set `true`
+     before `EmployeeManager.bind(...)` has already returned successfully. If the items were
+     consumed and `employeeBound` were set `true` ahead of the bind call, a thrown/failed bind would
+     leave the altar permanently unable to reopen (D-04/ALTAR-05 refuse to reopen a bound altar)
+     with no employee ever spawned and no recovery path, since this codebase has no repair mechanic.
+     A bind failure must instead be caught and logged clearly; `employeeBound` stays `false` in that
+     case.
 
 ## Assumptions Log
 
@@ -275,7 +282,7 @@ same shape to `SelectTradesPayload`, with these concrete additions:
 **If this table is empty:** N/A — see rows above; none of these are compliance/security-critical,
 all are tunable/discretionary implementation details already flagged as such in CONTEXT.md.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 None blocking. The interaction-order note in Finding 2 (A3) is a planning decision, not a research
 gap — the underlying technical facts (both slots must be independently settable, in either order,
