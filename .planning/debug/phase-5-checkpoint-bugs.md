@@ -30,10 +30,19 @@ updated: 2026-09-05
 
 ## Current Focus
 
-All 4 bugs fixed and verified via `./gradlew compileJava`, `./gradlew runGameTestServer` (41/41,
-38 original + 3 new regression tests), and `./gradlew runServer` (clean start, no client-class
-leak). Awaiting human re-verification of Bugs A, C, D in the real client (GameTest cannot fully
-confirm visual/interactive behavior) before archiving.
+status: awaiting_human_verify
+
+Round 3 complete. User confirmed Bug C fixed. The 2 remaining round-2 items (Bug A texture
+desync, silent selection-rejection) are now fixed and self-verified:
+- `./gradlew compileJava` — clean.
+- `./gradlew runGameTestServer` — 42/42 (41 prior + 1 new regression test for the
+  selection-rejection fix).
+- `./gradlew runServer` — clean start, no client-class leak.
+- `./gradlew deployToTest` — deployed `secondshift-0.1.0.jar` to the CurseForge test instance.
+
+next_action: Awaiting human re-verification in the real client of (1) the regenerated
+binding_altar.png layout (no more visual overlap) and (2) the themed rejection message +
+menu-stays-open behavior when confirming with the wrong trade-selection count.
 
 reasoning_checkpoint (Bug C):
   hypothesis: "SoulAltarRenderer.render()'s early-return gates on be.isEmpty() (Soul Block slot
@@ -111,6 +120,119 @@ next_action: Deploy via `./gradlew deployToTest` and request human re-verificati
 - timestamp: 2026-09-05T00:00:10Z
   finding: "Decompiled `Villager#mobInteract` (neoforge-21.1.248-sources.jar): `boolean flag = this.getOffers().isEmpty(); ... if (flag) return InteractionResult.CONSUME;` — an empty offers list silently refuses to open the trade screen, matching Bug D's exact symptom with no exception. This is Bug D's actual, evidence-backed root cause."
 
+## Round 3 (2026-09-05) — Bug A texture desync + silent selection-rejection
+
+User confirmed Bug C (socket render) fully FIXED. Investigating the two round-2 leading
+hypotheses directly, per the parent task's instructions.
+
+reasoning_checkpoint (Bug A texture desync):
+  hypothesis: "binding_altar.png's baked-in slot-frame artwork was never regenerated to match
+    the round-2 coordinate fix (soul slot 80,35; inventory rows 140/158/176; hotbar 198; 200x222
+    canvas), so the visual frames still show at old/broken positions even though Slot/widget logic
+    is correct — a texture/logic desync, not a coordinate math error."
+  confirming_evidence:
+    - "Decoded the actual shipped binding_altar.png with a pure-Python PNG decoder (zlib/struct,
+      no PIL) — direct byte-level inspection, not assumption. Confirmed 200x222/RGBA8, filter type
+      0 throughout (matches the project's established generation convention)."
+    - "ASCII-rendered the decoded pixel grid: found only 2 baked slot-row blocks total, at y131-136
+      (6px tall — too short to be a real 18px slot) and y142-159 (18px, roughly near but not
+      exactly matching row1's correct y=140), with NOTHING baked below y160 — the 2nd/3rd
+      inventory rows and the hotbar (correct y=158/176/198) have no baked frame at all."
+    - "Found a single large dark-recess rectangle baked from y40-129 spanning nearly the full
+      width (x8-191) — this overlaps/conflicts with the correct row-block positions and appears to
+      be a leftover from an earlier layout iteration, not the current candidate-list-only region
+      (y40-100)."
+    - "The soul slot's own baked frame (x81-99, y34-53) DOES already match the correct Java
+      coordinates (80,35) almost exactly — eliminating the possibility that the whole texture was
+      simply never touched; only the inventory-grid portion is desynced."
+  falsification_test: "If the baked frame positions had matched the current Java layout exactly
+    (soul slot 80,35; 3 rows at 140/158/176; hotbar at 198), this hypothesis would be refuted and
+    the 'still overlapping' report would need a different explanation (e.g. a rendering-order bug
+    in the screen class itself)."
+  fix_rationale: "Regenerated binding_altar.png from scratch with a new Python/zlib/struct script
+    (no PIL, matching established convention) that bakes the slot-frame grid at exactly the
+    current Java coordinates (soul slot 80,35; rows 140/158/176; hotbar 198, all 18x18) and the
+    candidate-list dark recess at the current screen coordinates (x8-192, y40-100), using the same
+    color palette already shipped (0xC6C6C6 body, 0x8B8B8B slot fill, 0x555555 borders/outer
+    bevel, 0x404040 recess) rather than inventing a new visual style. This directly eliminates the
+    positional desync rather than papering over a symptom."
+  blind_spots: "Not able to visually confirm the regenerated texture in a real client from this
+    environment — verified only programmatically (dimension + pixel-position spot-checks via a
+    second decode pass). Flagged for human re-verification."
+
+- timestamp: 2026-09-05T00:00:14Z
+  finding: "Decoded shipped binding_altar.png (200x222, RGBA8, all-filter-0 scanlines) byte-for-byte
+    via a pure-Python zlib/struct decoder. ASCII-rendered pixel map showed: soul-slot frame baked
+    correctly at (80,35)-ish; but the inventory-grid area only had 2 baked row-blocks (one 6px-tall
+    broken sliver at y131-136, one 18px block at y142-159) with nothing baked for rows 2/3 or the
+    hotbar (correct positions 158/176/198) — direct proof the round-2 coordinate fix's own note
+    ('kept the existing texture asset fixed... no asset regeneration needed') was incorrect: the
+    texture was never actually in sync with the corrected Java layout."
+  timestamp: 2026-09-05T00:00:14Z
+- timestamp: 2026-09-05T00:00:15Z
+  finding: "Regenerated binding_altar.png via a new stdlib zlib/struct script; re-decoded the
+    output and spot-checked pixel values at all 4 authoritative slot regions plus the candidate
+    list recess and background body fill — all match the intended color/position exactly (soul
+    slot border 0x555555 at (80,35), slot fill 0x8B8B8B at each of 4 grid rows, recess 0x404040 at
+    (100,60), body 0xC6C6C6 elsewhere). Dimensions confirmed 200x222 via IHDR re-parse."
+  timestamp: 2026-09-05T00:00:15Z
+
+reasoning_checkpoint (silent selection-rejection / "employee never spawns"):
+  hypothesis: "ServerPayloadHandler.handleSelectTrades calls sp.closeContainer() unconditionally
+    after the atomic access().execute(...) lambda, even when validateIndices rejects the selection
+    (wrong count) and the lambda returns early without calling EmployeeManager.bind — silently
+    closing the screen with zero player-facing feedback and no employee spawned."
+  confirming_evidence:
+    - "Direct re-read of the current shipped ServerPayloadHandler.java: `sp.closeContainer();` sits
+      as the last statement of handleSelectTrades, OUTSIDE and unconditionally after
+      `menu.access().execute(...)` — confirmed by line-by-line reading, not the round-2 summary."
+    - "Inside the lambda, `if (selected == null) { return; }` (validateIndices rejection) is the
+      only early-return path that fires BEFORE the socket-consuming lines (setHeldSoulBlock/
+      setHeldJobItem to EMPTY) — confirmed sockets are genuinely untouched at that point, so
+      keeping the menu open on this specific rejection is safe and lossless."
+    - "No Component.translatable message of any kind is sent on this path prior to the fix —
+      confirmed by grepping the method body for displayClientMessage/translatable calls before the
+      unconditional close; none existed."
+  falsification_test: "If the Confirm button's client-side logic guaranteed exactly 2 selections
+    before ever sending the payload (making a wrong-count server rejection unreachable in normal
+    play), this would not explain the reported symptom — but BindingAltarScreen's Confirm handler
+    sends whatever candidateList.getSelectedIndices() currently holds (0, 1, or more) with no
+    client-side gate, confirmed via direct read of BindingAltarScreen.init()'s button lambda."
+  fix_rationale: "Made sp.closeContainer() conditional on NOT having hit the validateIndices
+    rejection path (tracked via a boolean[] flag set inside the lambda, since the lambda itself
+    can't return a value here) — the menu now stays open and the player gets a themed
+    'select_exactly_two' action-bar message on a wrong-count confirm, instead of the screen
+    silently vanishing. All other early-return paths (stale send, altar gone, double-confirm race,
+    unreachable profession-empty) retain the original close-unconditionally behavior, since sockets
+    are consumed or the situation is otherwise terminal/rare on those paths — this is the smallest
+    change that fixes the specific reported gap without altering already-tested behavior."
+  blind_spots: "The round-2 hypothesis that Bug A's texture desync was making 2 distinct candidate
+    rows hard to see (and thus indirectly causing miscounted selections) is plausible but was not
+    directly tested — this fix addresses the missing-feedback correctness gap regardless of
+    whether mis-selection was the literal cause of the user's 'employee never spawns' report."
+
+- timestamp: 2026-09-05T00:00:16Z
+  finding: "Direct re-read of ServerPayloadHandler.handleSelectTrades confirmed: `sp.closeContainer()`
+    (now-old line 109) ran unconditionally after `menu.access().execute(...)`, including on the
+    `if (selected == null) { return; }` validateIndices-rejection path, with zero player-facing
+    feedback sent anywhere in the method before that point."
+  timestamp: 2026-09-05T00:00:16Z
+- timestamp: 2026-09-05T00:00:17Z
+  finding: "Confirmed BindingAltarScreen.init()'s Confirm button lambda sends
+    `this.candidateList.getSelectedIndices()` (0, 1, 2+ entries, whatever the player has toggled)
+    with no client-side minimum-selection gate — a wrong-count send to the server is fully
+    reachable in normal play, not just a malicious/synthetic case."
+  timestamp: 2026-09-05T00:00:17Z
+
+## Human Re-Verification (2026-09-05, round 2)
+
+User confirmed: Bug C (socket hover) is FIXED — "Right clicking the altar with the lectern is working now."
+
+Two symptoms remain:
+- **Bug A NOT fixed:** "the screen opens, but the UI is all messed up, things are overlapping" — despite the Bug A fix shifting the `BindingAltarMenu` slot Y-coordinates and `BindingAltarScreen`'s widget Y-coordinates to be internally non-overlapping in Java-space (verified by re-reading both files: candidate list 40-100, Confirm button 106-126, inventory grid starts at 140 — no numeric overlap). New leading hypothesis (not yet confirmed): the Bug A fix's own evidence log (timestamp 00:00:05) states it deliberately "kept the existing 200x222 texture asset fixed" and only moved the logical `Slot`/widget coordinates around it. In vanilla `AbstractContainerScreen` convention, the background PNG texture itself bakes in the visual slot-frame graphics (the light/dark inset squares players see) — `Slot` objects only draw the item icon/highlight, not the frame. If `binding_altar.png` was never regenerated to move its baked-in slot-frame artwork to match the new shifted Y-positions, the visual frames would still appear at the OLD (pre-shift) position while the actual interactive slots and rendered items are at the NEW position — a texture/logic desync, not a coordinate math error. This exactly matches "things are overlapping" persisting after a fix that resolved the coordinate math.
+
+- **New symptom, "employee never spawns":** with Bug C now fixed and the real flow reachable, confirming a bind produces no employee at all, with the screen simply closing (silent). Root cause found by re-reading `ServerPayloadHandler.handleSelectTrades` in full: `sp.closeContainer()` (line 109) runs UNCONDITIONALLY after the `menu.access().execute(...)` lambda — including when `validateIndices` returns `null` (wrong selection count) and the lambda's inner logic returns early via `if (selected == null) { return; }` (line 69-71) without ever calling `EmployeeManager.bind`. The Bug D fix's own doc comment claims this case is a "no-op, sockets stay intact, player can retry" — but the container still closes with ZERO player-facing feedback (no themed message, matching this project's own POL-08 convention violated), making a rejected selection indistinguishable from a real bug to the player. Given the Bug A texture desync likely makes it hard to see distinct candidate rows clearly, it's plausible the player is not actually landing exactly 2 selections, and the silent-close-with-no-feedback is turning a recoverable "please select 2" state into an apparent total failure.
+
 ## Eliminated
 
 - hypothesis: "Bug C is caused by `ProfessionResolver.fromItem`/`PoiTypes.forState` failing to resolve `Blocks.LECTERN.defaultBlockState()` specifically."
@@ -163,12 +285,51 @@ fix: |
   intact, player can reopen and retry) instead of silently spawning a broken employee.
 verification: |
   ./gradlew compileJava — clean build, no errors.
-  ./gradlew runGameTestServer — 41/41 tests pass (38 original + 3 new: a real-interaction-path
-  Lectern socket test for Bug C, a validateIndices fewer-than-two regression test and a bound-
-  employee mobInteract-gate regression test for Bug D).
+  ./gradlew runGameTestServer — 42/42 tests pass (38 original + 3 round-2 + 1 new round-3:
+  reject_wrong_selection_count_keeps_menu_open_and_sockets_intact).
   ./gradlew runServer — starts cleanly, no client-class leak.
-  Bugs A, C, and D still require human re-verification in the real client (visual layout,
-  hover render, and trade-screen-opening are not fully provable via GameTest alone).
+  ./gradlew deployToTest — deployed secondshift-0.1.0.jar to the CurseForge test instance.
+  User confirmed Bug C fixed in round 2. Round 3's 2 fixes (texture regeneration, selection-
+  rejection feedback) are self-verified programmatically (PNG re-decode + pixel spot-checks;
+  GameTest) but still require human re-verification of the real-client visual/interactive
+  result (see Current Focus).
+root_cause: |
+  Bug A (round 3 addendum): even after the round-2 coordinate-math fix corrected
+  BindingAltarMenu's Slot y-coordinates and BindingAltarScreen's widget y-coordinates,
+  binding_altar.png's own baked-in slot-frame artwork was never regenerated to match — a
+  vanilla Slot object only draws the item icon, not the frame graphic, which is baked into the
+  background PNG. Direct byte-level decode of the shipped 200x222 PNG showed only 2 of the 4
+  required inventory-grid row-blocks baked in (one broken 6px-tall sliver, one 18px block
+  roughly near but not matching row1), with nothing baked for row2/row3/hotbar at all, plus a
+  large stale dark-recess rectangle left over from an earlier layout iteration — a genuine
+  texture/logic desync, exactly matching the "still overlapping" report that persisted after
+  the coordinate math was already correct.
+  Silent selection-rejection (round 3, "employee never spawns"): ServerPayloadHandler
+  .handleSelectTrades called sp.closeContainer() unconditionally after the atomic
+  access().execute(...) lambda, including when validateIndices rejected the selection (wrong
+  count) and the lambda returned early without ever calling EmployeeManager.bind. Confirmed via
+  direct re-read of the shipped source: no Component.translatable message existed on this path
+  before the unconditional close, and BindingAltarScreen's Confirm button has no client-side
+  minimum-selection gate, so a wrong-count send is fully reachable in normal play — turning a
+  recoverable "please select 2" state into a silent, unexplained screen-closing failure.
+fix: |
+  Bug A (round 3 addendum): regenerated binding_altar.png from scratch with a new stdlib
+  zlib/struct Python script (matches this project's established no-PIL PNG-generation
+  convention) that bakes the slot-frame grid at exactly the current Java layout — soul slot
+  (80,35), 3 inventory rows at y=140/158/176, hotbar at y=198 (all 18x18), and the trade-
+  candidate-list dark recess at x8-192/y40-100 — using the same color palette already shipped
+  (0xC6C6C6 body, 0x8B8B8B slot fill, 0x555555 borders, 0x404040 recess). Verified by decoding
+  the regenerated PNG a second time and spot-checking pixel values at all authoritative
+  coordinates, not just trusting the generation script's exit code.
+  Silent selection-rejection: made sp.closeContainer() conditional on a boolean[] flag set
+  only when validateIndices returns null (the exact no-partial-application rejection path,
+  which fires before any socket is consumed); on that path the menu now stays open and the
+  player receives a new themed action-bar message (lang key
+  message.secondshift.altar.select_exactly_two, registered in
+  ModRegistrySelfCheck.EXTRA_LANG_KEYS per the project's lang-coverage guardrail) instead of
+  the screen silently closing. Every other early-return path in the method (stale/malicious
+  send, altar gone, double-confirm race, unreachable profession-empty) retains the original
+  close-unconditionally behavior.
 files_changed:
   - src/main/java/com/cxmxrgo/secondshift/menu/BindingAltarMenu.java
   - src/main/java/com/cxmxrgo/secondshift/client/screen/BindingAltarScreen.java
@@ -178,3 +339,8 @@ files_changed:
   - src/main/java/com/cxmxrgo/secondshift/gametest/BindingAltarGameTests.java
   - src/main/java/com/cxmxrgo/secondshift/gametest/ServerPayloadHandlerGameTests.java
   - src/main/java/com/cxmxrgo/secondshift/gametest/EmployeeGameTests.java
+  - src/main/resources/assets/secondshift/textures/gui/binding_altar.png (round 3: regenerated)
+  - src/main/resources/assets/secondshift/lang/en_us.json (round 3: new
+    message.secondshift.altar.select_exactly_two key)
+  - src/main/java/com/cxmxrgo/secondshift/ModRegistrySelfCheck.java (round 3: registered the
+    new lang key in EXTRA_LANG_KEYS)

@@ -217,4 +217,62 @@ public final class ServerPayloadHandlerGameTests {
                 "both sockets must be empty after a successful bind");
         helper.succeed();
     }
+
+    /**
+     * Round-3 regression (Phase 5 checkpoint debug, "employee never spawns" symptom):
+     * {@code sp.closeContainer()} used to run unconditionally after the atomic lambda, even when
+     * {@code validateIndices} rejected the selection (wrong count) and the lambda returned early
+     * without ever calling {@code EmployeeManager.bind}. That silently closed the screen with zero
+     * player-facing feedback. Proves: a rejected (wrong-count) confirm against a >2-candidate pool
+     * (1) does NOT close the menu — {@code player.containerMenu} is still the same
+     * {@code BindingAltarMenu} instance afterward, (2) does NOT bind an employee, and (3) leaves
+     * both altar sockets intact so the player can reopen/retry. Also proves
+     * {@code displayClientMessage} (the new themed rejection message) does not throw against a
+     * GameTest mock {@code ServerPlayer} — {@link BindingAltarMenu#stillValid}'s own forced-close
+     * messaging already exercises that same call successfully in this harness.
+     */
+    @GameTest(template = "empty")
+    public static void reject_wrong_selection_count_keeps_menu_open_and_sockets_intact(GameTestHelper helper) {
+        helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());
+        BlockPos absAltarPos = helper.absolutePos(ALTAR_POS);
+
+        SoulAltarBlockEntity be = (SoulAltarBlockEntity) helper.getLevel().getBlockEntity(absAltarPos);
+        be.setHeldJobItem(new ItemStack(Blocks.LECTERN.asItem()));
+        be.setHeldSoulBlock(new ItemStack(ModItems.SOUL_BLOCK_ITEM.get()));
+        be.setChanged();
+
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        player.teleportTo(absAltarPos.getX() + 0.5D, absAltarPos.getY(), absAltarPos.getZ() + 0.5D);
+
+        BindingAltarMenu menu = new BindingAltarMenu(0, player.getInventory(),
+                ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
+        player.containerMenu = menu;
+
+        helper.assertTrue(menu.getCandidateOffers().size() > 2,
+                "this regression requires a non-auto-locked (>2 candidate) pool to exercise the "
+                        + "exactly-2 rejection path, got " + menu.getCandidateOffers().size());
+
+        // Confirm's default when nothing was ever clicked — the exact real-world trigger.
+        SelectTradesPayload payload = new SelectTradesPayload(new int[0], "Rejected Confirm Test");
+        FakeContext context = new FakeContext(player);
+
+        ServerPayloadHandler.handleSelectTrades(payload, context);
+
+        helper.assertTrue(player.containerMenu == menu,
+                "a rejected (wrong-count) confirm must NOT close the container — the menu should "
+                        + "stay open so the player can retry");
+        helper.assertFalse(be.isEmployeeBound(), "a rejected confirm must never bind an employee");
+        helper.assertTrue(!be.isEmpty() && !be.isJobItemEmpty(),
+                "both altar sockets must remain intact after a rejected confirm");
+
+        int employeeCount = 0;
+        for (Villager villager : helper.getLevel().getEntitiesOfClass(Villager.class,
+                new net.minecraft.world.phys.AABB(absAltarPos).inflate(6))) {
+            if (villager.hasData(ModAttachments.EMPLOYEE.get())) {
+                employeeCount++;
+            }
+        }
+        helper.assertTrue(employeeCount == 0, "no employee must spawn from a rejected confirm, got " + employeeCount);
+        helper.succeed();
+    }
 }

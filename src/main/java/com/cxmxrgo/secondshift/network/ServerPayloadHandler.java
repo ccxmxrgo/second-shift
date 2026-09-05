@@ -4,6 +4,7 @@ import com.cxmxrgo.secondshift.content.blockentity.SoulAltarBlockEntity;
 import com.cxmxrgo.secondshift.employee.EmployeeManager;
 import com.cxmxrgo.secondshift.menu.BindingAltarMenu;
 import com.mojang.logging.LogUtils;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.npc.VillagerProfession;
@@ -52,6 +53,18 @@ public final class ServerPayloadHandler {
             return; // re-derived, not trusted — reuses the existing altar/job-block/proximity check
         }
 
+        // Bug (Phase 5 checkpoint round 3): `sp.closeContainer()` used to run unconditionally below,
+        // even when `validateIndices` rejected the selection (wrong count) and the lambda returned
+        // early without ever calling EmployeeManager.bind. That silently closed the screen with zero
+        // player-facing feedback, turning a recoverable "select exactly 2" state into an apparent
+        // total failure. `rejectedSelectionCount[0]` flags exactly that one no-partial-application
+        // rejection path (sockets are still untouched at that point — the consume-both-sockets lines
+        // below have not run yet) so the container can stay open and the player can retry instead of
+        // being kicked out silently. Every other early-return path (stale/malicious send, altar gone,
+        // double-confirm race, unreachable profession-empty) keeps the prior close-unconditionally
+        // behavior, matching this method's existing "silently ignore" precedent for those cases.
+        boolean[] rejectedSelectionCount = {false};
+
         menu.access().execute((level, pos) -> {
             if (!(level.getBlockEntity(pos) instanceof SoulAltarBlockEntity be)) {
                 return; // altar gone
@@ -67,7 +80,8 @@ public final class ServerPayloadHandler {
             List<MerchantOffer> candidates = menu.getCandidateOffers();
             List<Integer> selected = validateIndices(payload.indices(), candidates.size());
             if (selected == null) {
-                return; // whole payload rejected, no partial application
+                rejectedSelectionCount[0] = true;
+                return; // whole payload rejected, no partial application, sockets untouched
             }
 
             MerchantOffers chosen = new MerchantOffers();
@@ -106,7 +120,11 @@ public final class ServerPayloadHandler {
             }
         });
 
-        sp.closeContainer();
+        if (rejectedSelectionCount[0]) {
+            sp.displayClientMessage(Component.translatable("message.secondshift.altar.select_exactly_two"), true);
+        } else {
+            sp.closeContainer();
+        }
     }
 
     /**

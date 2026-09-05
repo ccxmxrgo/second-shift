@@ -78,7 +78,8 @@ public final class ModRegistrySelfCheck {
             "message.secondshift.altar.closed.altar_gone",
             "message.secondshift.altar.closed.job_gone",
             "message.secondshift.altar.closed.too_far",
-            "message.secondshift.altar.empty_pool");
+            "message.secondshift.altar.empty_pool",
+            "message.secondshift.altar.select_exactly_two");
 
     private ModRegistrySelfCheck() {}
 

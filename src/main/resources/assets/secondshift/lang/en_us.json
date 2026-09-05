@@ -19,6 +19,7 @@
   "message.secondshift.altar.closed.job_gone": "The workstation was removed. The position is rescinded.",
   "message.secondshift.altar.closed.too_far": "You stepped away from the altar. The paperwork goes unfiled.",
   "message.secondshift.altar.empty_pool": "This position has nothing to offer yet. No trades are on file for this role.",
+  "message.secondshift.altar.select_exactly_two": "Select exactly two trades before you sign off. The paperwork requires precision.",
 
   "advancement.secondshift.necromantic_apprentice.title": "Necromantic Apprentice",
   "advancement.secondshift.necromantic_apprentice.description": "Hold an emerald and feel the payroll calling. Forge a Harvester — emeralds, bone, and soul soil — and go collect what the village owes you.",
