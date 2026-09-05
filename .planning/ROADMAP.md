@@ -131,7 +131,7 @@ Plans:
 - [x] 05-03-PLAN.md — G-2 hovering/spinning job-item render (SoulAltarRenderer)
 - [x] 05-04-PLAN.md — BindingAltarMenu real candidate materialization (roll-once via TradePoolCache), GUI-03 accessor contract
 - [x] 05-05-PLAN.md — SelectTradesPayload trust-boundary rewrite (GUI-02) + EmployeeManager's real bind signature, replacing BindEmployeePayload
-- [ ] 05-06-PLAN.md — Real BindingAltarScreen UI: name field, click-to-toggle candidate rows, Confirm wiring, lang/guardrail sweep
+- [x] 05-06-PLAN.md — Real BindingAltarScreen UI: name field, click-to-toggle candidate rows, Confirm wiring, lang/guardrail sweep
 - [ ] 05-07-PLAN.md — Manual verification checkpoint: G-2 render distinctness, Binding Altar screen contents, enchanted-book trade display
 
 **UI hint**: yes
@@ -232,7 +232,7 @@ Phases 6 and 8 are parallelizable with the 5 → 7 trade chain once Phase 4 land
 | 2. Economy Items & Soul Altar Block | 5/5 | Complete    | 2026-09-04 |
 | 3. Menu & Screen Harness (HARD GATE) | 2/2 | Complete   | 2026-09-04 |
 | 4. Employee Attachment & Spawn | 4/4 | Complete    | 2026-09-05 |
-| 5. Profession Resolution & Trade Picker | 5/7 | In Progress|  |
+| 5. Profession Resolution & Trade Picker | 6/7 | In Progress|  |
 | 6. Employee Traits, Death & Firing | 0/TBD | Not started | - |
 | 7. Progression & Promotion Ritual | 0/TBD | Not started | - |
 | 8. Mod-Owned Restock | 0/TBD | Not started | - |

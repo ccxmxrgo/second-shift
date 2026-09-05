@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
 stopped_at: Completed 05-05-PLAN.md
-last_updated: "2026-09-05T02:01:26.273Z"
+last_updated: "2026-09-05T04:48:06.246Z"
 last_activity: 2026-09-05
 progress:
   total_phases: 10
   completed_phases: 4
   total_plans: 20
-  completed_plans: 18
+  completed_plans: 19
   percent: 40
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-09-04)
 
 Phase: 05 (profession-resolution-trade-picker) — EXECUTING
 Next: Phase 4 (Employee Attachment & Spawn) — discuss or plan
-Plan: 6 of 7
+Plan: 7 of 7
 Last activity: 2026-09-05
 
 Progress: [███░░░░░░░] 30%
@@ -71,6 +71,7 @@ Progress: [███░░░░░░░] 30%
 | Phase 05 P03 | 10min | 1 tasks | 1 files |
 | Phase 05 P04 | 20min | 2 tasks | 2 files |
 | Phase 05 P05 | 30min | 3 tasks | 8 files |
+| Phase 05 P06 | 40min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -117,6 +118,9 @@ Relevant to current work:
 - [Phase ?]: employeeBound is set true only after EmployeeManager.bind returns successfully, inside the same atomic access().execute lambda, closing the double-confirm race and soft-lock risk
 - [Phase ?]: validateIndices/sanitizeName made public (not package-private) on ServerPayloadHandler so the cross-package GameTest suite can exercise the trust-boundary logic directly
 - [Phase ?]: sanitizeName strips only the literal section-sign character and control characters, not full 2-char vanilla formatting codes -- verified empirically via GameTest against the plan's literal regex spec
+- [Phase ?]: MerchantOffer.getCostB() returns ItemStack (not Optional<ItemCost>) -- use ItemStack#isEmpty() for the costB presence check
+- [Phase ?]: AbstractSelectionList's scrollbar-position hook on NeoForge 21.1.248 is getScrollbarPosition(), not scrollBarX()
+- [Phase ?]: AbstractContainerScreen: renderBg/widgets render before the leftPos/topPos pose translate (absolute coords); renderLabels renders after (relative coords) -- verified via javap bytecode disassembly
 
 ### Pending Todos
 
@@ -145,6 +149,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-09-05T02:01:26.262Z
+Last session: 2026-09-05T04:47:19.617Z
 Stopped at: Completed 05-05-PLAN.md
 Resume file: None
