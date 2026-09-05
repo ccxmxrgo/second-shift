@@ -128,7 +128,7 @@ Plans:
 
 - [x] 05-01-PLAN.md — G-2 socket mechanic: SoulAltarBlockEntity dual-slot + occupancy/session-data contract, ProfessionResolver.fromItem, SoulAltarBlock interaction rewrite, BindingAltarMenu.stillValid update
 - [x] 05-02-PLAN.md — TradePoolCache: real vanilla tier-1 pool materialization via a throwaway villager, Finding 1's null/side-effect handling, librarian one-enchanted-book invariant
-- [ ] 05-03-PLAN.md — G-2 hovering/spinning job-item render (SoulAltarRenderer)
+- [x] 05-03-PLAN.md — G-2 hovering/spinning job-item render (SoulAltarRenderer)
 - [ ] 05-04-PLAN.md — BindingAltarMenu real candidate materialization (roll-once via TradePoolCache), GUI-03 accessor contract
 - [ ] 05-05-PLAN.md — SelectTradesPayload trust-boundary rewrite (GUI-02) + EmployeeManager's real bind signature, replacing BindEmployeePayload
 - [ ] 05-06-PLAN.md — Real BindingAltarScreen UI: name field, click-to-toggle candidate rows, Confirm wiring, lang/guardrail sweep
@@ -232,7 +232,7 @@ Phases 6 and 8 are parallelizable with the 5 → 7 trade chain once Phase 4 land
 | 2. Economy Items & Soul Altar Block | 5/5 | Complete    | 2026-09-04 |
 | 3. Menu & Screen Harness (HARD GATE) | 2/2 | Complete   | 2026-09-04 |
 | 4. Employee Attachment & Spawn | 4/4 | Complete    | 2026-09-05 |
-| 5. Profession Resolution & Trade Picker | 2/7 | In Progress|  |
+| 5. Profession Resolution & Trade Picker | 3/7 | In Progress|  |
 | 6. Employee Traits, Death & Firing | 0/TBD | Not started | - |
 | 7. Progression & Promotion Ritual | 0/TBD | Not started | - |
 | 8. Mod-Owned Restock | 0/TBD | Not started | - |
