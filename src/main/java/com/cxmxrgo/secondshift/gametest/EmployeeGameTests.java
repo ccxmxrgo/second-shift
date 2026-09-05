@@ -197,6 +197,33 @@ public final class EmployeeGameTests {
         helper.succeed();
     }
 
+    /**
+     * Bug D regression (Phase 5 checkpoint debug): proves the bound villager actually clears every
+     * gate vanilla {@code Villager#mobInteract} checks before opening the trade screen
+     * ({@code getOffers().isEmpty()}, {@code isTrading()}, {@code isSleeping()}, {@code isBaby()},
+     * {@code isAlive()}) — not just that {@code EmployeeManager.bind} runs without throwing. The
+     * root cause of Bug D was upstream in {@code ServerPayloadHandler.validateIndices} accepting
+     * fewer than 2 selections and producing an employee with too-few/zero offers; this test locks
+     * in that a *correctly* bound employee (exactly 2 real offers, matching what a valid confirm
+     * now always produces) is actually interactable.
+     */
+    @GameTest(template = "empty")
+    public static void bound_employee_clears_mobinteract_trade_screen_gates(GameTestHelper helper) {
+        BlockPos absAltarPos = helper.absolutePos(ALTAR_POS);
+        MerchantOffers chosenOffers = realOffers(helper, absAltarPos, VillagerProfession.LIBRARIAN, 2);
+        Villager villager = EmployeeManager.bind((net.minecraft.server.level.ServerLevel) helper.getLevel(),
+                absAltarPos, VillagerProfession.LIBRARIAN, chosenOffers, "Scholar");
+
+        helper.assertTrue(villager.isAlive(), "bound villager must be alive immediately after bind");
+        helper.assertFalse(villager.isBaby(), "bound villager must not be a baby");
+        helper.assertFalse(villager.isTrading(), "freshly bound villager must not already be isTrading()");
+        helper.assertFalse(villager.isSleeping(), "freshly bound villager must not be isSleeping()");
+        helper.assertFalse(villager.getOffers().isEmpty(),
+                "bound villager's getOffers() must be non-empty — an empty list fails "
+                        + "Villager#mobInteract's gate and silently refuses to open the trade screen (Bug D)");
+        helper.succeed();
+    }
+
     @GameTest(template = "empty")
     public static void wild_villager_unaffected_by_bind_in_same_world(GameTestHelper helper) {
         Villager wild = helper.spawn(EntityType.VILLAGER, WILD_VILLAGER_POS);

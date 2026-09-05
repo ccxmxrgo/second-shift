@@ -53,6 +53,13 @@ public final class EmployeeManager {
         // Profession FIRST — setVillagerData nulls offers on profession change (Pitfall 4).
         villager.setVillagerData(villager.getVillagerData().setProfession(profession).setLevel(1));
 
+        // Bug B fix (Phase 5 checkpoint): refreshBrain MUST run immediately after setVillagerData
+        // and before setVillagerXp/setOffers (PITFALLS.md Pitfall 4 / 05-RESEARCH.md Finding 3) —
+        // without it the villager's brain retains the activity/schedule set built for its previous
+        // (profession-less) VillagerData, which gates vanilla trade-screen-opening behavior in
+        // Villager#mobInteract via brain-driven state (this was also the root cause of Bug D).
+        villager.refreshBrain(level);
+
         // Non-negotiable: keeps ResetProfession from firing since this employee never claims
         // its own job-site POI (EMP-02).
         villager.setVillagerXp(1);

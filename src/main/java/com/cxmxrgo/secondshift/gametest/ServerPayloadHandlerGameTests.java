@@ -70,6 +70,27 @@ public final class ServerPayloadHandlerGameTests {
         helper.succeed();
     }
 
+    /**
+     * Bug D regression (Phase 5 checkpoint debug): PICK-03 requires exactly 2 selections against a
+     * pool bigger than 2 (not auto-locked). Before this fix, {@code validateIndices} only enforced
+     * an upper bound, silently accepting 0 or 1 valid indices — which let a player confirm with no
+     * trades selected (e.g. the Confirm button's default {@code new int[0]}) and spawn an employee
+     * with an empty/near-empty {@code MerchantOffers}, which then fails vanilla
+     * {@code Villager#mobInteract}'s {@code getOffers().isEmpty()} gate and never opens the trade
+     * screen at all.
+     */
+    @GameTest(template = "empty")
+    public static void validate_indices_rejects_fewer_than_two(GameTestHelper helper) {
+        List<Integer> resultZero = ServerPayloadHandler.validateIndices(new int[] {}, 5);
+        helper.assertTrue(resultZero == null,
+                "0 selected indices against a >2 pool must reject (PICK-03 requires exactly 2), got " + resultZero);
+
+        List<Integer> resultOne = ServerPayloadHandler.validateIndices(new int[] {2}, 5);
+        helper.assertTrue(resultOne == null,
+                "1 selected index against a >2 pool must reject (PICK-03 requires exactly 2), got " + resultOne);
+        helper.succeed();
+    }
+
     @GameTest(template = "empty")
     public static void validate_indices_auto_locks_small_pool(GameTestHelper helper) {
         List<Integer> resultEmpty = ServerPayloadHandler.validateIndices(new int[] {}, 2);

@@ -295,6 +295,32 @@ public final class BindingAltarGameTests {
         helper.succeed();
     }
 
+    /**
+     * Bug C investigation (Phase 5 checkpoint debug): exercises the REAL {@code
+     * SoulAltarBlock#useItemOn} interaction path (mirrors {@link #socketJobItem}) with a Lectern
+     * item specifically, instead of the direct BE field injection every other Lectern-based test
+     * in this file uses ({@link #setupFullySocketedAltar}). Only {@code Blocks.CARTOGRAPHY_TABLE}
+     * had ever been exercised through the real path before this test.
+     */
+    @GameTest(template = "empty")
+    public static void binding_altar_real_interaction_sockets_lectern_job_item(GameTestHelper helper) {
+        helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());
+
+        BlockPos absAltarPos = helper.absolutePos(ALTAR_POS);
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        player.teleportTo(absAltarPos.getX() + 0.5D, absAltarPos.getY(), absAltarPos.getZ() + 0.5D);
+
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Blocks.LECTERN.asItem()));
+        helper.useBlock(ALTAR_POS, player);
+
+        helper.assertTrue(
+                helper.getLevel().getBlockEntity(absAltarPos) instanceof SoulAltarBlockEntity be
+                        && !be.isJobItemEmpty(),
+                "a Lectern item right-clicked onto the altar must socket via the real useItemOn path, "
+                        + "exactly like Blocks.CARTOGRAPHY_TABLE does");
+        helper.succeed();
+    }
+
     @GameTest(template = "empty")
     public static void binding_altar_getprofession_and_gettier(GameTestHelper helper) {
         helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());

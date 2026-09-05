@@ -49,11 +49,11 @@ public class BindingAltarScreen extends AbstractContainerScreen<BindingAltarMenu
         super(menu, playerInv, title);
         this.imageWidth = 200;
         this.imageHeight = 222;
-        // The player-inventory grid stays at its existing fixed BindingAltarMenu slot coordinates
-        // (84/142) — only the label position is adjusted to sit just above it inside the taller
-        // canvas; vanilla's default (imageHeight - 94) would otherwise land inside the candidate
-        // list region.
-        this.inventoryLabelY = 74;
+        // Bug A fix (Phase 5 checkpoint): the player-inventory grid is shifted down by
+        // BindingAltarMenu.INVENTORY_Y_SHIFT (56px) so it sits below the candidate list (local y
+        // 40-100) and Confirm button (local y 106-126) instead of overlapping them. The label sits
+        // 10px above the shifted row1 (vanilla's own label-to-slot convention), landing at 130.
+        this.inventoryLabelY = 84 + BindingAltarMenu.INVENTORY_Y_SHIFT - 10;
     }
 
     @Override
@@ -66,10 +66,15 @@ public class BindingAltarScreen extends AbstractContainerScreen<BindingAltarMenu
         this.nameBox.setValue(this.getMenu().getDefaultName());
         this.addRenderableWidget(this.nameBox);
 
+        // Bug A fix (Phase 5 checkpoint): list shrunk to local y 40-100 (60px / 3 rows) and the
+        // Confirm button moved to local y 106-126 so both sit above the shifted player-inventory
+        // grid (row1 now at local y 84 + INVENTORY_Y_SHIFT = 140) with clearance for the
+        // "Inventory" label at local y 130 — no more overlap between the trade UI and the vanilla
+        // slot grid/hotbar.
         List<MerchantOffer> candidates = this.getMenu().getCandidateOffers();
         if (!candidates.isEmpty()) {
             this.candidateList = new TradeCandidateList(
-                    this.minecraft, 200 - 16, 130 - 40, topPos + 40, 20,
+                    this.minecraft, 200 - 16, 60, topPos + 40, 20,
                     candidates, this.getMenu().isAutoLocked(), index -> {});
             this.candidateList.setX(leftPos + 8);
             this.addRenderableWidget(this.candidateList);
@@ -84,7 +89,7 @@ public class BindingAltarScreen extends AbstractContainerScreen<BindingAltarMenu
                             String name = this.nameBox.getValue();
                             PacketDistributor.sendToServer(new SelectTradesPayload(indices, name));
                         })
-                .bounds(leftPos + 8, topPos + 134, 184, 20)
+                .bounds(leftPos + 8, topPos + 106, 184, 20)
                 .build());
     }
 
@@ -124,6 +129,8 @@ public class BindingAltarScreen extends AbstractContainerScreen<BindingAltarMenu
         }
 
         // GUI-03: happiness has nothing real to show until Phase 9 — static muted placeholder only.
-        guiGraphics.drawString(this.font, "Happiness: N/A", 8, 160, COLOR_MUTED, false);
+        // Bug A fix (Phase 5 checkpoint): moved from y=160 (now inside the shifted inventory grid)
+        // to the header row, right of the title text, where there is guaranteed clear space.
+        guiGraphics.drawString(this.font, "Happiness: N/A", 120, 6, COLOR_MUTED, false);
     }
 }

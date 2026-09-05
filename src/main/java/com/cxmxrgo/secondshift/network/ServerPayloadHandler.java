@@ -134,7 +134,14 @@ public final class ServerPayloadHandler {
             return all;
         }
 
-        if (deduped.size() > 2) {
+        // Bug D fix (Phase 5 checkpoint): PICK-03 requires the player select EXACTLY 2 when the
+        // pool isn't auto-locked (candidateCount > 2, handled above). The old check only enforced
+        // an upper bound (`> 2`), silently accepting 0 or 1 selections — including the Confirm
+        // button's default `new int[0]` when nothing was ever clicked. That produced a villager
+        // with an empty (or 1-offer) MerchantOffers list; vanilla Villager#mobInteract's
+        // `getOffers().isEmpty()` gate then refuses to open the trade screen at all (Bug D's exact
+        // symptom), with zero server-side error since bind() itself never rejects an empty list.
+        if (deduped.size() != 2) {
             return null;
         }
 

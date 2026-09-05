@@ -64,21 +64,30 @@ public class SoulAltarRenderer implements BlockEntityRenderer<SoulAltarBlockEnti
     @Override
     public void render(SoulAltarBlockEntity be, float partialTick, PoseStack pose,
                        MultiBufferSource buffers, int packedLight, int packedOverlay) {
-        if (be.isEmpty()) {
-            return; // empty altar renders nothing beyond the pedestal model
+        // Bug C fix (Phase 5 checkpoint): the early-return used to gate on be.isEmpty() alone,
+        // which only checks the Soul Block slot (SoulAltarBlockEntity#isEmpty). That meant socketing
+        // the JOB ITEM first (the reported real-world click order) skipped this entire method —
+        // including the hovering job-item render below — even though the item socketed correctly
+        // server-side (confirmed via a real-interaction-path GameTest, ProfessionResolver is not at
+        // fault). The player saw nothing rendered and assumed the socket mechanic silently failed.
+        // Gate on "both slots empty" instead, and render each slot's visual independently.
+        if (be.isEmpty() && be.isJobItemEmpty()) {
+            return; // nothing socketed at all — just the pedestal model
         }
 
-        BlockState soulBlock = ModBlocks.SOUL_BLOCK.get().defaultBlockState();
         BlockRenderDispatcher blockRenderer = Minecraft.getInstance().getBlockRenderer();
 
-        pose.pushPose();
-        // Centre on the altar top, scale down, then recentre the [0,1] block model on the origin.
-        pose.translate(CENTRE, EMBED_Y, CENTRE);
-        pose.scale(EMBED_SCALE, EMBED_SCALE, EMBED_SCALE);
-        pose.translate(-0.5D, -0.5D, -0.5D);
-        // FULL_BRIGHT packed light -> emissive, eye-of-ender style even in shadow (D-05). No bob / no spin.
-        blockRenderer.renderSingleBlock(soulBlock, pose, buffers, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
-        pose.popPose();
+        if (!be.isEmpty()) {
+            BlockState soulBlock = ModBlocks.SOUL_BLOCK.get().defaultBlockState();
+            pose.pushPose();
+            // Centre on the altar top, scale down, then recentre the [0,1] block model on the origin.
+            pose.translate(CENTRE, EMBED_Y, CENTRE);
+            pose.scale(EMBED_SCALE, EMBED_SCALE, EMBED_SCALE);
+            pose.translate(-0.5D, -0.5D, -0.5D);
+            // FULL_BRIGHT packed light -> emissive, eye-of-ender style even in shadow (D-05). No bob / no spin.
+            blockRenderer.renderSingleBlock(soulBlock, pose, buffers, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
+            pose.popPose();
+        }
 
         if (!be.isJobItemEmpty() && be.getHeldJobItem().getItem() instanceof BlockItem blockItem) {
             BlockState jobState = blockItem.getBlock().defaultBlockState();
@@ -96,7 +105,10 @@ public class SoulAltarRenderer implements BlockEntityRenderer<SoulAltarBlockEnti
             pose.popPose();
         }
 
-        emitWisp(be);
+        // Wisp rises from just above the embedded Soul Block — only meaningful once one exists.
+        if (!be.isEmpty()) {
+            emitWisp(be);
+        }
     }
 
     /** Slow, sparse upward soul wisp just above the embedded block. */

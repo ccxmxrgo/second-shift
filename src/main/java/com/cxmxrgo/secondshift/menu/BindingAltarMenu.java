@@ -34,6 +34,12 @@ import java.util.Optional;
  */
 public class BindingAltarMenu extends AbstractContainerMenu {
 
+    /** Bug A fix (Phase 5 checkpoint) — see slot-placement loop below for rationale. Also
+     * referenced by {@code BindingAltarScreen} for the inventory label and the trade-list/Confirm
+     * button placement, so both stay derived from one source of truth instead of hand-duplicated
+     * magic numbers drifting apart again. */
+    public static final int INVENTORY_Y_SHIFT = 56;
+
     private final ContainerLevelAccess access;
     private final Player owningPlayer;
 
@@ -61,13 +67,18 @@ public class BindingAltarMenu extends AbstractContainerMenu {
         AltarSoulContainer container = new AltarSoulContainer(playerInv.player.level(), pos);
         this.addSlot(new SoulSlot(container, 0, 80, 35));
 
+        // Bug A fix (Phase 5 checkpoint): shifted down by INVENTORY_Y_SHIFT (56px — exactly the
+        // amount 05-UI-SPEC.md's imageHeight grew, 166 -> 222) so the 3x9 grid + hotbar sit below
+        // the new trade-candidate list (local y 40-100) and Confirm button (local y 106-126)
+        // instead of overlapping them. Bottom-aligns flush with the 222px canvas: hotbar y=198,
+        // +18 slot height, +6 bottom margin = 222, matching the original layout's own margins.
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                this.addSlot(new net.minecraft.world.inventory.Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
+                this.addSlot(new net.minecraft.world.inventory.Slot(playerInv, col + row * 9 + 9, 8 + col * 18, INVENTORY_Y_SHIFT + 84 + row * 18));
             }
         }
         for (int col = 0; col < 9; col++) {
-            this.addSlot(new net.minecraft.world.inventory.Slot(playerInv, col, 8 + col * 18, 142));
+            this.addSlot(new net.minecraft.world.inventory.Slot(playerInv, col, 8 + col * 18, INVENTORY_Y_SHIFT + 142));
         }
 
         // Plan 05-04 (PICK-02/04/07/08): one-time tier-1 candidate + default-name materialization.
