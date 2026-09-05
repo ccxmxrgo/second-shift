@@ -16,8 +16,8 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
-import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -91,12 +91,19 @@ public class SoulAltarBlock extends Block implements EntityBlock {
     }
 
     /**
-     * D-01 / D-03 / D-11: one-way socket, now gated on {@link ProfessionResolver} BEFORE the
-     * socket mutation runs — an unmapped/missing job block never consumes the player's Soul
-     * Block. Gate on {@code stack.is(SOUL_BLOCK_ITEM)} AND {@code be.isEmpty()}; mutate the BE
-     * only on the logical server; then {@code setChanged()} + {@code sendBlockUpdated(...)} so
-     * the 02-05 renderer sees the charged state (PITFALLS §3); finally open the Binding Altar
-     * screen in the same click (D-01, ALTAR-03, SC1).
+     * Plan 05-01 (G-2 / D-04 / ALTAR-05 / PICK-01 / PICK-08): dual item-socket interaction,
+     * replacing the "place a real job-site block on top" mechanic. Branch order (server-only
+     * mutation, client only mirrors via {@code sidedSuccess}):
+     * <ol>
+     *   <li>Occupied altar ({@code employeeBound}) — themed no-op, never touches a socket.</li>
+     *   <li>Soul Block in hand + Soul Block slot empty — socket it (unchanged sound/particles).</li>
+     *   <li>Job item in hand ({@link ProfessionResolver#fromItem} resolves) + job slot empty —
+     *       socket it.</li>
+     *   <li>An unmapped {@link BlockItem} — themed rejection, no socket mutation (PICK-08).</li>
+     *   <li>Anything else — fall through to {@link #useWithoutItem}.</li>
+     * </ol>
+     * After either successful socket, opens the Binding Altar screen the instant both sockets are
+     * filled, regardless of fill order.
      */
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
@@ -104,39 +111,66 @@ public class SoulAltarBlock extends Block implements EntityBlock {
         if (!(level.getBlockEntity(pos) instanceof SoulAltarBlockEntity be)) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
-        if (!stack.is(ModItems.SOUL_BLOCK_ITEM.get()) || !be.isEmpty()) {
-            // D-03/D-04: one-way — no overwrite; already-charged falls through to useWithoutItem's
-            // reopen gate (Pitfall 10).
-            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+
+        if (be.isEmployeeBound()) {
+            // D-04/ALTAR-05: occupied altar — never mutates a socket regardless of held item.
+            if (!level.isClientSide) {
+                player.displayClientMessage(Component.translatable("message.secondshift.altar.occupied"), true);
+            }
+            return ItemInteractionResult.CONSUME;
         }
-        if (!level.isClientSide) {
-            if (ProfessionResolver.fromAbove(level, pos).isEmpty()) {
-                // D-11: unmapped/missing job block above an empty altar — do NOT socket.
+
+        if (stack.is(ModItems.SOUL_BLOCK_ITEM.get()) && be.isEmpty()) {
+            if (!level.isClientSide) {
+                be.setHeldSoulBlock(stack.copyWithCount(1));
+                stack.consume(1, player);                                   // respects creative mode
+                be.setChanged();
+                level.sendBlockUpdated(pos, state, state, Block.UPDATE_ALL); // push getUpdatePacket to trackers
+                level.playSound(null, pos, SoundEvents.SOUL_ESCAPE.value(), SoundSource.BLOCKS, 0.8F, 1.0F);
+                if (level instanceof ServerLevel serverLevel) {
+                    serverLevel.sendParticles(ParticleTypes.SOUL,
+                            pos.getX() + 0.5D, pos.getY() + 0.95D, pos.getZ() + 0.5D,
+                            8, 0.18D, 0.05D, 0.18D, 0.01D);
+                }
+                openIfBothSocketsFilled(be, pos, player);
+            }
+            return ItemInteractionResult.sidedSuccess(level.isClientSide);
+        }
+
+        if (ProfessionResolver.fromItem(stack).isPresent() && be.isJobItemEmpty()) {
+            if (!level.isClientSide) {
+                be.setHeldJobItem(stack.copyWithCount(1));
+                stack.consume(1, player);
+                be.setChanged();
+                level.sendBlockUpdated(pos, state, state, Block.UPDATE_ALL);
+                level.playSound(null, pos, SoundEvents.ITEM_FRAME_ADD_ITEM, SoundSource.BLOCKS, 0.8F, 1.0F);
+                openIfBothSocketsFilled(be, pos, player);
+            }
+            return ItemInteractionResult.sidedSuccess(level.isClientSide);
+        }
+
+        if (stack.getItem() instanceof BlockItem && ProfessionResolver.fromItem(stack).isEmpty()) {
+            // PICK-08: an invalid job item — reject, no socket mutation.
+            if (!level.isClientSide) {
                 player.displayClientMessage(Component.translatable("message.secondshift.altar.not_a_workstation"), true);
-                return ItemInteractionResult.CONSUME;
             }
-            be.setHeldSoulBlock(stack.copyWithCount(1));
-            stack.consume(1, player);                                   // respects creative mode
-            be.setChanged();
-            level.sendBlockUpdated(pos, state, state, Block.UPDATE_ALL); // push getUpdatePacket to trackers
-            level.playSound(null, pos, SoundEvents.SOUL_ESCAPE.value(), SoundSource.BLOCKS, 0.8F, 1.0F);
-            if (level instanceof ServerLevel serverLevel) {
-                serverLevel.sendParticles(ParticleTypes.SOUL,
-                        pos.getX() + 0.5D, pos.getY() + 0.95D, pos.getZ() + 0.5D,
-                        8, 0.18D, 0.05D, 0.18D, 0.01D);
-            }
-            if (player instanceof ServerPlayer sp) {
-                sp.openMenu(be, buf -> buf.writeBlockPos(pos)); // D-01
-            }
+            return ItemInteractionResult.CONSUME;
         }
-        return ItemInteractionResult.sidedSuccess(level.isClientSide);
+
+        // Covers a Soul Block on an already-soul-socketed altar, or any other stack.
+        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+    }
+
+    /** Server-only: opens the Binding Altar screen the instant both sockets are filled. */
+    private static void openIfBothSocketsFilled(SoulAltarBlockEntity be, BlockPos pos, Player player) {
+        if (be.bothSocketsFilled() && player instanceof ServerPlayer sp) {
+            sp.openMenu(be, buf -> buf.writeBlockPos(pos));
+        }
     }
 
     /**
-     * D-02 / D-04 / D-11: the single reopen gate. Falls through from {@link #useItemOn} whenever
-     * that method returns {@code PASS_TO_DEFAULT_BLOCK_INTERACTION} (empty hand, or a Soul Block
-     * on an already-charged altar — Pitfall 10), so the "is the altar charged + does the job
-     * block map to a profession" gate check lives exactly once, here.
+     * Plan 05-01 (D-02 / D-04): the single reopen gate. Falls through from {@link #useItemOn}
+     * whenever that method returns {@code PASS_TO_DEFAULT_BLOCK_INTERACTION}.
      */
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player,
@@ -144,26 +178,28 @@ public class SoulAltarBlock extends Block implements EntityBlock {
         if (!(level.getBlockEntity(pos) instanceof SoulAltarBlockEntity be)) {
             return InteractionResult.PASS;
         }
-        if (be.isEmpty()) {
+
+        if (be.isEmployeeBound()) {
             if (!level.isClientSide) {
-                player.displayClientMessage(Component.translatable("message.secondshift.altar.no_soul_block"), true); // D-11
+                player.displayClientMessage(Component.translatable("message.secondshift.altar.occupied"), true);
             }
-            return InteractionResult.PASS;
+            return InteractionResult.CONSUME;
         }
-        if (!level.isClientSide) {
-            if (ProfessionResolver.fromAbove(level, pos).isEmpty()) {
-                // D-11: distinguish "no job block at all" from "wrong/unmapped block" above.
-                String key = PoiTypes.forState(level.getBlockState(pos.above())).isEmpty()
-                        ? "message.secondshift.altar.no_job_block"
-                        : "message.secondshift.altar.not_a_workstation";
-                player.displayClientMessage(Component.translatable(key), true);
-                return InteractionResult.CONSUME;
-            }
-            if (player instanceof ServerPlayer sp) {
+
+        if (be.bothSocketsFilled()) {
+            if (!level.isClientSide && player instanceof ServerPlayer sp) {
                 sp.openMenu(be, buf -> buf.writeBlockPos(pos)); // D-02 reopen
             }
+            return InteractionResult.sidedSuccess(level.isClientSide);
         }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+
+        if (!level.isClientSide) {
+            String key = be.isJobItemEmpty()
+                    ? "message.secondshift.altar.no_job_block"
+                    : "message.secondshift.altar.no_soul_block";
+            player.displayClientMessage(Component.translatable(key), true);
+        }
+        return InteractionResult.PASS;
     }
 
     /**

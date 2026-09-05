@@ -1,12 +1,12 @@
 package com.cxmxrgo.secondshift.trade;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.ai.village.poi.PoiType;
 import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import net.minecraft.world.entity.npc.VillagerProfession;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.Optional;
 
@@ -32,9 +32,16 @@ public final class ProfessionResolver {
 
     private ProfessionResolver() {}
 
-    /** Resolves the profession (if any) mapped to the job-site block directly above {@code altarPos}. */
-    public static Optional<VillagerProfession> fromAbove(Level level, BlockPos altarPos) {
-        return PoiTypes.forState(level.getBlockState(altarPos.above())).flatMap(ProfessionResolver::fromPoi);
+    /**
+     * Plan 05-01 (G-2): resolves the profession (if any) mapped to the job-site block backing a
+     * {@link BlockItem} stack — replaces {@code fromAbove}, which resolved from the block placed
+     * directly above the altar (retired: the item-socket mechanic supersedes "block on top").
+     */
+    public static Optional<VillagerProfession> fromItem(ItemStack stack) {
+        if (!(stack.getItem() instanceof BlockItem blockItem)) {
+            return Optional.empty();
+        }
+        return PoiTypes.forState(blockItem.getBlock().defaultBlockState()).flatMap(ProfessionResolver::fromPoi);
     }
 
     /** Resolves the profession (if any) whose held job site matches the given POI holder. */
