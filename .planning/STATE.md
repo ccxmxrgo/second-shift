@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-stopped_at: Completed 05-03-PLAN.md
-last_updated: "2026-09-05T01:35:34.898Z"
+stopped_at: Completed 05-04-PLAN.md
+last_updated: "2026-09-05T01:46:52.243Z"
 last_activity: 2026-09-05
 progress:
   total_phases: 10
   completed_phases: 4
   total_plans: 20
-  completed_plans: 16
+  completed_plans: 17
   percent: 40
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-09-04)
 
 Phase: 05 (profession-resolution-trade-picker) — EXECUTING
 Next: Phase 4 (Employee Attachment & Spawn) — discuss or plan
-Plan: 4 of 7
+Plan: 5 of 7
 Last activity: 2026-09-05
 
 Progress: [███░░░░░░░] 30%
@@ -69,6 +69,7 @@ Progress: [███░░░░░░░] 30%
 | Phase 05 P01 | 35min | 3 tasks | 6 files |
 | Phase 05 P02 | 15min | - tasks | - files |
 | Phase 05 P03 | 10min | 1 tasks | 1 files |
+| Phase 05 P04 | 20min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -110,6 +111,8 @@ Relevant to current work:
 - [Phase ?]: GameTest coverage for an already-bound altar sets up state via direct BE setters, not two real socket interactions — completing both sockets via useItemOn triggers a real openMenu packet the GameTest mock player cannot receive
 - [Phase ?]: List.of()/List.copyOf() immutable lists throw NPE from contains(null) by JDK design - use Stream#anyMatch(Objects::isNull) for null-leak checks instead
 - [Phase ?]: [Phase 05 P03]: Hovering job-item render uses the render method's own packedLight (ambient) rather than LightTexture.FULL_BRIGHT, deliberately distinguishing it from the emissive embedded Soul Block
+- [Phase 05]: GameTest fully-socketed-altar setup sets heldJobItem/heldSoulBlock directly on the BE, continuing the 05-01 pattern that avoids the real openMenu packet a GameTest mock player cannot receive
+- [Phase 05]: MerchantOffer has no equals() override; roll-once content-comparison test compares ItemStack.matches on result/costA/costB plus maxUses/xp
 
 ### Pending Todos
 
@@ -138,6 +141,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-09-05T01:35:34.889Z
-Stopped at: Completed 05-03-PLAN.md
+Last session: 2026-09-05T01:46:52.234Z
+Stopped at: Completed 05-04-PLAN.md
 Resume file: None

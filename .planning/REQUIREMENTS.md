@@ -59,10 +59,10 @@ Requirements for the first shippable version. Each maps to exactly one roadmap p
 - [x] **PICK-01**: The target profession is derived from the job-site block via the POI registry at runtime — no hardcoded list; modded professions supported
 - [x] **PICK-02**: Trade candidates for a tier are the profession's real vanilla `ItemListing` pool for that tier, materialized into concrete `MerchantOffer`s server-side
 - [ ] **PICK-03**: The picker shows all N candidates for the tier; the player selects exactly 2 (vanilla's per-tier count)
-- [ ] **PICK-04**: When a tier's pool has ≤ 2 trades, they are auto-selected and still displayed in the picker
+- [x] **PICK-04**: When a tier's pool has ≤ 2 trades, they are auto-selected and still displayed in the picker
 - [x] **PICK-05**: For librarian employees, each tier's candidate list includes exactly one freshly-rolled enchanted-book trade; enchantments are not separately enumerated
 - [ ] **PICK-06**: Chosen trades are persisted as concrete offers on the attachment and installed via `setOffers`; profession is always set before offers
-- [ ] **PICK-07**: The binding GUI has a name field pre-filled with a generated default; the final value is applied as the employee's visible custom name
+- [x] **PICK-07**: The binding GUI has a name field pre-filled with a generated default; the final value is applied as the employee's visible custom name
 - [x] **PICK-08**: A job block that maps to no profession, or a profession with an empty tier pool, is handled with a themed message and no crash
 
 ### Progression
@@ -83,7 +83,7 @@ Requirements for the first shippable version. Each maps to exactly one roadmap p
 
 - [x] **GUI-01**: The altar `MenuType` + `Screen` are registered correctly and an (initially empty) altar screen opens under `runClient` without crashing — proven before any trade logic is built
 - [ ] **GUI-02**: The menu is server-authoritative; client-sent selections (trade indices, name) are re-validated server-side against the server's own candidate list and altar proximity
-- [ ] **GUI-03**: The altar GUI shows the bound employee's name, profession, current tier, already-chosen trades, and happiness state
+- [x] **GUI-03**: The altar GUI shows the bound employee's name, profession, current tier, already-chosen trades, and happiness state
 
 ### Polish
 
@@ -166,13 +166,13 @@ Which phases cover which requirements. Populated during roadmap creation (2026-0
 | PICK-01 | Phase 5 | Complete |
 | PICK-02 | Phase 5 | Complete |
 | PICK-03 | Phase 5 | Pending |
-| PICK-04 | Phase 5 | Pending |
+| PICK-04 | Phase 5 | Complete |
 | PICK-05 | Phase 5 | Complete |
 | PICK-06 | Phase 5 | Pending |
-| PICK-07 | Phase 5 | Pending |
+| PICK-07 | Phase 5 | Complete |
 | PICK-08 | Phase 5 | Complete |
 | GUI-02 | Phase 5 | Pending |
-| GUI-03 | Phase 5 | Pending |
+| GUI-03 | Phase 5 | Complete |
 | EMP-03 | Phase 6 | Pending |
 | EMP-04 | Phase 6 | Pending |
 | EMP-05 | Phase 6 | Pending |
