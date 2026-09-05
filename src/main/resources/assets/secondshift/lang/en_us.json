@@ -8,6 +8,8 @@
 
   "container.secondshift.binding_altar": "Binding Altar",
   "gui.secondshift.binding_altar.confirm": "Confirm Hire",
+  "gui.secondshift.binding_altar.name_label": "Name:",
+  "gui.secondshift.binding_altar.trade_locked": "(locked)",
 
   "message.secondshift.altar.no_job_block": "The position is unfilled. Socket a job-site item into the altar before you file the paperwork.",
   "message.secondshift.altar.not_a_workstation": "That block posts no job. Only a real workstation defines the role.",
@@ -16,6 +18,7 @@
   "message.secondshift.altar.closed.altar_gone": "The altar is gone. Consider the interview concluded.",
   "message.secondshift.altar.closed.job_gone": "The workstation was removed. The position is rescinded.",
   "message.secondshift.altar.closed.too_far": "You stepped away from the altar. The paperwork goes unfiled.",
+  "message.secondshift.altar.empty_pool": "This position has nothing to offer yet. No trades are on file for this role.",
 
   "advancement.secondshift.necromantic_apprentice.title": "Necromantic Apprentice",
   "advancement.secondshift.necromantic_apprentice.description": "Hold an emerald and feel the payroll calling. Forge a Harvester — emeralds, bone, and soul soil — and go collect what the village owes you.",

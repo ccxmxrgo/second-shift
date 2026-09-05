@@ -68,7 +68,17 @@ public final class ModRegistrySelfCheck {
             "advancement.secondshift.soul_mason.title",
             "advancement.secondshift.soul_mason.description",
             "container.secondshift.binding_altar",
-            "message.secondshift.altar.occupied");
+            "gui.secondshift.binding_altar.confirm",
+            "gui.secondshift.binding_altar.name_label",
+            "gui.secondshift.binding_altar.trade_locked",
+            "message.secondshift.altar.no_job_block",
+            "message.secondshift.altar.not_a_workstation",
+            "message.secondshift.altar.no_soul_block",
+            "message.secondshift.altar.occupied",
+            "message.secondshift.altar.closed.altar_gone",
+            "message.secondshift.altar.closed.job_gone",
+            "message.secondshift.altar.closed.too_far",
+            "message.secondshift.altar.empty_pool");
 
     private ModRegistrySelfCheck() {}
 
