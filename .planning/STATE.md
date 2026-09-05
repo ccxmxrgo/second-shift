@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-stopped_at: Completed 05-04-PLAN.md
-last_updated: "2026-09-05T01:46:52.243Z"
+stopped_at: Completed 05-05-PLAN.md
+last_updated: "2026-09-05T02:01:26.273Z"
 last_activity: 2026-09-05
 progress:
   total_phases: 10
   completed_phases: 4
   total_plans: 20
-  completed_plans: 17
+  completed_plans: 18
   percent: 40
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-09-04)
 
 Phase: 05 (profession-resolution-trade-picker) — EXECUTING
 Next: Phase 4 (Employee Attachment & Spawn) — discuss or plan
-Plan: 5 of 7
+Plan: 6 of 7
 Last activity: 2026-09-05
 
 Progress: [███░░░░░░░] 30%
@@ -70,6 +70,7 @@ Progress: [███░░░░░░░] 30%
 | Phase 05 P02 | 15min | - tasks | - files |
 | Phase 05 P03 | 10min | 1 tasks | 1 files |
 | Phase 05 P04 | 20min | 2 tasks | 2 files |
+| Phase 05 P05 | 30min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -113,6 +114,9 @@ Relevant to current work:
 - [Phase ?]: [Phase 05 P03]: Hovering job-item render uses the render method's own packedLight (ambient) rather than LightTexture.FULL_BRIGHT, deliberately distinguishing it from the emissive embedded Soul Block
 - [Phase 05]: GameTest fully-socketed-altar setup sets heldJobItem/heldSoulBlock directly on the BE, continuing the 05-01 pattern that avoids the real openMenu packet a GameTest mock player cannot receive
 - [Phase 05]: MerchantOffer has no equals() override; roll-once content-comparison test compares ItemStack.matches on result/costA/costB plus maxUses/xp
+- [Phase ?]: employeeBound is set true only after EmployeeManager.bind returns successfully, inside the same atomic access().execute lambda, closing the double-confirm race and soft-lock risk
+- [Phase ?]: validateIndices/sanitizeName made public (not package-private) on ServerPayloadHandler so the cross-package GameTest suite can exercise the trust-boundary logic directly
+- [Phase ?]: sanitizeName strips only the literal section-sign character and control characters, not full 2-char vanilla formatting codes -- verified empirically via GameTest against the plan's literal regex spec
 
 ### Pending Todos
 
@@ -141,6 +145,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-09-05T01:46:52.234Z
-Stopped at: Completed 05-04-PLAN.md
+Last session: 2026-09-05T02:01:26.262Z
+Stopped at: Completed 05-05-PLAN.md
 Resume file: None

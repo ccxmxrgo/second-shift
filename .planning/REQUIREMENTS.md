@@ -27,7 +27,7 @@ Requirements for the first shippable version. Each maps to exactly one roadmap p
 - [x] **ALTAR-01**: The Soul Altar is a craftable block backed by a block entity
 - [x] **ALTAR-02**: Placing a vanilla job-site block on top of the altar sets the target profession for binding
 - [x] **ALTAR-03**: Inserting a Soul Block into an altar that has a job block on top opens the binding GUI
-- [ ] **ALTAR-04**: Completing a bind consumes the Soul Block and the job-site block into the altar and spawns the employee
+- [x] **ALTAR-04**: Completing a bind consumes the Soul Block and the job-site block into the altar and spawns the employee
 - [x] **ALTAR-05**: Each altar is bound to exactly one employee and persists that link across save/load
 - [ ] **ALTAR-06**: Destroying a bound altar consumes (does not drop) the Soul Block and job block, deals 1 damage to the breaking player only with no block or environment damage, and 0.5s later a cosmetic lightning strike (visual + thunder, no fire, no collateral damage) instakills the bound employee
 - [x] **ALTAR-07**: An unbound altar breaks normally and drops itself
@@ -58,10 +58,10 @@ Requirements for the first shippable version. Each maps to exactly one roadmap p
 
 - [x] **PICK-01**: The target profession is derived from the job-site block via the POI registry at runtime — no hardcoded list; modded professions supported
 - [x] **PICK-02**: Trade candidates for a tier are the profession's real vanilla `ItemListing` pool for that tier, materialized into concrete `MerchantOffer`s server-side
-- [ ] **PICK-03**: The picker shows all N candidates for the tier; the player selects exactly 2 (vanilla's per-tier count)
+- [x] **PICK-03**: The picker shows all N candidates for the tier; the player selects exactly 2 (vanilla's per-tier count)
 - [x] **PICK-04**: When a tier's pool has ≤ 2 trades, they are auto-selected and still displayed in the picker
 - [x] **PICK-05**: For librarian employees, each tier's candidate list includes exactly one freshly-rolled enchanted-book trade; enchantments are not separately enumerated
-- [ ] **PICK-06**: Chosen trades are persisted as concrete offers on the attachment and installed via `setOffers`; profession is always set before offers
+- [x] **PICK-06**: Chosen trades are persisted as concrete offers on the attachment and installed via `setOffers`; profession is always set before offers
 - [x] **PICK-07**: The binding GUI has a name field pre-filled with a generated default; the final value is applied as the employee's visible custom name
 - [x] **PICK-08**: A job block that maps to no profession, or a profession with an empty tier pool, is handled with a themed message and no crash
 
@@ -82,7 +82,7 @@ Requirements for the first shippable version. Each maps to exactly one roadmap p
 ### GUI / Menu
 
 - [x] **GUI-01**: The altar `MenuType` + `Screen` are registered correctly and an (initially empty) altar screen opens under `runClient` without crashing — proven before any trade logic is built
-- [ ] **GUI-02**: The menu is server-authoritative; client-sent selections (trade indices, name) are re-validated server-side against the server's own candidate list and altar proximity
+- [x] **GUI-02**: The menu is server-authoritative; client-sent selections (trade indices, name) are re-validated server-side against the server's own candidate list and altar proximity
 - [x] **GUI-03**: The altar GUI shows the bound employee's name, profession, current tier, already-chosen trades, and happiness state
 
 ### Polish
@@ -161,17 +161,17 @@ Which phases cover which requirements. Populated during roadmap creation (2026-0
 | EMP-08 | Phase 4 | Complete |
 | EMP-09 | Phase 4 | Complete |
 | ALTAR-02 | Phase 5 | Complete |
-| ALTAR-04 | Phase 5 | Pending |
+| ALTAR-04 | Phase 5 | Complete |
 | ALTAR-05 | Phase 5 | Complete |
 | PICK-01 | Phase 5 | Complete |
 | PICK-02 | Phase 5 | Complete |
-| PICK-03 | Phase 5 | Pending |
+| PICK-03 | Phase 5 | Complete |
 | PICK-04 | Phase 5 | Complete |
 | PICK-05 | Phase 5 | Complete |
-| PICK-06 | Phase 5 | Pending |
+| PICK-06 | Phase 5 | Complete |
 | PICK-07 | Phase 5 | Complete |
 | PICK-08 | Phase 5 | Complete |
-| GUI-02 | Phase 5 | Pending |
+| GUI-02 | Phase 5 | Complete |
 | GUI-03 | Phase 5 | Complete |
 | EMP-03 | Phase 6 | Pending |
 | EMP-04 | Phase 6 | Pending |
