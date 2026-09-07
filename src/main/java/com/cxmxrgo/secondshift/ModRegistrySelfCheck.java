@@ -69,8 +69,6 @@ public final class ModRegistrySelfCheck {
             "advancement.secondshift.soul_mason.description",
             "container.secondshift.binding_altar",
             "gui.secondshift.binding_altar.confirm",
-            "gui.secondshift.binding_altar.name_label",
-            "gui.secondshift.binding_altar.trade_locked",
             "message.secondshift.altar.no_job_block",
             "message.secondshift.altar.not_a_workstation",
             "message.secondshift.altar.no_soul_block",

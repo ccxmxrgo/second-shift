@@ -1,59 +1,73 @@
 package com.cxmxrgo.secondshift.menu;
 
 import com.cxmxrgo.secondshift.content.blockentity.SoulAltarBlockEntity;
+import com.cxmxrgo.secondshift.employee.EmployeeManager;
 import com.cxmxrgo.secondshift.employee.EmployeeNames;
 import com.cxmxrgo.secondshift.registry.ModBlocks;
 import com.cxmxrgo.secondshift.registry.ModMenus;
 import com.cxmxrgo.secondshift.trade.ProfessionResolver;
 import com.cxmxrgo.secondshift.trade.TradePoolCache;
+import com.mojang.logging.LogUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.trading.MerchantOffer;
+import net.minecraft.world.item.trading.MerchantOffers;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import org.slf4j.Logger;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
- * Binding Altar container menu (D-05 / D-06 / D-16 / GUI-01) — the load-bearing half of the HARD
- * GATE. Owns the player inventory plus the altar's single display-only {@link SoulSlot}, and is
- * the {@code AbstractContainerMenu} the prior draft's unregistered {@code MenuType} crashed
- * before this ever compiled.
+ * Binding Altar container menu — round-10 redesign (2026-09-08).
  *
- * <p>No trade/employee data, no shift-click routing (D-06) — those arrive in later phases. The
- * {@code owningPlayer} field is stored now for Plan 02 Task 3's D-12 forced-close messaging; not
- * used yet. Named distinctly from {@link #stillValid(Player)}'s {@code player} parameter so the
- * two are never ambiguous within the same scope (WR-01).
+ * <p><b>Why this exists:</b> rounds 6-9 built a fully custom {@code Screen} subclass with a
+ * hand-generated background texture and hand-computed pixel coordinates for every element. Every
+ * one of those rounds shipped a real, distinct bug (a title/button collision, a Java
+ * constructor-init-order gotcha with {@code inventoryLabelY}, coordinate math that didn't account
+ * for actual rendered proportions) despite each fix being individually verified. The custom-layout
+ * approach was the common thread across all of them.
+ *
+ * <p>This redesign eliminates that entire class of risk by extending {@link ChestMenu} directly —
+ * the exact same menu class every vanilla chest, barrel, and shulker box uses — and binding it to
+ * vanilla's own {@code ContainerScreen} (see {@code ClientModBusEvents}). Zero custom rendering
+ * code, zero custom texture, zero hand-computed pixel coordinates. The materialized trade
+ * candidates are shown as real items in slots 0..N-1 (via {@link BindingAltarContainer}), selection
+ * is toggled by clicking a candidate slot (shown via an enchantment-glint overlay — a real vanilla
+ * per-item visual, not custom-drawn), and confirming is a click on the dedicated
+ * {@link BindingAltarContainer#CONFIRM_SLOT}. All of this happens inside {@link #clicked}, which
+ * runs via vanilla's own server-authoritative slot-click protocol
+ * ({@code ServerboundContainerClickPacket}) — the same mechanism every container in the game
+ * already uses securely, which is also why the {@code SelectTradesPayload}/{@code
+ * ServerPayloadHandler} network layer and its index-validation logic (the exact code that caused
+ * Bug D) no longer exist: there is no client-supplied index list to validate anymore.
+ *
+ * <p>The name field is still removed (per round-6's decision, D-03 superseded in 05-CONTEXT.md) —
+ * the employee always gets its {@link EmployeeNames}-pool-generated default name. GUI-03's
+ * "shows profession" requirement is satisfied via the container's title (see
+ * {@link SoulAltarBlockEntity#getDisplayName()}), computed once at menu-open time from the
+ * socketed job item — no custom text rendering needed.
  */
-public class BindingAltarMenu extends AbstractContainerMenu {
+public class BindingAltarMenu extends ChestMenu {
 
-    /**
-     * Round-8 UI redesign (2026-09-08): slot and trade-row coordinates now come DIRECTLY from
-     * decompiled vanilla {@code EnchantmentMenu}/{@code EnchantmentScreen} source (extracted from
-     * this project's own NeoFormRuntime cache) rather than guessed values — the exact bug class
-     * that caused rounds 6-7's overlaps. Vanilla's enchanting table places its input-item slot at
-     * (15,47) and its lapis slot at (35,47); {@code BindingAltarScreen} places its 3 trade-row
-     * sprites at x=60, y=14/33/52 (108x19 each) — the same real numbers used here for the Soul
-     * Block / profession-item sockets and the trade list, so this layout is proven-correct by
-     * construction rather than approximated. The canvas is taller than vanilla's 176x166 (see
-     * {@code BindingAltarScreen} for the exact height math) to fit the Confirm button and
-     * profession/Happiness labels BELOW this vanilla-derived top section, before the also-untouched
-     * vanilla-relative-position inventory grid.
-     */
-    public static final int SOUL_SLOT_X = 15;
-    public static final int SOUL_SLOT_Y = 47;
-    public static final int JOB_SLOT_X = 35;
-    public static final int JOB_SLOT_Y = 47;
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     private final ContainerLevelAccess access;
-    private final Player owningPlayer;
+    private final BindingAltarContainer altarContainer;
 
     /** D-12: guards forced-close messaging so a menu that fails {@code stillValid} across
      * multiple ticks (before the client processes the close packet) sends exactly one
@@ -72,86 +86,161 @@ public class BindingAltarMenu extends AbstractContainerMenu {
 
     /** Core ctor — both client and server ultimately land here. */
     public BindingAltarMenu(int containerId, Inventory playerInv, ContainerLevelAccess access, BlockPos pos) {
-        super(ModMenus.BINDING_ALTAR.get(), containerId);
+        super(ModMenus.BINDING_ALTAR.get(), containerId, playerInv,
+                resolveContainer(playerInv, access, pos), BindingAltarContainer.ROWS);
         this.access = access;
-        this.owningPlayer = playerInv.player;
-
-        AltarSoulContainer soulContainer = new AltarSoulContainer(playerInv.player.level(), pos);
-        this.addSlot(new SoulSlot(soulContainer, 0, SOUL_SLOT_X, SOUL_SLOT_Y));
-
-        AltarJobItemContainer jobContainer = new AltarJobItemContainer(playerInv.player.level(), pos);
-        this.addSlot(new SoulSlot(jobContainer, 0, JOB_SLOT_X, JOB_SLOT_Y));
-
-        // Round-8: shifted down to clear the Confirm button + profession/Happiness labels that
-        // sit below the vanilla-derived slot/trade-row section (see BindingAltarScreen for the
-        // exact height math — row1=135, hotbar=193).
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                this.addSlot(new net.minecraft.world.inventory.Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 135 + row * 18));
-            }
-        }
-        for (int col = 0; col < 9; col++) {
-            this.addSlot(new net.minecraft.world.inventory.Slot(playerInv, col, 8 + col * 18, 193));
-        }
-
-        // Plan 05-04 (PICK-02/04/07/08): one-time tier-1 candidate + default-name materialization.
-        // Only the server-side branch ever rolls or reads real candidate data (threat T-05-06) —
-        // the client-side menu construction never sees the BE at all in this code path.
-        if (!playerInv.player.level().isClientSide()
-                && playerInv.player.level().getBlockEntity(pos) instanceof SoulAltarBlockEntity be
-                && !be.isEmployeeBound() && be.bothSocketsFilled() && !be.candidatesRolled()) {
-            Optional<VillagerProfession> profession = ProfessionResolver.fromItem(be.getHeldJobItem());
-            if (profession.isPresent() && playerInv.player.level() instanceof ServerLevel serverLevel) {
-                be.setCandidateOffers(TradePoolCache.rollTier1Candidates(serverLevel, pos, profession.get()));
-                be.setDefaultName(EmployeeNames.pickRandom(serverLevel.getRandom()));
-            } else {
-                // Defensive — should be unreachable given bothSocketsFilled implies a valid job
-                // item was accepted at socket time. Still flips candidatesRolled() true so this
-                // branch does not re-attempt on every reopen.
-                be.setCandidateOffers(List.of());
-            }
-        }
+        this.altarContainer = (BindingAltarContainer) this.getContainer();
     }
 
     /**
-     * Plan 05-04 (GUI-03): re-resolves the block entity fresh on every call, mirroring {@code
-     * AltarSoulContainer}'s "no caching" pattern — never caches the BE reference across calls.
+     * Resolves (and, server-side only, rolls-once-and-persists — PICK-02/04/07/08, mirroring
+     * Plan 05-04's original one-time materialization) the candidate trade pool, then builds the
+     * backing {@link BindingAltarContainer}.
+     *
+     * <p>On the CLIENT, this always returns an empty-candidates container purely for correct
+     * sizing — vanilla's own container-sync protocol ({@code ClientboundContainerSetContentPacket})
+     * fills in the real item stacks immediately after open, exactly like any vanilla chest. The
+     * client's own local candidate list is never used for anything authoritative.
      */
-    private SoulAltarBlockEntity resolveBlockEntity() {
-        return this.access.evaluate((level, pos) ->
-                level.getBlockEntity(pos) instanceof SoulAltarBlockEntity be ? be : null).orElse(null);
-    }
+    private static BindingAltarContainer resolveContainer(Inventory playerInv, ContainerLevelAccess access, BlockPos pos) {
+        List<MerchantOffer> candidates = List.of();
+        Level level = playerInv.player.level();
 
-    /** The materialized tier-1 candidate offers, or an empty list if not yet rolled/unresolvable. */
-    public List<MerchantOffer> getCandidateOffers() {
-        SoulAltarBlockEntity be = resolveBlockEntity();
-        return be == null ? List.of() : be.getCandidateOffers();
-    }
-
-    /** {@code true} when the tier-1 pool has 2 or fewer candidates (auto-lock, still shows all). */
-    public boolean isAutoLocked() {
-        return getCandidateOffers().size() <= 2;
-    }
-
-    /** The profession resolved from the altar's socketed job item, or empty if unresolvable. */
-    public Optional<VillagerProfession> getProfession() {
-        SoulAltarBlockEntity be = resolveBlockEntity();
-        return be == null ? Optional.empty() : ProfessionResolver.fromItem(be.getHeldJobItem());
-    }
-
-    /** Always 1 this phase; PROG-04's tier advancement is Phase 7. */
-    public int getTier() {
-        return 1;
-    }
-
-    /** The generated default employee name, or {@code ""} if unresolvable/not yet rolled. */
-    public String getDefaultName() {
-        SoulAltarBlockEntity be = resolveBlockEntity();
-        if (be == null) {
-            return "";
+        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof SoulAltarBlockEntity be
+                && !be.isEmployeeBound() && be.bothSocketsFilled()) {
+            if (!be.candidatesRolled()) {
+                Optional<VillagerProfession> profession = ProfessionResolver.fromItem(be.getHeldJobItem());
+                if (profession.isPresent() && level instanceof ServerLevel serverLevel) {
+                    be.setCandidateOffers(TradePoolCache.rollTier1Candidates(serverLevel, pos, profession.get()));
+                    be.setDefaultName(EmployeeNames.pickRandom(serverLevel.getRandom()));
+                } else {
+                    // Defensive — should be unreachable given bothSocketsFilled implies a valid
+                    // job item was accepted at socket time.
+                    be.setCandidateOffers(List.of());
+                }
+            }
+            candidates = be.getCandidateOffers();
         }
-        String name = be.getDefaultName();
-        return name == null ? "" : name;
+
+        Set<Integer> selected = new LinkedHashSet<>();
+        if (candidates.size() <= 2) {
+            // PICK-04 auto-lock: pre-select (and, via the clicked() guard below, freeze) every
+            // candidate when the pool is too small to require a real choice.
+            for (int i = 0; i < candidates.size(); i++) {
+                selected.add(i);
+            }
+        }
+        return new BindingAltarContainer(candidates, selected);
+    }
+
+    /**
+     * Vanilla's own server-authoritative slot-click entry point (fires from
+     * {@code ServerboundContainerClickPacket} — the same mechanism every container in the game
+     * already uses). Candidate slots (0..N-1) toggle selection; {@link
+     * BindingAltarContainer#CONFIRM_SLOT} attempts the bind; everything else (the player's own
+     * inventory, added by {@link ChestMenu}'s constructor at indices &gt;= {@link
+     * BindingAltarContainer#SIZE}) falls through to vanilla's default behavior.
+     */
+    @Override
+    public void clicked(int slotId, int button, ClickType clickType, Player player) {
+        List<MerchantOffer> candidates = altarContainer.getCandidates();
+        Set<Integer> selected = altarContainer.getSelected();
+        boolean autoLocked = candidates.size() <= 2;
+
+        if (slotId >= 0 && slotId < candidates.size()) {
+            if (autoLocked) {
+                return; // pre-selected and frozen — no-op click, matches D-04's "no-op, don't
+                        // disable-gray-out" tone for locked state.
+            }
+            if (selected.contains(slotId)) {
+                selected.remove(slotId);
+            } else if (selected.size() < 2) {
+                selected.add(slotId);
+            } else if (player instanceof ServerPlayer sp) {
+                sp.displayClientMessage(Component.translatable("message.secondshift.altar.select_exactly_two"), true);
+            }
+            return;
+        }
+
+        if (slotId == BindingAltarContainer.CONFIRM_SLOT) {
+            if (player instanceof ServerPlayer sp) {
+                attemptBind(sp, candidates, selected, autoLocked);
+            }
+            return;
+        }
+
+        super.clicked(slotId, button, clickType, player);
+    }
+
+    /**
+     * The bind attempt — runs entirely server-side (only ever called with a {@link ServerPlayer}).
+     * Preserves every safety property from the prior {@code ServerPayloadHandler} implementation:
+     * the atomic occupancy guard first, consume-both-sockets-before-bind, {@code employeeBound} set
+     * ONLY after a successful {@link EmployeeManager#bind} call (never before — a bind failure with
+     * the flag already set would permanently soft-lock the altar), and a caught/logged failure path
+     * that leaves the altar in a recoverable (if item-losing) state rather than crashing.
+     */
+    private void attemptBind(ServerPlayer sp, List<MerchantOffer> candidates, Set<Integer> selected, boolean autoLocked) {
+        if (!autoLocked && selected.size() != 2) {
+            sp.displayClientMessage(Component.translatable("message.secondshift.altar.select_exactly_two"), true);
+            return;
+        }
+        if (!stillValid(sp)) {
+            return;
+        }
+
+        access.execute((level, pos) -> {
+            if (!(level.getBlockEntity(pos) instanceof SoulAltarBlockEntity be)) {
+                return; // altar gone
+            }
+            if (be.isEmployeeBound()) {
+                return; // T-05-11: atomic occupancy guard, before any other check
+            }
+            if (be.isEmpty() || be.isJobItemEmpty()) {
+                return; // nothing to bind, or a prior rapid confirm already consumed it
+            }
+
+            MerchantOffers chosen = new MerchantOffers();
+            for (int i : selected) {
+                chosen.add(candidates.get(i));
+            }
+
+            Optional<VillagerProfession> profession = ProfessionResolver.fromItem(be.getHeldJobItem());
+            if (profession.isEmpty()) {
+                return; // defensive — should be unreachable
+            }
+            String name = be.getDefaultName() == null ? "Employee" : be.getDefaultName();
+
+            // Consume both sockets BEFORE calling bind. The sockets are consumed regardless of
+            // bind's eventual outcome; there is no repair mechanic for a partially-applied bind,
+            // so a bind failure is handled by explicit logging below, not by attempting to
+            // restore the already-consumed items.
+            be.setHeldSoulBlock(ItemStack.EMPTY);
+            be.setHeldJobItem(ItemStack.EMPTY);
+            be.setChanged();
+            level.sendBlockUpdated(pos, level.getBlockState(pos), level.getBlockState(pos), Block.UPDATE_ALL);
+
+            if (level instanceof ServerLevel serverLevel) {
+                try {
+                    EmployeeManager.bind(serverLevel, pos, profession.get(), chosen, name);
+                    // Set employeeBound only AFTER a successful bind, inside this same atomic
+                    // lambda — never before (see class javadoc).
+                    be.setEmployeeBound(true);
+                    be.setChanged();
+                    level.sendBlockUpdated(pos, level.getBlockState(pos), level.getBlockState(pos), Block.UPDATE_ALL);
+                    sp.closeContainer();
+                } catch (Exception e) {
+                    LOGGER.error("EmployeeManager.bind failed for altar at {} — sockets already consumed, "
+                            + "no employee spawned, employeeBound left false", pos, e);
+                }
+            }
+        });
+    }
+
+    /** Read-only container — no shift-click routing in either direction (D-06). */
+    @Override
+    public ItemStack quickMoveStack(Player player, int index) {
+        return ItemStack.EMPTY;
     }
 
     /**
@@ -178,9 +267,34 @@ public class BindingAltarMenu extends AbstractContainerMenu {
         return valid;
     }
 
-    @Override
-    public ItemStack quickMoveStack(Player player, int index) {
-        return ItemStack.EMPTY; // display-only slot, no shift-click routing needed (D-06)
+    // --- GUI-03 / test-facing accessors (kept for GameTest compatibility and API parity) ---
+
+    /** The materialized tier-1 candidate offers, or an empty list if not yet rolled/unresolvable. */
+    public List<MerchantOffer> getCandidateOffers() {
+        return altarContainer.getCandidates();
+    }
+
+    /** {@code true} when the tier-1 pool has 2 or fewer candidates (auto-lock, still shows all). */
+    public boolean isAutoLocked() {
+        return altarContainer.getCandidates().size() <= 2;
+    }
+
+    /** The currently-selected candidate indices (mutable live view — do not cache). */
+    public Set<Integer> getSelectedIndices() {
+        return altarContainer.getSelected();
+    }
+
+    /** The profession resolved from the altar's socketed job item, or empty if unresolvable. */
+    public Optional<VillagerProfession> getProfession() {
+        return this.access.evaluate((level, pos) ->
+                level.getBlockEntity(pos) instanceof SoulAltarBlockEntity be
+                        ? ProfessionResolver.fromItem(be.getHeldJobItem())
+                        : Optional.<VillagerProfession>empty()).orElse(Optional.empty());
+    }
+
+    /** Always 1 this phase; PROG-04's tier advancement is Phase 7. */
+    public int getTier() {
+        return 1;
     }
 
     /**

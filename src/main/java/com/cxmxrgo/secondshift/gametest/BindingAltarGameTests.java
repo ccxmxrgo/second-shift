@@ -271,6 +271,13 @@ public final class BindingAltarGameTests {
         helper.succeed();
     }
 
+    /**
+     * Round-10 note: {@link BindingAltarMenu} snapshots its candidate list from the block entity
+     * once, at construction time (required by {@code ChestMenu}'s fixed slot layout — slots can't
+     * be added/removed after the menu exists). So unlike the pre-round-10 design,
+     * {@code isAutoLocked()} no longer tracks later BE mutations against an already-open menu;
+     * this test now constructs one fresh menu per candidate-count state instead.
+     */
     @GameTest(template = "empty")
     public static void binding_altar_isautolocked_reflects_candidate_count(GameTestHelper helper) {
         helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());
@@ -280,18 +287,19 @@ public final class BindingAltarGameTests {
         ServerPlayer player = helper.makeMockServerPlayerInLevel();
         player.teleportTo(absAltarPos.getX() + 0.5D, absAltarPos.getY(), absAltarPos.getZ() + 0.5D);
 
-        BindingAltarMenu menu = new BindingAltarMenu(0, player.getInventory(),
-                ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
-
         MerchantOffer offerA = new MerchantOffer(new ItemCost(Items.EMERALD), new ItemStack(Items.BREAD), 1, 1, 0.05F);
         MerchantOffer offerB = new MerchantOffer(new ItemCost(Items.EMERALD), new ItemStack(Items.PAPER), 1, 1, 0.05F);
         MerchantOffer offerC = new MerchantOffer(new ItemCost(Items.EMERALD), new ItemStack(Items.BOOK), 1, 1, 0.05F);
 
         be.setCandidateOffers(List.of(offerA, offerB));
-        helper.assertTrue(menu.isAutoLocked(), "a 2-candidate pool must be reported as auto-locked");
+        BindingAltarMenu twoCandidateMenu = new BindingAltarMenu(0, player.getInventory(),
+                ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
+        helper.assertTrue(twoCandidateMenu.isAutoLocked(), "a 2-candidate pool must be reported as auto-locked");
 
         be.setCandidateOffers(List.of(offerA, offerB, offerC));
-        helper.assertTrue(!menu.isAutoLocked(), "a 3-candidate pool must not be reported as auto-locked");
+        BindingAltarMenu threeCandidateMenu = new BindingAltarMenu(1, player.getInventory(),
+                ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
+        helper.assertTrue(!threeCandidateMenu.isAutoLocked(), "a 3-candidate pool must not be reported as auto-locked");
         helper.succeed();
     }
 
