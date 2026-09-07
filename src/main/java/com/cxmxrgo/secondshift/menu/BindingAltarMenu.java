@@ -35,22 +35,22 @@ import java.util.Optional;
 public class BindingAltarMenu extends AbstractContainerMenu {
 
     /**
-     * Round-6 UI redesign (2026-09-07, per user-provided mockup): Confirm button now sits at the
-     * very top of the screen, the Soul Block + profession-item sockets sit side by side below it,
-     * the scrollable trade list sits to the right of those two sockets at the same height, and the
-     * profession name / Happiness placeholder sit in the narrow column directly under the two
-     * sockets. These constants are the single source of truth shared with {@code
-     * BindingAltarScreen} so the two files never drift out of sync again (the exact bug this
-     * comment replaces — see the prior INVENTORY_Y_SHIFT-only approach's git history).
+     * Round-7 UI redesign (2026-09-07): canvas reverted to the vanilla-standard 176x166 size (the
+     * exact same dimensions as the Enchanting Table / Furnace / Crafting Table screens, used here
+     * as a known-good reference after round 6's custom 176x172 canvas produced overlapping text
+     * and a Confirm button that collided with the vanilla title label). The player-inventory
+     * portion is now the UNMODIFIED vanilla-default layout (label y=72 — {@code
+     * AbstractContainerScreen}'s own default for a 166-tall screen, row1=84, row2=102, row3=120,
+     * hotbar=142) — no shifting at all. All custom content (Confirm button, the two sockets, the
+     * trade list, profession/Happiness labels) is budgeted into the fixed y=17..82 band ABOVE that
+     * untouched vanilla section, the same real estate the Enchanting Table itself uses for its
+     * slot + lapis/level display. These constants are the single source of truth shared with
+     * {@code BindingAltarScreen} so the two files never drift out of sync again.
      */
     public static final int SOUL_SLOT_X = 8;
-    public static final int SOUL_SLOT_Y = 32;
+    public static final int SOUL_SLOT_Y = 41;
     public static final int JOB_SLOT_X = 30;
-    public static final int JOB_SLOT_Y = 32;
-    public static final int INVENTORY_LABEL_Y = 76;
-    public static final int INVENTORY_ROW1_Y = 86;
-    public static final int INVENTORY_ROW_HEIGHT = 18;
-    public static final int INVENTORY_HOTBAR_Y = 144;
+    public static final int JOB_SLOT_Y = 41;
 
     private final ContainerLevelAccess access;
     private final Player owningPlayer;
@@ -82,13 +82,14 @@ public class BindingAltarMenu extends AbstractContainerMenu {
         AltarJobItemContainer jobContainer = new AltarJobItemContainer(playerInv.player.level(), pos);
         this.addSlot(new SoulSlot(jobContainer, 0, JOB_SLOT_X, JOB_SLOT_Y));
 
+        // Round-7: unmodified vanilla-standard positions (176x166 canvas) — no shift.
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                this.addSlot(new net.minecraft.world.inventory.Slot(playerInv, col + row * 9 + 9, 8 + col * 18, INVENTORY_ROW1_Y + row * INVENTORY_ROW_HEIGHT));
+                this.addSlot(new net.minecraft.world.inventory.Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
             }
         }
         for (int col = 0; col < 9; col++) {
-            this.addSlot(new net.minecraft.world.inventory.Slot(playerInv, col, 8 + col * 18, INVENTORY_HOTBAR_Y));
+            this.addSlot(new net.minecraft.world.inventory.Slot(playerInv, col, 8 + col * 18, 142));
         }
 
         // Plan 05-04 (PICK-02/04/07/08): one-time tier-1 candidate + default-name materialization.
