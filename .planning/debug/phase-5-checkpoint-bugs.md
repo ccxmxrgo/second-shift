@@ -5,6 +5,31 @@ created: 2026-09-05
 updated: 2026-09-05
 ---
 
+## Human Re-Verification (2026-09-07, round 5 — E-key bug)
+
+User reported (after round 4's fixes) that pressing "E" while typing in the name field closes the
+Binding Altar screen entirely, making it impossible to type a name containing that letter.
+
+**Root cause (high confidence, standard vanilla gotcha):** `BindingAltarScreen` never overrode
+`keyPressed`. `AbstractContainerScreen#keyPressed`'s default behavior: call `super.keyPressed`
+(delegates to the focused widget) first; if unconsumed, check whether the raw key matches the
+`keyInventory` keybind (E by default) and close the container if so. A vanilla `EditBox` only
+consumes *special* keys in `keyPressed` (backspace, arrows, ctrl+combos) — a plain alphanumeric key
+like 'E' is handled separately via `charTyped`, so `EditBox#keyPressed` returns `false` for it. That
+means the unconsumed 'E' keypress fell through to the inventory-close check every time, regardless
+of focus.
+
+**Fix:** Added a `keyPressed` override to `BindingAltarScreen` that checks
+`nameBox.isFocused() && nameBox.canConsumeInput()` (vanilla's own purpose-built method for exactly
+this situation) and unconditionally reports the key as consumed while the field has focus, before
+`super.keyPressed`'s inventory-close check ever runs. Verified via `./gradlew compileJava` (clean,
+including a forced `clean compileJava`) and `./gradlew runGameTestServer` (43/43, no regression —
+this is a client-input-only fix with no server-observable behavior, so no new GameTest was
+possible/needed for it specifically).
+
+**Not yet re-verified in a real client** (this fix was applied without further debug-session
+delegation — direct, high-confidence fix given time/budget constraints raised by the user).
+
 ## Human Re-Verification (2026-09-05, round 3 result)
 
 User confirmed round 3's UI fix WORKS — screenshot shows the inventory grid, Confirm button, and

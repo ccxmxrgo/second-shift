@@ -93,6 +93,30 @@ public class BindingAltarScreen extends AbstractContainerScreen<BindingAltarMenu
                 .build());
     }
 
+    /**
+     * Fixes the "pressing E closes the screen while typing a name" bug: {@code
+     * AbstractContainerScreen#keyPressed} closes the container whenever the raw keypress matches
+     * the {@code keyInventory} keybind (E by default) and no focused widget already consumed the
+     * event. A vanilla {@link EditBox} does NOT consume plain alphanumeric keys in {@code
+     * keyPressed} (those go through the separate {@code charTyped} callback) — only special keys
+     * (backspace, arrows, ctrl+combos) — so typing a bare "e" while the name field is focused fell
+     * through to the container-close check. {@link EditBox#canConsumeInput()} is vanilla's own
+     * purpose-built escape hatch for exactly this case (used by vanilla's own text-entry screens):
+     * it reports true whenever the box is active/focused/visible, regardless of which specific key
+     * was pressed, so we can unconditionally swallow the keypress while the name field has focus.
+     */
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (this.nameBox != null && this.nameBox.isFocused() && this.nameBox.canConsumeInput()) {
+            // Let the box handle special keys itself (backspace, arrows, ctrl+combos); regardless
+            // of its own return value, we ALWAYS report the key as consumed here so the
+            // container-close keybind check in super.keyPressed never runs while typing.
+            this.nameBox.keyPressed(keyCode, scanCode, modifiers);
+            return true;
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
     @Override
     protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
         guiGraphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
