@@ -74,13 +74,16 @@ public class BindingAltarScreen extends AbstractContainerScreen<BindingAltarMenu
 
     public BindingAltarScreen(BindingAltarMenu menu, Inventory playerInv, Component title) {
         super(menu, playerInv, title);
-        // Round-8: 176 wide (vanilla-standard, matches the enchanting table's own trade-row
-        // bounding box). Height=217 is exactly sized so AbstractContainerScreen's own default
-        // inventoryLabelY formula (imageHeight - 94 = 123) lines up with BindingAltarMenu's
-        // shifted inventory grid (row1=135 = 123 + 12, matching vanilla's label-to-row1 gap) —
-        // no manual inventoryLabelY override needed.
         this.imageWidth = 176;
         this.imageHeight = 217;
+        // BUG FIX (round 9): AbstractContainerScreen's constructor sets
+        // `this.inventoryLabelY = this.imageHeight - 94` using the DEFAULT field value (166) —
+        // that line runs during the super(...) call above, BEFORE this constructor body reaches
+        // the imageHeight=217 assignment. The formula's result (72) is therefore permanently
+        // stale and never reflects our taller canvas, no matter what imageHeight is set to
+        // afterward. Must be set explicitly here, every time imageHeight deviates from vanilla's
+        // 166 default. 123 = 12px above row1 (135), matching vanilla's own label-to-row1 gap.
+        this.inventoryLabelY = 123;
     }
 
     @Override
