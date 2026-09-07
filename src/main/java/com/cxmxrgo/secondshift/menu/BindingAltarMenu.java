@@ -34,11 +34,23 @@ import java.util.Optional;
  */
 public class BindingAltarMenu extends AbstractContainerMenu {
 
-    /** Bug A fix (Phase 5 checkpoint) — see slot-placement loop below for rationale. Also
-     * referenced by {@code BindingAltarScreen} for the inventory label and the trade-list/Confirm
-     * button placement, so both stay derived from one source of truth instead of hand-duplicated
-     * magic numbers drifting apart again. */
-    public static final int INVENTORY_Y_SHIFT = 56;
+    /**
+     * Round-6 UI redesign (2026-09-07, per user-provided mockup): Confirm button now sits at the
+     * very top of the screen, the Soul Block + profession-item sockets sit side by side below it,
+     * the scrollable trade list sits to the right of those two sockets at the same height, and the
+     * profession name / Happiness placeholder sit in the narrow column directly under the two
+     * sockets. These constants are the single source of truth shared with {@code
+     * BindingAltarScreen} so the two files never drift out of sync again (the exact bug this
+     * comment replaces — see the prior INVENTORY_Y_SHIFT-only approach's git history).
+     */
+    public static final int SOUL_SLOT_X = 8;
+    public static final int SOUL_SLOT_Y = 32;
+    public static final int JOB_SLOT_X = 30;
+    public static final int JOB_SLOT_Y = 32;
+    public static final int INVENTORY_LABEL_Y = 76;
+    public static final int INVENTORY_ROW1_Y = 86;
+    public static final int INVENTORY_ROW_HEIGHT = 18;
+    public static final int INVENTORY_HOTBAR_Y = 144;
 
     private final ContainerLevelAccess access;
     private final Player owningPlayer;
@@ -64,21 +76,19 @@ public class BindingAltarMenu extends AbstractContainerMenu {
         this.access = access;
         this.owningPlayer = playerInv.player;
 
-        AltarSoulContainer container = new AltarSoulContainer(playerInv.player.level(), pos);
-        this.addSlot(new SoulSlot(container, 0, 80, 35));
+        AltarSoulContainer soulContainer = new AltarSoulContainer(playerInv.player.level(), pos);
+        this.addSlot(new SoulSlot(soulContainer, 0, SOUL_SLOT_X, SOUL_SLOT_Y));
 
-        // Bug A fix (Phase 5 checkpoint): shifted down by INVENTORY_Y_SHIFT (56px — exactly the
-        // amount 05-UI-SPEC.md's imageHeight grew, 166 -> 222) so the 3x9 grid + hotbar sit below
-        // the new trade-candidate list (local y 40-100) and Confirm button (local y 106-126)
-        // instead of overlapping them. Bottom-aligns flush with the 222px canvas: hotbar y=198,
-        // +18 slot height, +6 bottom margin = 222, matching the original layout's own margins.
+        AltarJobItemContainer jobContainer = new AltarJobItemContainer(playerInv.player.level(), pos);
+        this.addSlot(new SoulSlot(jobContainer, 0, JOB_SLOT_X, JOB_SLOT_Y));
+
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                this.addSlot(new net.minecraft.world.inventory.Slot(playerInv, col + row * 9 + 9, 8 + col * 18, INVENTORY_Y_SHIFT + 84 + row * 18));
+                this.addSlot(new net.minecraft.world.inventory.Slot(playerInv, col + row * 9 + 9, 8 + col * 18, INVENTORY_ROW1_Y + row * INVENTORY_ROW_HEIGHT));
             }
         }
         for (int col = 0; col < 9; col++) {
-            this.addSlot(new net.minecraft.world.inventory.Slot(playerInv, col, 8 + col * 18, INVENTORY_Y_SHIFT + 142));
+            this.addSlot(new net.minecraft.world.inventory.Slot(playerInv, col, 8 + col * 18, INVENTORY_HOTBAR_Y));
         }
 
         // Plan 05-04 (PICK-02/04/07/08): one-time tier-1 candidate + default-name materialization.
