@@ -8,6 +8,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.trading.MerchantOffer;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -20,12 +21,27 @@ import java.util.Set;
  * is a fixed "Confirm Hire" indicator item — clicking it (handled in
  * {@link BindingAltarMenu#clicked}) triggers the bind. All other slots are empty.
  *
- * <p>Read-only: {@link #removeItem}/{@link #removeItemNoUpdate}/{@link #setItem} are all no-ops —
- * nothing in this container can ever leave via drag/shift-click/hopper. Selection and confirmation
- * both happen exclusively through {@link BindingAltarMenu#clicked}, which runs via vanilla's own
- * server-authoritative slot-click protocol ({@code ServerboundContainerClickPacket}) — there is no
- * client-supplied index list to bounds-check anymore, eliminating the entire class of trust-boundary
- * bug the prior custom-payload design required (05-RESEARCH.md Finding 3 / Bug D).
+ * <p><b>Round-10 checkpoint fix (real-playtest regression, 2026-09-08):</b> the first version of
+ * this class computed every slot's display stack on the fly inside {@code getItem()} and made
+ * {@code setItem()} a no-op on the theory that the container was "read-only". That broke the
+ * client screen entirely: vanilla syncs a freshly-opened menu to the client via
+ * {@code ClientboundContainerSetContentPacket}, which works by calling {@code setItem()} on the
+ * CLIENT's own (separately-constructed, always-empty-candidates) container instance to apply the
+ * server's authoritative stacks — exactly like any real chest's backing {@code SimpleContainer}.
+ * A no-op {@code setItem()} silently discarded every synced candidate stack, so only the Confirm
+ * emerald (built directly, unconditionally, inside the old {@code getItem()}) ever rendered.
+ *
+ * <p>This version instead behaves like a normal mutable item-array container — {@code setItem()}
+ * actually stores the stack, {@code getItem()} just reads it back — with display stacks
+ * pre-computed once at construction (candidates) or on demand via {@link
+ * #refreshCandidateDisplay} (selection toggles, called from {@link BindingAltarMenu#clicked}).
+ * That mutation is picked up automatically by vanilla's own per-tick {@code
+ * AbstractContainerMenu#broadcastChanges()} and synced to the client, the same mechanism every
+ * other container-mutating menu (anvils, beacons, looms) already relies on. Extraction/insertion
+ * from this container is never legally reachable — {@link BindingAltarMenu#clicked} intercepts
+ * every one of its slot indices before falling through to vanilla's default pickup/place logic —
+ * so {@link #removeItem}/{@link #removeItemNoUpdate} are trivial stubs, not because the container
+ * can't hold real state, but because nothing is ever allowed to ask it to give an item up.
  */
 public final class BindingAltarContainer implements Container {
 
@@ -35,10 +51,38 @@ public final class BindingAltarContainer implements Container {
 
     private final List<MerchantOffer> candidates;
     private final Set<Integer> selected;
+    private final ItemStack[] items = new ItemStack[SIZE];
 
     public BindingAltarContainer(List<MerchantOffer> candidates, Set<Integer> selected) {
         this.candidates = candidates;
         this.selected = selected;
+        Arrays.fill(items, ItemStack.EMPTY);
+
+        for (int i = 0; i < candidates.size() && i < CONFIRM_SLOT; i++) {
+            items[i] = buildCandidateDisplay(i);
+        }
+
+        ItemStack confirm = new ItemStack(Items.EMERALD);
+        confirm.set(DataComponents.CUSTOM_NAME, Component.translatable("gui.secondshift.binding_altar.confirm"));
+        items[CONFIRM_SLOT] = confirm;
+    }
+
+    private ItemStack buildCandidateDisplay(int index) {
+        ItemStack display = candidates.get(index).getResult().copy();
+        display.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, selected.contains(index));
+        return display;
+    }
+
+    /**
+     * Re-renders slot {@code index}'s displayed stack from the current selection set. Called from
+     * {@link BindingAltarMenu#clicked} immediately after mutating {@link #getSelected}'s backing
+     * set — the mutation itself is invisible to the client until some slot's stored {@link
+     * ItemStack} actually changes, since sync is diff-based against the container's own state.
+     */
+    public void refreshCandidateDisplay(int index) {
+        if (index >= 0 && index < candidates.size()) {
+            items[index] = buildCandidateDisplay(index);
+        }
     }
 
     /** The materialized candidate offers this container displays (never mutated here). */
@@ -63,32 +107,27 @@ public final class BindingAltarContainer implements Container {
 
     @Override
     public ItemStack getItem(int slot) {
-        if (slot >= 0 && slot < candidates.size()) {
-            ItemStack display = candidates.get(slot).getResult().copy();
-            display.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, selected.contains(slot));
-            return display;
-        }
-        if (slot == CONFIRM_SLOT) {
-            ItemStack confirm = new ItemStack(Items.EMERALD);
-            confirm.set(DataComponents.CUSTOM_NAME, Component.translatable("gui.secondshift.binding_altar.confirm"));
-            return confirm;
-        }
-        return ItemStack.EMPTY;
+        return slot >= 0 && slot < SIZE ? items[slot] : ItemStack.EMPTY;
     }
 
     @Override
     public ItemStack removeItem(int slot, int amount) {
-        return ItemStack.EMPTY;
+        return ItemStack.EMPTY; // never legally reachable — BindingAltarMenu#clicked intercepts first
     }
 
     @Override
     public ItemStack removeItemNoUpdate(int slot) {
-        return ItemStack.EMPTY;
+        return ItemStack.EMPTY; // never legally reachable — BindingAltarMenu#clicked intercepts first
     }
 
     @Override
     public void setItem(int slot, ItemStack stack) {
-        // Read-only — selection state lives on the menu instance, never via container writes.
+        // MUST actually store — this is how the client's own container instance receives the
+        // server's synced stacks (see class javadoc). Server-side, nothing but this class's own
+        // constructor/refreshCandidateDisplay ever calls this.
+        if (slot >= 0 && slot < SIZE) {
+            items[slot] = stack;
+        }
     }
 
     @Override
@@ -103,6 +142,6 @@ public final class BindingAltarContainer implements Container {
 
     @Override
     public void clearContent() {
-        // No-op — read-only.
+        Arrays.fill(items, ItemStack.EMPTY);
     }
 }

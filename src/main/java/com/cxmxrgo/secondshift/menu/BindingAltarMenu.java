@@ -154,8 +154,10 @@ public class BindingAltarMenu extends ChestMenu {
             }
             if (selected.contains(slotId)) {
                 selected.remove(slotId);
+                altarContainer.refreshCandidateDisplay(slotId);
             } else if (selected.size() < 2) {
                 selected.add(slotId);
+                altarContainer.refreshCandidateDisplay(slotId);
             } else if (player instanceof ServerPlayer sp) {
                 sp.displayClientMessage(Component.translatable("message.secondshift.altar.select_exactly_two"), true);
             }
