@@ -77,10 +77,28 @@ workaround (`altarPos.above(2)`).
   no new widget type needed beyond what a list-of-rows requires.
 
 ### Naming
-- **D-03:** The name field is editable (first real name-entry UI in the mod, per Phase 4's deferred
-  D-01). Pre-filled with the `EmployeeNames`-pool-generated default. If the player clears the field
-  and confirms with it blank, silently fall back to the pre-filled default name rather than allowing
-  an empty `CustomName` — do not block Confirm on a blank field.
+- **D-03 (SUPERSEDED 2026-09-07, round-6 UI redesign):** Originally locked as an editable name
+  field. Superseded after real-client testing surfaced a vanilla-gotcha bug (pressing "E" while
+  typing closed the whole screen, since a focused `EditBox` doesn't consume plain alphanumeric keys
+  in `keyPressed` — those fall through to the container-close keybind check) and the user provided
+  a new mockup with no name field at all. **New decision:** name editing is removed this phase
+  entirely — the employee always gets its `EmployeeNames`-pool-generated default name. This also
+  eliminates the E-key bug at the root (no focusable text field exists in the screen anymore).
+  `SelectTradesPayload` still carries a name field for wire-format stability, but the client always
+  sends `""`; `ServerPayloadHandler.sanitizeName`'s existing fallback-to-default behavior applies
+  the default name transparently, so no network-payload shape change was needed.
+
+### Screen layout (D-05, ADDED 2026-09-07, round-6 UI redesign)
+- **D-05:** Full layout redesign per a user-provided mockup, replacing Plan 05-06's original
+  layout. Top to bottom: a full-width Confirm Hire button at the very top; the Soul Block and
+  profession-item sockets side by side below it (both now real display-only `SoulSlot`s — the
+  profession item is visible as an icon in the GUI for the first time, via a new
+  `AltarJobItemContainer` mirroring `AltarSoulContainer`'s exact pattern); the scrollable
+  trade-candidate list to the right of the two sockets at the same height (3 visible rows); the
+  profession name (gold) and the Phase-9 Happiness placeholder in the narrow column directly under
+  the two sockets; then the standard player inventory grid, repositioned to clear the new content
+  above it. Canvas resized to 176x172 (down from the round-3 fix's 200x222 — the new layout is more
+  compact). Texture regenerated to match.
 
 ### Altar occupancy (ALTAR-05)
 - **D-04:** Right-clicking an already-occupied altar with bind items (job item + Soul Block) shows a
