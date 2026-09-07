@@ -35,22 +35,22 @@ import java.util.Optional;
 public class BindingAltarMenu extends AbstractContainerMenu {
 
     /**
-     * Round-7 UI redesign (2026-09-07): canvas reverted to the vanilla-standard 176x166 size (the
-     * exact same dimensions as the Enchanting Table / Furnace / Crafting Table screens, used here
-     * as a known-good reference after round 6's custom 176x172 canvas produced overlapping text
-     * and a Confirm button that collided with the vanilla title label). The player-inventory
-     * portion is now the UNMODIFIED vanilla-default layout (label y=72 — {@code
-     * AbstractContainerScreen}'s own default for a 166-tall screen, row1=84, row2=102, row3=120,
-     * hotbar=142) — no shifting at all. All custom content (Confirm button, the two sockets, the
-     * trade list, profession/Happiness labels) is budgeted into the fixed y=17..82 band ABOVE that
-     * untouched vanilla section, the same real estate the Enchanting Table itself uses for its
-     * slot + lapis/level display. These constants are the single source of truth shared with
-     * {@code BindingAltarScreen} so the two files never drift out of sync again.
+     * Round-8 UI redesign (2026-09-08): slot and trade-row coordinates now come DIRECTLY from
+     * decompiled vanilla {@code EnchantmentMenu}/{@code EnchantmentScreen} source (extracted from
+     * this project's own NeoFormRuntime cache) rather than guessed values — the exact bug class
+     * that caused rounds 6-7's overlaps. Vanilla's enchanting table places its input-item slot at
+     * (15,47) and its lapis slot at (35,47); {@code BindingAltarScreen} places its 3 trade-row
+     * sprites at x=60, y=14/33/52 (108x19 each) — the same real numbers used here for the Soul
+     * Block / profession-item sockets and the trade list, so this layout is proven-correct by
+     * construction rather than approximated. The canvas is taller than vanilla's 176x166 (see
+     * {@code BindingAltarScreen} for the exact height math) to fit the Confirm button and
+     * profession/Happiness labels BELOW this vanilla-derived top section, before the also-untouched
+     * vanilla-relative-position inventory grid.
      */
-    public static final int SOUL_SLOT_X = 8;
-    public static final int SOUL_SLOT_Y = 41;
-    public static final int JOB_SLOT_X = 30;
-    public static final int JOB_SLOT_Y = 41;
+    public static final int SOUL_SLOT_X = 15;
+    public static final int SOUL_SLOT_Y = 47;
+    public static final int JOB_SLOT_X = 35;
+    public static final int JOB_SLOT_Y = 47;
 
     private final ContainerLevelAccess access;
     private final Player owningPlayer;
@@ -82,14 +82,16 @@ public class BindingAltarMenu extends AbstractContainerMenu {
         AltarJobItemContainer jobContainer = new AltarJobItemContainer(playerInv.player.level(), pos);
         this.addSlot(new SoulSlot(jobContainer, 0, JOB_SLOT_X, JOB_SLOT_Y));
 
-        // Round-7: unmodified vanilla-standard positions (176x166 canvas) — no shift.
+        // Round-8: shifted down to clear the Confirm button + profession/Happiness labels that
+        // sit below the vanilla-derived slot/trade-row section (see BindingAltarScreen for the
+        // exact height math — row1=135, hotbar=193).
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                this.addSlot(new net.minecraft.world.inventory.Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
+                this.addSlot(new net.minecraft.world.inventory.Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 135 + row * 18));
             }
         }
         for (int col = 0; col < 9; col++) {
-            this.addSlot(new net.minecraft.world.inventory.Slot(playerInv, col, 8 + col * 18, 142));
+            this.addSlot(new net.minecraft.world.inventory.Slot(playerInv, col, 8 + col * 18, 193));
         }
 
         // Plan 05-04 (PICK-02/04/07/08): one-time tier-1 candidate + default-name materialization.
