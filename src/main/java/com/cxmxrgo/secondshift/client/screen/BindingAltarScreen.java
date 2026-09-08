@@ -8,6 +8,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.EnchantmentMenu;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Binding Altar screen — round-12 redesign (2026-09-08): reuses vanilla's real
@@ -19,11 +20,13 @@ import net.minecraft.world.inventory.EnchantmentMenu;
  * {@code Slot}s rather than driving vanilla's enchant-button/cost-array system. Because of that
  * choice, this class needs to override only ONE thing: {@link #renderBg}, to paint each trade
  * row's parchment-bar background (enabled/disabled, exact same sprite constants and coordinates
- * {@code EnchantmentScreen} itself uses). Everything else — the background texture, the item icon
- * in each row and the reroll button (real vanilla per-slot rendering, since they're real slots),
- * the hover highlight, and the tooltip (real vanilla item tooltip, showing this class's {@code
- * DataComponents.LORE} cost/reroll-cost text) — is 100% inherited, unmodified vanilla behavior.
- * No custom pixel-math, no custom texture, no custom tooltip code.
+ * {@code EnchantmentScreen} itself uses) and — the entire point of reusing this particular vanilla
+ * screen, per the user's explicit request — the item's real name printed beside its icon, in the
+ * same spot vanilla prints its scrambled rune text. Everything else — the background texture, the
+ * item icon in each row and the reroll button (real vanilla per-slot rendering, since they're real
+ * slots), the hover highlight, and the tooltip (real vanilla item tooltip, showing this class's
+ * {@code DataComponents.LORE} cost/reroll-cost text) — is 100% inherited, unmodified vanilla
+ * behavior. No custom pixel-math, no custom texture, no custom tooltip code.
  *
  * <p><b>Round-13:</b> the animated 3D book vanilla normally renders in the area now occupied by
  * the reroll button has been dropped entirely (it would render behind/through the reroll slot's
@@ -62,8 +65,15 @@ public class BindingAltarScreen extends EnchantmentScreen {
         for (int row = 0; row < BindingAltarMenu.OPTION_COUNT; row++) {
             int rowX = i + 60;
             int rowY = j + 14 + 19 * row;
-            boolean active = !menu.getSlot(BindingAltarMenu.TRADE_SLOT_BASE + row).getItem().isEmpty();
-            guiGraphics.blitSprite(active ? ENCHANTMENT_SLOT_SPRITE : ENCHANTMENT_SLOT_DISABLED_SPRITE, rowX, rowY, 108, 19);
+            ItemStack rowItem = menu.getSlot(BindingAltarMenu.TRADE_SLOT_BASE + row).getItem();
+            guiGraphics.blitSprite(!rowItem.isEmpty() ? ENCHANTMENT_SLOT_SPRITE : ENCHANTMENT_SLOT_DISABLED_SPRITE,
+                    rowX, rowY, 108, 19);
+            if (!rowItem.isEmpty()) {
+                // The name text is the entire reason this altar reuses this particular vanilla
+                // screen — real item name where vanilla prints scrambled rune filler, in the same
+                // spot (just right of the 16x16 icon vanilla's own per-slot rendering draws there).
+                guiGraphics.drawWordWrap(this.font, rowItem.getHoverName(), rowX + 20, rowY + 2, 84, 4210752);
+            }
         }
         RenderSystem.disableBlend();
     }
