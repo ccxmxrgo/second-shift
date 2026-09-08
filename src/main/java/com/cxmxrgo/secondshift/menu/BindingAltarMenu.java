@@ -251,10 +251,29 @@ public class BindingAltarMenu extends EnchantmentMenu {
         return List.copyOf(shuffled.subList(0, OPTION_COUNT));
     }
 
+    /**
+     * Round-14 fix: several professions' entire tier-1 pool is exactly {@link #OPTION_COUNT} real
+     * listings (Librarian's is Paper/Enchanted Book/Bookshelf, always in that order — see {@code
+     * VillagerTrades}), so rerolling never changes WHICH items appear, only their randomized
+     * price. Since the row's inline label used to be the bare item name, a reroll of such a pool
+     * looked completely unchanged at a glance — the price only ever showed in the hover tooltip.
+     * Baking the cost into the display item's own {@code CUSTOM_NAME} (which {@link
+     * BindingAltarScreen}'s row text reads via {@code getHoverName()}) makes every reroll visibly
+     * different, since the randomized price is exactly the part {@link TradePoolCache#rollTier1Candidates}
+     * actually re-rolls even when the item type repeats.
+     */
     private static ItemStack buildCandidateDisplay(MerchantOffer offer) {
         ItemStack display = offer.getResult().copy();
+
+        Component costA = costLine(offer.getCostA());
+        display.set(DataComponents.CUSTOM_NAME, Component.empty()
+                .append(display.getHoverName())
+                .append(Component.literal(" ("))
+                .append(costA)
+                .append(Component.literal(")")));
+
         List<Component> lore = new ArrayList<>();
-        lore.add(costLine(offer.getCostA()));
+        lore.add(costA);
         if (!offer.getCostB().isEmpty()) {
             lore.add(costLine(offer.getCostB()));
         }

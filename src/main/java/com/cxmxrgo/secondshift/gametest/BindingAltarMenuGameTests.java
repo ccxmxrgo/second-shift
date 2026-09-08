@@ -88,6 +88,33 @@ public final class BindingAltarMenuGameTests {
         helper.succeed();
     }
 
+    /**
+     * Round-14 fix: several professions' tier-1 pool is exactly {@link BindingAltarMenu#OPTION_COUNT}
+     * fixed item types (e.g. Librarian: Paper/Enchanted Book/Bookshelf, always in that order), so a
+     * reroll never changes WHICH items show — only their randomized price, which used to be
+     * hover-tooltip-only. This asserts the row's own display name (read by {@code
+     * BindingAltarScreen}'s inline row text via {@code getHoverName()}) now bakes the cost in, so a
+     * reroll is visibly different even when the item type repeats.
+     */
+    @GameTest(template = "empty")
+    public static void trade_row_display_name_includes_its_cost(GameTestHelper helper) {
+        helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());
+        BlockPos absAltarPos = helper.absolutePos(ALTAR_POS);
+        setupFullySocketedAltar(helper, absAltarPos);
+
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        player.teleportTo(absAltarPos.getX() + 0.5D, absAltarPos.getY(), absAltarPos.getZ() + 0.5D);
+
+        BindingAltarMenu menu = new BindingAltarMenu(0, player.getInventory(),
+                ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
+
+        ItemStack rowItem = menu.getSlot(BindingAltarMenu.TRADE_SLOT_BASE).getItem();
+        String displayName = rowItem.getHoverName().getString();
+        helper.assertTrue(displayName.contains("(") && displayName.contains(")"),
+                "the row's display name must bake in the cost (parenthesized), got '" + displayName + "'");
+        helper.succeed();
+    }
+
     @GameTest(template = "empty")
     public static void clicking_a_trade_row_binds_exactly_one_employee(GameTestHelper helper) {
         helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());
