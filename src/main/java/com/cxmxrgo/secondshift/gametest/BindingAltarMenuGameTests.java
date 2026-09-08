@@ -55,6 +55,39 @@ public final class BindingAltarMenuGameTests {
         return count;
     }
 
+    /**
+     * Regression test: round-13's refactor of trade-slot population into {@code
+     * refreshTradeSlots()} briefly dropped the {@code addSlot(...)} calls that actually register
+     * the 3 trade rows AND the reroll slot with the menu's own slot list, since {@code
+     * BindingAltarMenu#clicked} routes trade-row/reroll clicks by raw index arithmetic and never
+     * consults {@code this.slots} — so every other GameTest in this suite kept passing even
+     * though {@code BindingAltarScreen}'s real client-side rendering (which DOES call {@code
+     * menu.getSlot(...)}) crashed with an {@code IndexOutOfBoundsException} the moment the altar
+     * screen tried to render. This test calls {@code getSlot} directly for every row plus the
+     * reroll slot, exactly like the screen does, so a repeat of that specific mistake fails loudly
+     * here instead of only in a live client.
+     */
+    @GameTest(template = "empty")
+    public static void every_trade_row_and_the_reroll_slot_are_actually_registered(GameTestHelper helper) {
+        helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());
+        BlockPos absAltarPos = helper.absolutePos(ALTAR_POS);
+        setupFullySocketedAltar(helper, absAltarPos);
+
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        player.teleportTo(absAltarPos.getX() + 0.5D, absAltarPos.getY(), absAltarPos.getZ() + 0.5D);
+
+        BindingAltarMenu menu = new BindingAltarMenu(0, player.getInventory(),
+                ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
+
+        for (int row = 0; row < BindingAltarMenu.OPTION_COUNT; row++) {
+            // Must not throw IndexOutOfBoundsException — that's the entire point of this test.
+            menu.getSlot(BindingAltarMenu.TRADE_SLOT_BASE + row);
+        }
+        helper.assertTrue(!menu.getSlot(BindingAltarMenu.REROLL_SLOT).getItem().isEmpty(),
+                "the reroll slot must be registered and show its Soul Fragment display item");
+        helper.succeed();
+    }
+
     @GameTest(template = "empty")
     public static void clicking_a_trade_row_binds_exactly_one_employee(GameTestHelper helper) {
         helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());

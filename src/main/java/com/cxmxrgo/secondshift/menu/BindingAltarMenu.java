@@ -181,11 +181,17 @@ public class BindingAltarMenu extends EnchantmentMenu {
         }
 
         refreshTradeSlots();
+        for (int row = 0; row < OPTION_COUNT; row++) {
+            this.addSlot(new Slot(tradeSlots, row, 60, 14 + 19 * row));
+        }
+
         rerollSlot.setItem(0, buildRerollDisplay());
         this.addSlot(new Slot(rerollSlot, 0, REROLL_SLOT_X, REROLL_SLOT_Y));
     }
 
-    /** (Re)writes all {@link #OPTION_COUNT} trade-row slot contents from {@link #displayedCandidates}. */
+    /** (Re)writes all {@link #OPTION_COUNT} trade-row slot CONTENTS from {@link
+     * #displayedCandidates} — does not touch the menu's slot list; the 3 trade {@link Slot}s
+     * themselves are added exactly once, in the constructor. */
     private void refreshTradeSlots() {
         for (int row = 0; row < OPTION_COUNT; row++) {
             ItemStack display = row < displayedCandidates.size()
