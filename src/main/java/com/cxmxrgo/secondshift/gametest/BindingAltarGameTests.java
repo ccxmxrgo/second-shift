@@ -272,14 +272,13 @@ public final class BindingAltarGameTests {
     }
 
     /**
-     * Round-10 note: {@link BindingAltarMenu} snapshots its candidate list from the block entity
-     * once, at construction time (required by {@code ChestMenu}'s fixed slot layout — slots can't
-     * be added/removed after the menu exists). So unlike the pre-round-10 design,
-     * {@code isAutoLocked()} no longer tracks later BE mutations against an already-open menu;
-     * this test now constructs one fresh menu per candidate-count state instead.
+     * Round-12 note: {@link BindingAltarMenu} snapshots (and, when the real pool exceeds {@link
+     * BindingAltarMenu#OPTION_COUNT}, shuffles-and-caps) its displayed candidate list from the
+     * block entity once, at construction time — mirroring round-10's "menu snapshots once" note,
+     * now with an explicit cap since the enchanting-table-style UI only ever shows 3 rows.
      */
     @GameTest(template = "empty")
-    public static void binding_altar_isautolocked_reflects_candidate_count(GameTestHelper helper) {
+    public static void binding_altar_displayed_candidates_capped_at_option_count(GameTestHelper helper) {
         helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());
         BlockPos absAltarPos = helper.absolutePos(ALTAR_POS);
         SoulAltarBlockEntity be = setupFullySocketedAltar(helper, absAltarPos);
@@ -289,17 +288,22 @@ public final class BindingAltarGameTests {
 
         MerchantOffer offerA = new MerchantOffer(new ItemCost(Items.EMERALD), new ItemStack(Items.BREAD), 1, 1, 0.05F);
         MerchantOffer offerB = new MerchantOffer(new ItemCost(Items.EMERALD), new ItemStack(Items.PAPER), 1, 1, 0.05F);
-        MerchantOffer offerC = new MerchantOffer(new ItemCost(Items.EMERALD), new ItemStack(Items.BOOK), 1, 1, 0.05F);
 
         be.setCandidateOffers(List.of(offerA, offerB));
         BindingAltarMenu twoCandidateMenu = new BindingAltarMenu(0, player.getInventory(),
                 ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
-        helper.assertTrue(twoCandidateMenu.isAutoLocked(), "a 2-candidate pool must be reported as auto-locked");
+        helper.assertTrue(twoCandidateMenu.getDisplayedCandidates().size() == 2,
+                "a 2-candidate real pool must show all 2, got " + twoCandidateMenu.getDisplayedCandidates().size());
 
-        be.setCandidateOffers(List.of(offerA, offerB, offerC));
-        BindingAltarMenu threeCandidateMenu = new BindingAltarMenu(1, player.getInventory(),
+        MerchantOffer offerC = new MerchantOffer(new ItemCost(Items.EMERALD), new ItemStack(Items.BOOK), 1, 1, 0.05F);
+        MerchantOffer offerD = new MerchantOffer(new ItemCost(Items.EMERALD), new ItemStack(Items.MAP), 1, 1, 0.05F);
+        MerchantOffer offerE = new MerchantOffer(new ItemCost(Items.EMERALD), new ItemStack(Items.COMPASS), 1, 1, 0.05F);
+        be.setCandidateOffers(List.of(offerA, offerB, offerC, offerD, offerE));
+        BindingAltarMenu fiveCandidateMenu = new BindingAltarMenu(1, player.getInventory(),
                 ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
-        helper.assertTrue(!threeCandidateMenu.isAutoLocked(), "a 3-candidate pool must not be reported as auto-locked");
+        helper.assertTrue(fiveCandidateMenu.getDisplayedCandidates().size() == BindingAltarMenu.OPTION_COUNT,
+                "a 5-candidate real pool must be capped down to " + BindingAltarMenu.OPTION_COUNT + ", got "
+                        + fiveCandidateMenu.getDisplayedCandidates().size());
         helper.succeed();
     }
 

@@ -69,15 +69,8 @@ public final class ModRegistrySelfCheck {
             "advancement.secondshift.soul_mason.description",
             "container.secondshift.binding_altar",
             "container.secondshift.binding_altar_titled",
-            "gui.secondshift.binding_altar.confirm",
             "gui.secondshift.binding_altar.cost_line",
-            "gui.secondshift.binding_altar.trade_included",
-            "gui.secondshift.binding_altar.trade_selected",
-            "gui.secondshift.binding_altar.trade_click_to_select",
-            "gui.secondshift.binding_altar.confirm_auto",
-            "gui.secondshift.binding_altar.confirm_selected_count",
-            "gui.secondshift.binding_altar.confirm_ready",
-            "gui.secondshift.binding_altar.confirm_not_ready",
+            "gui.secondshift.binding_altar.trade_bind_hint",
             "message.secondshift.altar.no_job_block",
             "message.secondshift.altar.not_a_workstation",
             "message.secondshift.altar.no_soul_block",
@@ -85,8 +78,7 @@ public final class ModRegistrySelfCheck {
             "message.secondshift.altar.closed.altar_gone",
             "message.secondshift.altar.closed.job_gone",
             "message.secondshift.altar.closed.too_far",
-            "message.secondshift.altar.empty_pool",
-            "message.secondshift.altar.select_exactly_two");
+            "message.secondshift.altar.empty_pool");
 
     private ModRegistrySelfCheck() {}
 
