@@ -9,11 +9,14 @@ import com.cxmxrgo.secondshift.registry.ModMenus;
 import com.cxmxrgo.secondshift.trade.ProfessionResolver;
 import com.cxmxrgo.secondshift.trade.TradePoolCache;
 import com.mojang.logging.LogUtils;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -32,6 +35,8 @@ import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemLore;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraft.world.level.Level;
@@ -268,7 +273,7 @@ public class BindingAltarMenu extends EnchantmentMenu {
 
         Component costA = costLine(offer.getCostA());
         display.set(DataComponents.CUSTOM_NAME, Component.empty()
-                .append(display.getHoverName())
+                .append(resolveDisplayName(display))
                 .append(Component.literal(" ("))
                 .append(costA)
                 .append(Component.literal(")")));
@@ -287,6 +292,42 @@ public class BindingAltarMenu extends EnchantmentMenu {
     private static Component costLine(ItemStack cost) {
         return Component.translatable("gui.secondshift.binding_altar.cost_line",
                 cost.getCount(), cost.getHoverName()).withStyle(ChatFormatting.YELLOW);
+    }
+
+    /**
+     * An Enchanted Book's (or any pre-enchanted item's) real item name is always the generic
+     * "Enchanted Book" — the actual enchantment only ever shows as a separate tooltip line vanilla
+     * adds via {@code ItemEnchantments}' own {@code TooltipProvider}, which a display item's own
+     * {@code getHoverName()} never includes. Since a player picking between trade rows needs to
+     * know WHICH enchantment a given "Enchanted Book" row actually is without hovering, this reads
+     * {@code DataComponents#STORED_ENCHANTMENTS} (books) / {@code ENCHANTMENTS} (already-applied,
+     * for completeness) directly and builds the real "Sharpness III"-style name vanilla's own
+     * {@link Enchantment#getFullname} produces — falling back to the plain item name for anything
+     * unenchanted.
+     */
+    private static Component resolveDisplayName(ItemStack result) {
+        ItemEnchantments stored = result.get(DataComponents.STORED_ENCHANTMENTS);
+        if (stored != null && !stored.isEmpty()) {
+            return enchantmentsToName(stored);
+        }
+        ItemEnchantments applied = result.get(DataComponents.ENCHANTMENTS);
+        if (applied != null && !applied.isEmpty()) {
+            return enchantmentsToName(applied);
+        }
+        return result.getHoverName();
+    }
+
+    private static Component enchantmentsToName(ItemEnchantments enchantments) {
+        MutableComponent combined = Component.empty();
+        boolean first = true;
+        for (Object2IntMap.Entry<Holder<Enchantment>> entry : enchantments.entrySet()) {
+            if (!first) {
+                combined.append(", ");
+            }
+            combined.append(Enchantment.getFullname(entry.getKey(), entry.getIntValue()));
+            first = false;
+        }
+        return combined;
     }
 
     private static ItemStack buildRerollDisplay() {

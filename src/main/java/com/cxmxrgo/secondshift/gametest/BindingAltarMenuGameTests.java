@@ -56,6 +56,38 @@ public final class BindingAltarMenuGameTests {
     }
 
     /**
+     * Round-14 fix: an Enchanted Book's real item name is always the generic "Enchanted Book" —
+     * vanilla only ever shows WHICH enchantment as a separate tooltip line, never in the name
+     * itself. Librarian's tier-1 pool is fixed as [Paper, Enchanted Book, Bookshelf] (see {@code
+     * VillagerTrades}) and is exactly {@link BindingAltarMenu#OPTION_COUNT}, so with no shuffling
+     * needed row 1 is always the Enchanted Book listing — this asserts its row display name is
+     * NOT the bare generic name, i.e. {@link BindingAltarMenu} resolved the real enchantment.
+     */
+    @GameTest(template = "empty")
+    public static void enchanted_book_row_shows_the_real_enchantment_not_a_generic_name(GameTestHelper helper) {
+        helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());
+        BlockPos absAltarPos = helper.absolutePos(ALTAR_POS);
+        setupFullySocketedAltar(helper, absAltarPos);
+
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        player.teleportTo(absAltarPos.getX() + 0.5D, absAltarPos.getY(), absAltarPos.getZ() + 0.5D);
+
+        BindingAltarMenu menu = new BindingAltarMenu(0, player.getInventory(),
+                ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
+
+        ItemStack bookRow = menu.getSlot(BindingAltarMenu.TRADE_SLOT_BASE + 1).getItem();
+        helper.assertTrue(bookRow.is(net.minecraft.world.item.Items.ENCHANTED_BOOK),
+                "row 1 of a Librarian altar must be the Enchanted Book listing, got " + bookRow);
+
+        String genericName = new ItemStack(net.minecraft.world.item.Items.ENCHANTED_BOOK).getHoverName().getString();
+        String rowDisplayName = bookRow.getHoverName().getString();
+        helper.assertFalse(rowDisplayName.startsWith(genericName),
+                "the row's display name must show the real enchantment, not the generic '" + genericName
+                        + "' name, got '" + rowDisplayName + "'");
+        helper.succeed();
+    }
+
+    /**
      * Regression test: round-13's refactor of trade-slot population into {@code
      * refreshTradeSlots()} briefly dropped the {@code addSlot(...)} calls that actually register
      * the 3 trade rows AND the reroll slot with the menu's own slot list, since {@code
