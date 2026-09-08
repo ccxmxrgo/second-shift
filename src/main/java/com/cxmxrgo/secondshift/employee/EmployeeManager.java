@@ -97,6 +97,11 @@ public final class EmployeeManager {
         villager.setData(ModAttachments.EMPLOYEE.get(),
                 new EmployeeData(1, name, professionId, 1, chosenOffers, Optional.of(altarPos)));
 
+        // Phase 8 (STOCK-01): starts the restock clock at bind time so a long-lived world's high
+        // game-time doesn't read as "a decade overdue for a restock" on this employee's first
+        // periodic check.
+        villager.setData(ModAttachments.RESTOCK_TIMER.get(), level.getGameTime());
+
         level.addFreshEntity(villager);
         return villager;
     }

@@ -74,9 +74,9 @@ Requirements for the first shippable version. Each maps to exactly one roadmap p
 
 ### Restock
 
-- [ ] **STOCK-01**: Employees restock trades on a mod-owned real-time timer, independent of POI, work schedule, day/night, and dimension
-- [ ] **STOCK-02**: The restock interval is configurable
-- [ ] **STOCK-03**: Restock logic never touches villagers without the attachment
+- [x] **STOCK-01**: Employees restock trades on a mod-owned real-time timer, independent of POI, work schedule, day/night, and dimension
+- [x] **STOCK-02**: The restock interval is configurable
+- [x] **STOCK-03**: Restock logic never touches villagers without the attachment
 - [ ] **STOCK-04**: Restock is slowed or paused while the employee is Unhappy
 
 ### GUI / Menu
@@ -184,9 +184,9 @@ Which phases cover which requirements. Populated during roadmap creation (2026-0
 | PROG-02 | Phase 7 | Complete |
 | PROG-03 | Phase 7 | Complete |
 | PROG-04 | Phase 7 | Complete |
-| STOCK-01 | Phase 8 | Pending |
-| STOCK-02 | Phase 8 | Pending |
-| STOCK-03 | Phase 8 | Pending |
+| STOCK-01 | Phase 8 | Complete |
+| STOCK-02 | Phase 8 | Complete |
+| STOCK-03 | Phase 8 | Complete |
 | HAPP-01 | Phase 9 | Pending |
 | HAPP-02 | Phase 9 | Pending |
 | HAPP-03 | Phase 9 | Pending |

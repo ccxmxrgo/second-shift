@@ -1,6 +1,7 @@
 package com.cxmxrgo.secondshift.event;
 
 import com.cxmxrgo.secondshift.SecondShift;
+import com.cxmxrgo.secondshift.config.ModConfig;
 import com.cxmxrgo.secondshift.content.item.HarvesterItem;
 import com.cxmxrgo.secondshift.employee.EmployeeData;
 import com.cxmxrgo.secondshift.employee.EmployeeManager;
@@ -137,6 +138,19 @@ public final class EmployeeEvents {
             if (!Integer.valueOf(vanillaLevel).equals(lastSignaledLevel.put(villager.getUUID(), vanillaLevel))) {
                 signalPromotable(level, villager, vanillaLevel);
             }
+        }
+
+        // Phase 8 STOCK-01/02/03: mod-owned real-time restock, independent of vanilla's own
+        // POI/work-schedule/day-count restock gating (never calling Villager#shouldRestock() at
+        // all). A single elapsed-vs-interval comparison, resetting the timer to "now" on trigger,
+        // guarantees at most one restock per check regardless of how long the employee was
+        // unloaded (success criterion 4 — no burst). Gated on hasData(EMPLOYEE) at the top of this
+        // method already (STOCK-03) — a wild villager never reaches this line.
+        long lastRestock = villager.getData(ModAttachments.RESTOCK_TIMER.get());
+        long now = level.getGameTime();
+        if (now - lastRestock >= ModConfig.RESTOCK_INTERVAL_TICKS.get()) {
+            villager.restock();
+            villager.setData(ModAttachments.RESTOCK_TIMER.get(), now);
         }
 
         // D-04: the altar tether. Suspended while the player is moving the employee deliberately.

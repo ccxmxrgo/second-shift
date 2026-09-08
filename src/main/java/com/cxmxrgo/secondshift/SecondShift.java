@@ -1,5 +1,6 @@
 package com.cxmxrgo.secondshift;
 
+import com.cxmxrgo.secondshift.config.ModConfig;
 import com.cxmxrgo.secondshift.registry.ModAttachments;
 import com.cxmxrgo.secondshift.registry.ModBlockEntities;
 import com.cxmxrgo.secondshift.registry.ModBlocks;
@@ -11,6 +12,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig.Type;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import org.slf4j.Logger;
 
@@ -43,6 +45,9 @@ public class SecondShift {
         ModCreativeTab.TABS.register(modBus);
         ModMenus.MENUS.register(modBus);
         ModAttachments.ATTACHMENT_TYPES.register(modBus);
+
+        // Phase 8 (STOCK-02): common config — restock interval.
+        container.registerConfig(Type.COMMON, ModConfig.SPEC);
 
         modBus.addListener(this::commonSetup);
         // No network payloads to register: the round-10 Binding Altar redesign (see

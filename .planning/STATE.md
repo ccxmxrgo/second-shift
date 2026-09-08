@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-stopped_at: Completed 07-01 (Progression & Promotion Ritual); autonomous overnight run continuing to Phase 8
-last_updated: "2026-09-08T05:35:00.000Z"
+stopped_at: Completed 08-01 (Mod-Owned Restock); autonomous overnight run continuing to Phase 9
+last_updated: "2026-09-08T05:45:00.000Z"
 last_activity: 2026-09-08
 progress:
   total_phases: 10
-  completed_phases: 7
-  total_plans: 22
-  completed_plans: 22
-  percent: 70
+  completed_phases: 8
+  total_plans: 23
+  completed_plans: 23
+  percent: 80
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-04)
 
 **Core value:** Harvest souls → bind a villager at the Soul Altar → hand-pick its profession and its trades, tier by tier. That loop must be reliable and feel good.
-**Current focus:** Phase 08 — mod-owned-restock (autonomous overnight build in progress)
+**Current focus:** Phase 09 — quarters-happiness (autonomous overnight build in progress)
 
 ## Current Position
 
-Phase: 07 (progression-promotion-ritual) — COMPLETE (status: human_needed — see 07-VERIFICATION.md; the promotion-ready signal's feel and the ritual screen's Confirm-button UX are both "does this feel right" playtest checks with verified underlying logic, awaiting the user's return)
-Next: Phase 08 (Mod-Owned Restock) — being built autonomously (2026-09-08 overnight session, user asleep, explicit autonomous-mode request)
-Plan: 1 of 1 (Phase 7)
+Phase: 08 (mod-owned-restock) — COMPLETE (fully code-verified, no human_needed items — see 08-VERIFICATION.md)
+Next: Phase 09 (Quarters & Happiness) — being built autonomously (2026-09-08 overnight session, user asleep, explicit autonomous-mode request)
+Plan: 1 of 1 (Phase 8)
 Last activity: 2026-09-08
 
-Progress: [███████░░░] 70%
+Progress: [████████░░] 80%
 
 **2026-09-08 note (Phase 6, autonomous session):** an earlier dispatch for this phase accidentally
 ran two concurrent agent sessions against the same working tree (one agent silently spawned a
@@ -143,6 +143,10 @@ Relevant to current work:
 - [Phase 07]: "Pick 2" at a Promotion Ritual is done with zero new network payloads -- selection toggles client-side only (TradeCandidateList's new toggle mode) and a single Confirm click packs up to 2 chosen indices into one int (idxA*32+idxB) sent through vanilla's existing clickMenuButton RPC, the same one BindingAltarMenu already established
 - [Phase 07]: The Binding Altar's bind-time picker now rolls the profession's TIER 1 pool, not the max tier (Phase 5 round-15 shipped max-tier-immediate-grant as an explicit interim stopgap) -- now that Promotion Ritual infrastructure exists, every tier including the max one is earned the same way, generalizing the user's original "grant only at max tier" balancing idea rather than special-casing it
 - [Phase 07]: MenuProvider#createMenu runs BEFORE getDisplayName() in ServerPlayer#openMenu (verified via decompiled source) -- SoulAltarBlockEntity's one-shot promotionRitualRequested flag must be reset in getDisplayName(), not createMenu(), or the title packet reads the wrong branch
+- [Phase 08]: Villager#restock() is public and has NO internal day/POI/twice-daily gate (that lives entirely in the separate private shouldRestock()/allowedToRestock()) -- calling restock() directly, never shouldRestock(), is what makes the mod-owned timer genuinely independent of vanilla's own restock rhythm
+- [Phase 08]: Restock timer is a SEPARATE AttachmentType<Long> (secondshift:restock_timer, no sync -- server-only bookkeeping), not a 7th EmployeeData field, since that record's StreamCodec.composite chain is already full (Phase 6)
+- [Phase 08]: "at most one restock on reload, no burst" falls out for free from `if (now - last >= interval) { restock(); last = now; }` -- no explicit catch-up-N-times logic was ever needed
+- [Phase 08]: First ModConfig.Type.COMMON value added (restockIntervalTicks, ModConfigSpec/registerConfig) -- generates run/config/secondshift-common.toml, verified loading cleanly in both runGameTestServer and a real runClient boot
 
 ### Pending Todos
 

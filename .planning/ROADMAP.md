@@ -23,7 +23,7 @@ in a jar the user can load in the CurseForge "test" instance and verify in-game.
 - [x] **Phase 5: Profession Resolution & Trade Picker** - Hand-pick an employee's profession and its career-path trade from the real vanilla pool (amended from tier-1/pick-2 — see 05-VERIFICATION.md)
 - [x] **Phase 6: Employee Traits, Death & Firing** - Employees are conversion/breed-immune, recoverable on death, removable only via altar destruction
 - [x] **Phase 7: Progression & Promotion Ritual** - Vanilla XP unlocks tiers; the player picks each tier's trades at the altar, never seeing unchosen trades (completed 2026-09-08)
-- [ ] **Phase 8: Mod-Owned Restock** - Employee trades restock on a POI-independent timer
+- [x] **Phase 8: Mod-Owned Restock** - Employee trades restock on a POI-independent timer (completed 2026-09-08)
 - [ ] **Phase 9: Quarters & Happiness** - Employees need quarters + food; happiness modulates prices/restock and neglect makes them quit
 - [ ] **Phase 10: Polish, Config & Invalid States** - Every surface translated, themed, configurable, and failing gracefully
 
@@ -193,7 +193,8 @@ in a first pass on a personal mod.
   3. A wild (non-employee) villager nearby is never touched by the restock logic, and offers are never mutated while the employee is being traded with.
   4. An employee that was unloaded for a long time restocks at most once on reload — no burst.
 
-**Plans**: TBD
+**Plans**: 1 (implemented directly, autonomous overnight session — see 08-01-SUMMARY.md)
+**Status**: ✅ Complete
 
 ### Phase 9: Quarters & Happiness
 
