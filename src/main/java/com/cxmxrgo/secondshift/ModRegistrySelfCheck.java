@@ -71,6 +71,8 @@ public final class ModRegistrySelfCheck {
             "container.secondshift.binding_altar_titled",
             "gui.secondshift.binding_altar.cost_line",
             "gui.secondshift.binding_altar.trade_bind_hint",
+            "gui.secondshift.binding_altar.reroll",
+            "gui.secondshift.binding_altar.reroll_cost",
             "message.secondshift.altar.no_job_block",
             "message.secondshift.altar.not_a_workstation",
             "message.secondshift.altar.no_soul_block",
@@ -78,7 +80,8 @@ public final class ModRegistrySelfCheck {
             "message.secondshift.altar.closed.altar_gone",
             "message.secondshift.altar.closed.job_gone",
             "message.secondshift.altar.closed.too_far",
-            "message.secondshift.altar.empty_pool");
+            "message.secondshift.altar.empty_pool",
+            "message.secondshift.altar.reroll_not_enough_fragments");
 
     private ModRegistrySelfCheck() {}
 

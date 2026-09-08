@@ -188,4 +188,119 @@ public final class BindingAltarMenuGameTests {
                 "clickMenuButton must always return false so EnchantmentScreen's mouseClicked falls through to normal slot clicks");
         helper.succeed();
     }
+
+    // --- round-13: receipt slots + reroll ---
+
+    @GameTest(template = "empty")
+    public static void receipt_slots_show_socketed_items_and_are_locked(GameTestHelper helper) {
+        helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());
+        BlockPos absAltarPos = helper.absolutePos(ALTAR_POS);
+        setupFullySocketedAltar(helper, absAltarPos);
+
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        player.teleportTo(absAltarPos.getX() + 0.5D, absAltarPos.getY(), absAltarPos.getZ() + 0.5D);
+
+        BindingAltarMenu menu = new BindingAltarMenu(0, player.getInventory(),
+                ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
+        player.containerMenu = menu;
+
+        helper.assertTrue(menu.getSlot(0).getItem().is(ModItems.SOUL_BLOCK_ITEM.get()),
+                "receipt slot 0 must show a copy of the socketed Soul Block, got " + menu.getSlot(0).getItem());
+        helper.assertTrue(menu.getSlot(1).getItem().is(Blocks.LECTERN.asItem()),
+                "receipt slot 1 must show a copy of the socketed job item, got " + menu.getSlot(1).getItem());
+
+        menu.clicked(0, 0, ClickType.PICKUP, player);
+        menu.clicked(1, 1, ClickType.PICKUP, player);
+
+        helper.assertTrue(menu.getSlot(0).getItem().is(ModItems.SOUL_BLOCK_ITEM.get()),
+                "clicking receipt slot 0 must never remove its display item");
+        helper.assertTrue(menu.getSlot(1).getItem().is(Blocks.LECTERN.asItem()),
+                "clicking receipt slot 1 must never remove its display item");
+        helper.assertTrue(menu.getCarried().isEmpty(), "locked receipt slots must never populate the cursor's carried item");
+        helper.succeed();
+    }
+
+    /**
+     * Guards against the exact duplication bug the receipt-slot design has to avoid: {@code
+     * EnchantmentMenu.removed()} unconditionally drops whatever is in its "item to enchant"/"lapis"
+     * slots back into the world on close — since those now hold COPIES of already-consumed altar
+     * materials (not real held items), letting that run unmodified would duplicate them.
+     */
+    @GameTest(template = "empty")
+    public static void closing_the_menu_does_not_duplicate_receipt_items(GameTestHelper helper) {
+        helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());
+        BlockPos absAltarPos = helper.absolutePos(ALTAR_POS);
+        setupFullySocketedAltar(helper, absAltarPos);
+
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        player.teleportTo(absAltarPos.getX() + 0.5D, absAltarPos.getY(), absAltarPos.getZ() + 0.5D);
+
+        BindingAltarMenu menu = new BindingAltarMenu(0, player.getInventory(),
+                ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
+
+        long itemEntitiesBefore = helper.getLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
+                new net.minecraft.world.phys.AABB(absAltarPos).inflate(8)).size();
+
+        menu.removed(player);
+
+        long itemEntitiesAfter = helper.getLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
+                new net.minecraft.world.phys.AABB(absAltarPos).inflate(8)).size();
+        helper.assertTrue(itemEntitiesAfter == itemEntitiesBefore,
+                "closing the menu must not drop the receipt slots' display copies as item entities, before="
+                        + itemEntitiesBefore + " after=" + itemEntitiesAfter);
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void reroll_with_a_soul_fragment_changes_candidates_and_consumes_it(GameTestHelper helper) {
+        helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());
+        BlockPos absAltarPos = helper.absolutePos(ALTAR_POS);
+        SoulAltarBlockEntity be = setupFullySocketedAltar(helper, absAltarPos);
+
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        player.teleportTo(absAltarPos.getX() + 0.5D, absAltarPos.getY(), absAltarPos.getZ() + 0.5D);
+        player.getInventory().add(new ItemStack(ModItems.SOUL_FRAGMENT.get(), 1));
+
+        BindingAltarMenu menu = new BindingAltarMenu(0, player.getInventory(),
+                ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
+        player.containerMenu = menu;
+
+        java.util.List<net.minecraft.world.item.trading.MerchantOffer> beforeRoll = be.getCandidateOffers();
+
+        menu.clicked(BindingAltarMenu.REROLL_SLOT, 0, ClickType.PICKUP, player);
+
+        helper.assertTrue(player.getInventory().countItem(ModItems.SOUL_FRAGMENT.get()) == 0,
+                "a successful reroll must consume exactly the 1 Soul Fragment the player had");
+        helper.assertTrue(be.getCandidateOffers() != beforeRoll,
+                "a successful reroll must produce a freshly rolled candidate list on the BE");
+        helper.assertFalse(be.isEmployeeBound(), "rerolling must never bind an employee");
+        helper.assertTrue(!be.isEmpty() && !be.isJobItemEmpty(), "rerolling must never touch the altar's sockets");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void reroll_without_a_soul_fragment_is_rejected(GameTestHelper helper) {
+        helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());
+        BlockPos absAltarPos = helper.absolutePos(ALTAR_POS);
+        SoulAltarBlockEntity be = setupFullySocketedAltar(helper, absAltarPos);
+
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        player.teleportTo(absAltarPos.getX() + 0.5D, absAltarPos.getY(), absAltarPos.getZ() + 0.5D);
+        // Deliberately no Soul Fragment in inventory.
+
+        BindingAltarMenu menu = new BindingAltarMenu(0, player.getInventory(),
+                ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
+        player.containerMenu = menu;
+
+        java.util.List<net.minecraft.world.item.trading.MerchantOffer> beforeRoll = be.getCandidateOffers();
+        java.util.List<net.minecraft.world.item.trading.MerchantOffer> beforeDisplayed = menu.getDisplayedCandidates();
+
+        menu.clicked(BindingAltarMenu.REROLL_SLOT, 0, ClickType.PICKUP, player);
+
+        helper.assertTrue(be.getCandidateOffers() == beforeRoll,
+                "a rejected reroll (no Soul Fragment) must never change the BE's rolled candidates");
+        helper.assertTrue(menu.getDisplayedCandidates() == beforeDisplayed,
+                "a rejected reroll must never change the menu's displayed candidates");
+        helper.succeed();
+    }
 }

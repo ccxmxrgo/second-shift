@@ -4,6 +4,7 @@ import com.cxmxrgo.secondshift.content.blockentity.SoulAltarBlockEntity;
 import com.cxmxrgo.secondshift.employee.EmployeeManager;
 import com.cxmxrgo.secondshift.employee.EmployeeNames;
 import com.cxmxrgo.secondshift.registry.ModBlocks;
+import com.cxmxrgo.secondshift.registry.ModItems;
 import com.cxmxrgo.secondshift.registry.ModMenus;
 import com.cxmxrgo.secondshift.trade.ProfessionResolver;
 import com.cxmxrgo.secondshift.trade.TradePoolCache;
@@ -15,6 +16,8 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
@@ -47,9 +50,9 @@ import java.util.Optional;
  *
  * <p><b>Why extend {@code EnchantmentMenu} specifically:</b> the vanilla {@code EnchantmentScreen}
  * class is hard-typed to {@code AbstractContainerScreen<EnchantmentMenu>} — reusing that screen
- * (its background texture, slot positions, and 3D book model) requires our menu to actually BE an
- * {@code EnchantmentMenu}, the same constraint that made {@code ChestMenu} the anchor for the
- * round-10 design.
+ * (its background texture and slot positions) requires our menu to actually BE an {@code
+ * EnchantmentMenu}, the same constraint that made {@code ChestMenu} the anchor for the round-10
+ * design.
  *
  * <p><b>Why the mechanic changed from "pick 2 of N, then confirm" to "pick 1 of up to 3,
  * immediately":</b> {@code EnchantmentMenu} has no concept of a toggleable multi-select plus a
@@ -73,24 +76,27 @@ import java.util.Optional;
  * and the tooltip completely for free — genuinely zero custom tooltip code, unlike the vanilla
  * enchant rows' scrambled-rune-text + wrong-registry-lookup problem this design sidesteps
  * entirely. The client-side screen ({@code BindingAltarScreen}) only needs to draw each row's
- * enabled/disabled parchment-bar background sprite and reproduce the animated book (see that
- * class's doc comment for why the book needs re-declaring rather than reusing).
+ * enabled/disabled parchment-bar background sprite.
  *
  * <p>{@link #costs} (inherited, public, mutable) is deliberately left at its default all-zero
  * state forever — {@code EnchantmentScreen.render()}'s own inline tooltip loop (which performs
  * the real, unrelated {@code Registries.ENCHANTMENT} lookup) is guarded by {@code costs[row] > 0},
  * so leaving it at 0 permanently and unconditionally suppresses that broken vanilla codepath
  * without touching it at all. {@link #slotsChanged} is overridden to a no-op specifically so a
- * curious player fiddling with the two now-inert vanilla input/lapis slots (see class-level note
- * below) can never trigger vanilla's real bookshelf-scanning enchant-cost calculation, which would
- * otherwise repopulate {@code costs[]} with a nonzero value and revive that same broken tooltip.
+ * curious player fiddling with the two "receipt" input/lapis slots (see {@link #REROLL_SLOT}'s
+ * neighbors below) can never trigger vanilla's real bookshelf-scanning enchant-cost calculation,
+ * which would otherwise repopulate {@code costs[]} with a nonzero value and revive that same
+ * broken tooltip.
  *
- * <p>The two real slots {@code EnchantmentMenu}'s own constructor adds (its "item to enchant" and
- * "lapis" slots, at 15,47 and 35,47) are left completely alone — never populated, never
- * intercepted. A player who drops something in there for no reason gets it back automatically via
- * {@code EnchantmentMenu.removed()}'s inherited close-time cleanup, exactly like leaving an item in
- * a real enchanting table; they simply serve no purpose for this altar. This is a known, accepted
- * minor cosmetic wart of reusing the real vanilla menu class as-is.
+ * <p><b>Round-13 (user feedback pass, same day):</b> the two real slots {@code EnchantmentMenu}'s
+ * own constructor adds (its "item to enchant" and "lapis" slots, at 15,47 and 35,47) now show a
+ * read-only, locked "receipt" of what's actually socketed on the altar — a copy of {@link
+ * SoulAltarBlockEntity#getHeldSoulBlock()} and {@link SoulAltarBlockEntity#getHeldJobItem()}
+ * respectively, since the real items are already consumed by the block-interaction socketing step
+ * before this menu ever opens (there is no drag-to-socket flow in this GUI — see {@link #clicked}
+ * for the lock). A third real slot ({@link #REROLL_SLOT}, in the enchanting table's now-otherwise-
+ * empty book area) lets the player spend one real {@code minecraft:soul_fragment} from their own
+ * inventory to re-roll the 3 displayed trades without closing the menu (see {@link #attemptReroll}).
  */
 public class BindingAltarMenu extends EnchantmentMenu {
 
@@ -109,9 +115,18 @@ public class BindingAltarMenu extends EnchantmentMenu {
      */
     public static final int TRADE_SLOT_BASE = 38;
 
+    /** The reroll button's slot index — right after the 3 trade rows. */
+    public static final int REROLL_SLOT = TRADE_SLOT_BASE + OPTION_COUNT;
+
+    /** Screen position of the reroll slot — centered between the two receipt slots (15,47 / 35,47),
+     * well clear of the title text above it. */
+    private static final int REROLL_SLOT_X = 25;
+    private static final int REROLL_SLOT_Y = 20;
+
     private final ContainerLevelAccess access;
-    private final List<MerchantOffer> displayedCandidates;
     private final Container tradeSlots = new SimpleContainer(OPTION_COUNT);
+    private final Container rerollSlot = new SimpleContainer(1);
+    private List<MerchantOffer> displayedCandidates;
 
     /** D-12: guards forced-close messaging so a menu failing {@code stillValid} across multiple
      * ticks sends exactly one action-bar message, not one per failing tick. */
@@ -155,20 +170,35 @@ public class BindingAltarMenu extends EnchantmentMenu {
             throw new IllegalStateException("EnchantmentMenu's slot layout changed — expected "
                     + TRADE_SLOT_BASE + " slots before the trade rows, found " + this.slots.size());
         }
+
+        // Round-13: the "item to enchant" / "lapis" slots become a locked, read-only receipt of
+        // what's actually socketed on the altar below — never populated on the client (server-only
+        // BE read; the real stacks sync to the client the same way the trade rows do).
+        if (!playerInv.player.level().isClientSide()
+                && playerInv.player.level().getBlockEntity(pos) instanceof SoulAltarBlockEntity receiptBe) {
+            this.getSlot(0).set(receiptBe.getHeldSoulBlock().copy());
+            this.getSlot(1).set(receiptBe.getHeldJobItem().copy());
+        }
+
+        refreshTradeSlots();
+        rerollSlot.setItem(0, buildRerollDisplay());
+        this.addSlot(new Slot(rerollSlot, 0, REROLL_SLOT_X, REROLL_SLOT_Y));
+    }
+
+    /** (Re)writes all {@link #OPTION_COUNT} trade-row slot contents from {@link #displayedCandidates}. */
+    private void refreshTradeSlots() {
         for (int row = 0; row < OPTION_COUNT; row++) {
             ItemStack display = row < displayedCandidates.size()
                     ? buildCandidateDisplay(displayedCandidates.get(row))
                     : ItemStack.EMPTY;
             tradeSlots.setItem(row, display);
-            this.addSlot(new Slot(tradeSlots, row, 60, 14 + 19 * row));
         }
     }
 
     /**
      * Resolves (and, server-side only, rolls-once-and-persists — PICK-02/04/07/08) the candidate
-     * trade pool, then caps it down to {@link #OPTION_COUNT} for display — a shuffled sample when
-     * the real pool is larger, so a profession with more than 3 tier-1 listings doesn't always
-     * show the same 3 (vanilla's tier1 {@code ItemListing[]} array order is fixed, not randomized).
+     * trade pool, then caps it down to {@link #OPTION_COUNT} for display via {@link
+     * #sampleUpToOptionCount}.
      *
      * <p>On the CLIENT, this always returns an empty list purely for slot-count bookkeeping —
      * vanilla's own container-sync protocol fills in the real per-slot item stacks immediately
@@ -182,22 +212,30 @@ public class BindingAltarMenu extends EnchantmentMenu {
         }
 
         if (!be.candidatesRolled()) {
-            Optional<VillagerProfession> profession = ProfessionResolver.fromItem(be.getHeldJobItem());
-            if (profession.isPresent() && level instanceof ServerLevel serverLevel) {
-                be.setCandidateOffers(TradePoolCache.rollTier1Candidates(serverLevel, pos, profession.get()));
-                be.setDefaultName(EmployeeNames.pickRandom(serverLevel.getRandom()));
-            } else {
-                be.setCandidateOffers(List.of()); // defensive — should be unreachable
-            }
+            rollFreshCandidates(be, (ServerLevel) level, pos);
         }
 
-        List<MerchantOffer> all = be.getCandidateOffers();
+        return sampleUpToOptionCount(be.getCandidateOffers(), (ServerLevel) level);
+    }
+
+    private static void rollFreshCandidates(SoulAltarBlockEntity be, ServerLevel level, BlockPos pos) {
+        Optional<VillagerProfession> profession = ProfessionResolver.fromItem(be.getHeldJobItem());
+        if (profession.isPresent()) {
+            be.setCandidateOffers(TradePoolCache.rollTier1Candidates(level, pos, profession.get()));
+            be.setDefaultName(EmployeeNames.pickRandom(level.getRandom()));
+        } else {
+            be.setCandidateOffers(List.of()); // defensive — should be unreachable
+        }
+    }
+
+    /** A shuffled sample of at most {@link #OPTION_COUNT} offers, so a profession with more than 3
+     * tier-1 listings doesn't always show the same 3 (vanilla's tier1 array order is fixed). */
+    private static List<MerchantOffer> sampleUpToOptionCount(List<MerchantOffer> all, ServerLevel level) {
         if (all.size() <= OPTION_COUNT) {
             return all;
         }
-
         List<MerchantOffer> shuffled = new ArrayList<>(all);
-        RandomSource random = (level instanceof ServerLevel sl) ? sl.getRandom() : RandomSource.create();
+        RandomSource random = level.getRandom();
         for (int i = shuffled.size() - 1; i > 0; i--) {
             int j = random.nextInt(i + 1);
             MerchantOffer tmp = shuffled.get(i);
@@ -225,6 +263,16 @@ public class BindingAltarMenu extends EnchantmentMenu {
                 cost.getCount(), cost.getHoverName()).withStyle(ChatFormatting.YELLOW);
     }
 
+    private static ItemStack buildRerollDisplay() {
+        ItemStack display = new ItemStack(ModItems.SOUL_FRAGMENT.get());
+        display.set(DataComponents.CUSTOM_NAME, Component.translatable("gui.secondshift.binding_altar.reroll")
+                .withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD));
+        List<Component> lore = new ArrayList<>();
+        lore.add(Component.translatable("gui.secondshift.binding_altar.reroll_cost").withStyle(ChatFormatting.GRAY));
+        display.set(DataComponents.LORE, new ItemLore(lore));
+        return display;
+    }
+
     /**
      * Disables vanilla's real enchant-button mechanism entirely. {@code EnchantmentScreen}'s
      * inherited {@code mouseClicked} always tries this FIRST for a click inside a row's bounding
@@ -239,11 +287,12 @@ public class BindingAltarMenu extends EnchantmentMenu {
 
     /**
      * No-op: this altar has no real enchantment cost to compute. Overridden specifically to stop
-     * vanilla's own bookshelf-scanning enchant-cost logic from ever running against the two inert
-     * input/lapis slots {@code EnchantmentMenu}'s constructor adds (see class doc) — that logic
-     * would repopulate {@link #costs} with a nonzero value and revive {@code EnchantmentScreen}'s
-     * broken enchantment-registry tooltip lookup, which {@link #costs} being permanently 0
-     * otherwise suppresses.
+     * vanilla's own bookshelf-scanning enchant-cost logic from ever running against the two
+     * receipt input/lapis slots (see class doc) — that logic would repopulate {@link #costs} with
+     * a nonzero value and revive {@code EnchantmentScreen}'s broken enchantment-registry tooltip
+     * lookup, which {@link #costs} being permanently 0 otherwise suppresses. It also happens to be
+     * exactly what we want anyway, since we drive those slots' contents ourselves via {@code
+     * Slot#set} in the constructor and never expect vanilla's own change-tracking to fire for them.
      */
     @Override
     public void slotsChanged(Container inventory) {
@@ -253,9 +302,22 @@ public class BindingAltarMenu extends EnchantmentMenu {
     @Override
     public void clicked(int slotId, int button, ClickType clickType, Player player) {
         // Drag operations fire clicked() once per slot the drag passes over — never treat an
-        // incidental drag-through as a deliberate bind click (mirrors the round-10/11 guard).
+        // incidental drag-through as a deliberate bind/reroll click (mirrors the round-10/11 guard).
         if (clickType == ClickType.QUICK_CRAFT) {
             super.clicked(slotId, button, clickType, player);
+            return;
+        }
+
+        // Round-13: lock the two receipt slots — they show already-consumed altar materials, not
+        // anything the player can take back.
+        if (slotId == 0 || slotId == 1) {
+            return;
+        }
+
+        if (slotId == REROLL_SLOT) {
+            if (player instanceof ServerPlayer sp) {
+                attemptReroll(sp);
+            }
             return;
         }
 
@@ -322,9 +384,57 @@ public class BindingAltarMenu extends EnchantmentMenu {
         });
     }
 
-    /** Read-only trade rows, and no shift-click routing for them — full override of
-     * {@code EnchantmentMenu}'s own version to keep the two inert input/lapis slots' quirky
-     * default shift-click behavior from ever reaching our trade rows. */
+    /**
+     * Round-13: spends one real {@code minecraft:soul_fragment} from the player's own inventory
+     * (not a menu slot — the reroll button is a display, not a payment slot) to re-roll the tier-1
+     * pool and refresh the 3 displayed trade rows in place, without closing the menu. Rejects with
+     * a themed message if the player doesn't have a Soul Fragment on hand; never touches the altar
+     * sockets or {@code employeeBound}.
+     */
+    private void attemptReroll(ServerPlayer sp) {
+        if (!stillValid(sp)) {
+            return;
+        }
+
+        access.execute((level, pos) -> {
+            if (!(level.getBlockEntity(pos) instanceof SoulAltarBlockEntity be) || be.isEmployeeBound()
+                    || !(level instanceof ServerLevel serverLevel)) {
+                return;
+            }
+
+            if (sp.getInventory().countItem(ModItems.SOUL_FRAGMENT.get()) < 1) {
+                sp.displayClientMessage(Component.translatable("message.secondshift.altar.reroll_not_enough_fragments"), true);
+                return;
+            }
+            sp.getInventory().clearOrCountMatchingItems(
+                    stack -> stack.is(ModItems.SOUL_FRAGMENT.get()), 1, new SimpleContainer(0));
+
+            rollFreshCandidates(be, serverLevel, pos);
+            this.displayedCandidates = sampleUpToOptionCount(be.getCandidateOffers(), serverLevel);
+            refreshTradeSlots();
+
+            level.playSound(null, pos, SoundEvents.SOUL_ESCAPE.value(), SoundSource.BLOCKS, 0.8F,
+                    0.9F + serverLevel.getRandom().nextFloat() * 0.2F);
+        });
+    }
+
+    /**
+     * Prevents {@code EnchantmentMenu.removed()} (called via {@code super.removed()} right below)
+     * from dropping the receipt slots' display copies back into the world on close — those are
+     * copies of already-consumed altar materials, not real held items, and {@code
+     * EnchantmentMenu.removed()} unconditionally drops whatever is in its "item to enchant"/"lapis"
+     * slots. Emptying them first makes that drop a safe no-op (it only drops non-empty stacks).
+     */
+    @Override
+    public void removed(Player player) {
+        this.getSlot(0).set(ItemStack.EMPTY);
+        this.getSlot(1).set(ItemStack.EMPTY);
+        super.removed(player);
+    }
+
+    /** Read-only trade/reroll rows, and no shift-click routing for them — full override of
+     * {@code EnchantmentMenu}'s own version to keep the two receipt slots' quirky default
+     * shift-click behavior from ever reaching our own slots. */
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
         return ItemStack.EMPTY;
