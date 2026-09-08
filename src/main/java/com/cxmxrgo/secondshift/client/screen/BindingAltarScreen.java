@@ -87,4 +87,18 @@ public class BindingAltarScreen extends EnchantmentScreen {
                 Component.translatable("gui.secondshift.binding_altar.reroll_short"),
                 rerollCenterX, rerollLabelY, 4226832);
     }
+
+    /**
+     * Round-14 (follow-up): the always-visible "Reroll" label made the hover tooltip redundant,
+     * but didn't stop it from popping up and still covering the trade rows above it. Suppress the
+     * tooltip specifically for the reroll slot — every other slot (trade rows, player inventory)
+     * keeps its normal vanilla tooltip.
+     */
+    @Override
+    protected void renderTooltip(GuiGraphics guiGraphics, int x, int y) {
+        if (this.hoveredSlot != null && this.hoveredSlot.index == BindingAltarMenu.REROLL_SLOT) {
+            return;
+        }
+        super.renderTooltip(guiGraphics, x, y);
+    }
 }
