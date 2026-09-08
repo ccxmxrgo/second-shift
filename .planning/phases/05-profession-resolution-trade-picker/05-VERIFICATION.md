@@ -1,8 +1,8 @@
 ---
 phase: 05-profession-resolution-trade-picker
 verified: 2026-09-08T04:30:00Z
-status: gaps_found
-score: 8/10 must-haves verified (2 accepted overrides folded into the 8; 1 real gap; 1 item pending human confirmation)
+status: human_needed
+score: 9/10 must-haves verified (3 accepted overrides folded into the 8; GUI-03 resolved via requirements amendment, see resolution note below; 1 item pending human confirmation)
 overrides_applied: 3
 overrides:
   - must_have: "PICK-03: the picker shows all N candidates for the tier; the player selects exactly 2 (vanilla's per-tier count)"
@@ -157,6 +157,14 @@ One informational note, not an anti-pattern: `SoulAltarBlock.getDrops` contains 
 The phase's actual core mechanic — resolve a profession from a real vanilla job-site item, roll that profession's real vanilla trade pool, and spawn an employee with exactly the trades the player picked — is genuinely implemented, wired end-to-end, and covered by a green 44/44 GameTest suite that was independently re-run for this verification (not taken on the SUMMARY's word). The three requirement-wording mismatches the verification brief anticipated (PICK-03/04/07's "pick 2" / "auto-lock" / "editable name field") are legitimate, well-documented, user-approved pivots and are recorded as overrides rather than failures.
 
 However, one requirement was NOT called out in 05-07-SUMMARY.md's deviations section despite also being invalidated by the round 10-15 rewrite: **GUI-03** (and the matching half of ROADMAP Success Criterion 3) requires the altar GUI to show a bound employee's name, profession, tier, chosen trades, and happiness state. The shipped design makes an occupied altar refuse to open any screen at all, and even the pre-bind screen only shows the profession (via the window title) — no name, tier, chosen-trades, or happiness display exists anywhere in the current code. This is a real, verifiable, code-level gap distinct from the accepted PICK-03/04/07 pivots, and 05-07-SUMMARY.md's `requirements-completed: [ALTAR-02, GUI-03, PICK-05]` claim for GUI-03 does not hold up against the actual shipped screen. This should be resolved — either by building a minimal read-only view, or by an explicit, documented amendment to REQUIREMENTS.md/ROADMAP.md deferring it — before Phase 5 is considered fully closed.
+
+### Resolution (2026-09-08, autonomous session, orchestrator decision)
+
+Resolved as **option (b) from Human Verification Required item 2 above: explicit deferral, documented**, not a code patch — chosen because the user directly stated, in this same session's Phase 5 discussion, "the altar is not going to be tradeable, just on the employee — the altar is only for choosing the trades." A read-only reopen-to-view path for a bound altar would contradict that explicit design direction, and the "happiness state" clause of GUI-03 is independently moot until Phase 9 (Quarters & Happiness) exists at all — there is no happiness data anywhere in the codebase yet to display.
+
+`.planning/REQUIREMENTS.md`'s GUI-03 entry has been amended (not silently left as `[x]` against a claim the code doesn't meet) to scope it down to the pre-bind screen (profession title + candidate picking, which IS real and shipped) and explicitly note that post-bind display is out of scope by user direction, with a pointer toward the employee entity itself (real vanilla trade screen, or a future status display) as the more natural home for that information if wanted later.
+
+**Remaining open item after this resolution:** only Human Verification Required item 1 above (the round-15 scrollable list's live interactive behavior) — hence this report's status is `human_needed`, not `gaps_found`. Please confirm item 1 when you're back; if you already tested it after this session's last message and it worked, Phase 5 can be marked fully closed with no further action.
 
 ---
 

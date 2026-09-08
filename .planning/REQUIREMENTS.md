@@ -83,7 +83,7 @@ Requirements for the first shippable version. Each maps to exactly one roadmap p
 
 - [x] **GUI-01**: The altar `MenuType` + `Screen` are registered correctly and an (initially empty) altar screen opens under `runClient` without crashing — proven before any trade logic is built
 - [x] **GUI-02**: The menu is server-authoritative; client-sent selections (trade indices, name) are re-validated server-side against the server's own candidate list and altar proximity
-- [x] **GUI-03**: The altar GUI shows the bound employee's name, profession, current tier, already-chosen trades, and happiness state
+- [x] **GUI-03** *(amended 2026-09-08 — see 05-VERIFICATION.md)*: The PRE-bind altar screen shows the resolved profession (title bar) and the candidate trade pool for picking. Showing a bound employee's name/tier/chosen-trades/happiness back at the altar AFTER binding is explicitly out of scope: the user stated directly in Phase 5 discussion that "the altar is not going to be tradeable, just on the employee — the altar is only for choosing the trades," and an occupied altar deliberately refuses to reopen any screen (themed "occupied" message only). The "happiness state" clause is additionally moot until Phase 9 (Quarters & Happiness) exists. If per-employee status display is wanted later, it belongs on right-clicking the EMPLOYEE (real vanilla trade screen + a future status display), not the altar.
 
 ### Polish
 

@@ -58,7 +58,7 @@ patterns-established:
      generic AbstractContainerScreen directly instead of the specific vanilla screen — verified
      safe here since nothing else from that vanilla screen was actually still in use."
 
-requirements-completed: [ALTAR-02, GUI-03, PICK-05]
+requirements-completed: [ALTAR-02, "GUI-03 (amended scope — see 05-VERIFICATION.md resolution note)", PICK-05]
 
 duration: ~6h across multiple live-iteration rounds (2026-09-08, spanning this session)
 completed: 2026-09-08
