@@ -20,7 +20,7 @@ Requirements for the first shippable version. Each maps to exactly one roadmap p
 - [x] **ECON-01**: The Harvester is a craftable tool/weapon
 - [x] **ECON-02**: Killing any villager with the Harvester drops exactly 1 Soul Fragment, guaranteed; no other vanilla drops are changed
 - [x] **ECON-03**: 4 Soul Fragments craft into 1 Soul Block (vanilla shapeless recipe)
-- [ ] **ECON-04**: Killing your own employee with the Harvester yields 1 Soul Fragment only (no Soul Block, no bonus)
+- [x] **ECON-04**: Killing your own employee with the Harvester yields 1 Soul Fragment only (no Soul Block, no bonus)
 
 ### Altar & Binding
 
@@ -29,18 +29,18 @@ Requirements for the first shippable version. Each maps to exactly one roadmap p
 - [x] **ALTAR-03**: Inserting a Soul Block into an altar that has a job block on top opens the binding GUI
 - [x] **ALTAR-04**: Completing a bind consumes the Soul Block and the job-site block into the altar and spawns the employee
 - [x] **ALTAR-05**: Each altar is bound to exactly one employee and persists that link across save/load
-- [ ] **ALTAR-06**: Destroying a bound altar consumes (does not drop) the Soul Block and job block, deals 1 damage to the breaking player only with no block or environment damage, and 0.5s later a cosmetic lightning strike (visual + thunder, no fire, no collateral damage) instakills the bound employee
+- [x] **ALTAR-06**: Destroying a bound altar consumes (does not drop) the Soul Block and job block, deals 1 damage to the breaking player only with no block or environment damage, and 0.5s later a cosmetic lightning strike (visual + thunder, no fire, no collateral damage) instakills the bound employee
 - [x] **ALTAR-07**: An unbound altar breaks normally and drops itself
 
 ### Employee
 
 - [x] **EMP-01**: An employee is a `minecraft:villager` carrying a serialized, client-synced `EmployeeData` attachment (name, profession, tier, chosen offers, happiness, timers) — no custom entity type
 - [x] **EMP-02**: Employees spawn with villager XP ≥ 1 so vanilla never resets their profession to unemployed
-- [ ] **EMP-03**: Employees cannot be converted into zombie villagers
-- [ ] **EMP-04**: Employees cannot be converted by lightning into a witch
-- [ ] **EMP-05**: Employees cannot breed and never produce baby villagers
-- [ ] **EMP-06**: An employee killed by anything other than the Harvester or altar-destruction drops its Soul Block plus slimeballs
-- [ ] **EMP-07**: Employees stay within a bound area around their altar and never wander off
+- [x] **EMP-03**: Employees cannot be converted into zombie villagers
+- [x] **EMP-04**: Employees cannot be converted by lightning into a witch
+- [x] **EMP-05**: Employees cannot breed and never produce baby villagers
+- [x] **EMP-06**: An employee killed by anything other than the Harvester or altar-destruction drops its Soul Block plus slimeballs
+- [x] **EMP-07**: Employees stay within a bound area around their altar and never wander off
 - [x] **EMP-08**: Employees are visually distinguishable from wild villagers (always-visible custom name at minimum)
 - [x] **EMP-09**: Villagers without the `EmployeeData` attachment behave exactly as vanilla — zero side effects
 
@@ -173,13 +173,13 @@ Which phases cover which requirements. Populated during roadmap creation (2026-0
 | PICK-08 | Phase 5 | Complete |
 | GUI-02 | Phase 5 | Complete |
 | GUI-03 | Phase 5 | Complete |
-| EMP-03 | Phase 6 | Pending |
-| EMP-04 | Phase 6 | Pending |
-| EMP-05 | Phase 6 | Pending |
-| EMP-06 | Phase 6 | Pending |
-| EMP-07 | Phase 6 | Pending |
-| ECON-04 | Phase 6 | Pending |
-| ALTAR-06 | Phase 6 | Pending |
+| EMP-03 | Phase 6 | Complete |
+| EMP-04 | Phase 6 | Complete |
+| EMP-05 | Phase 6 | Complete |
+| EMP-06 | Phase 6 | Complete |
+| EMP-07 | Phase 6 | Complete |
+| ECON-04 | Phase 6 | Complete |
+| ALTAR-06 | Phase 6 | Complete |
 | PROG-01 | Phase 7 | Pending |
 | PROG-02 | Phase 7 | Pending |
 | PROG-03 | Phase 7 | Pending |

@@ -25,6 +25,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Soul Altar block entity (D-01 / D-03 / ALTAR-01).
@@ -55,6 +56,7 @@ public class SoulAltarBlockEntity extends BlockEntity implements MenuProvider {
     private static final String KEY_DATA_VERSION = "DataVersion";
     private static final String KEY_JOB_ITEM = "JobItem";
     private static final String KEY_EMPLOYEE_BOUND = "EmployeeBound";
+    private static final String KEY_EMPLOYEE_ID = "EmployeeId";
 
     private ItemStack heldSoulBlock = ItemStack.EMPTY;
 
@@ -68,6 +70,17 @@ public class SoulAltarBlockEntity extends BlockEntity implements MenuProvider {
 
     /** Plan 05-01 (D-04 / ALTAR-05): one employee per altar. Persisted unconditionally. */
     private boolean employeeBound = false;
+
+    /**
+     * Phase 6 (06-CONTEXT.md D-01): the altar's half of the bidirectional altar↔employee link —
+     * {@code null} means either no employee was ever bound, or (for a pre-Phase-6 save) one was
+     * bound before this field existed. Nullable rather than {@code Optional} because block
+     * entity fields follow the codebase's existing null-means-absent idiom (see
+     * {@link #heldSoulBlock}'s ItemStack.EMPTY equivalent) — {@code Optional} is reserved for
+     * {@link com.cxmxrgo.secondshift.employee.EmployeeData#altarPos()}, the record side of the
+     * same link, per that class's own doc comment.
+     */
+    private UUID employeeId = null;
 
     /**
      * Plan 05-01: transient (never persisted) session fields for the trade-candidate roll that
@@ -160,6 +173,15 @@ public class SoulAltarBlockEntity extends BlockEntity implements MenuProvider {
         this.employeeBound = bound;
     }
 
+    /** Phase 6: the UUID of the villager this altar is currently bound to, or {@code null}. */
+    public UUID getEmployeeId() {
+        return employeeId;
+    }
+
+    public void setEmployeeId(UUID employeeId) {
+        this.employeeId = employeeId;
+    }
+
     /** {@code true} once {@link #candidateOffers} has been rolled for this session. */
     public boolean candidatesRolled() {
         return candidateOffers != null;
@@ -208,6 +230,9 @@ public class SoulAltarBlockEntity extends BlockEntity implements MenuProvider {
             tag.put(KEY_JOB_ITEM, heldJobItem.save(registries));
         }
         tag.putBoolean(KEY_EMPLOYEE_BOUND, employeeBound);
+        if (employeeId != null) {
+            tag.putUUID(KEY_EMPLOYEE_ID, employeeId);
+        }
     }
 
     @Override
@@ -225,6 +250,9 @@ public class SoulAltarBlockEntity extends BlockEntity implements MenuProvider {
         }
         // D-17: pre-Phase-5 saves lack this key — getBoolean defaults to false, backward compatible.
         employeeBound = tag.getBoolean(KEY_EMPLOYEE_BOUND);
+        // Phase 6: pre-Phase-6 saves lack this key — null means "bound before the link existed";
+        // EmployeeManager.releaseAltar treats a null stored id as matching any dying employee.
+        employeeId = tag.hasUUID(KEY_EMPLOYEE_ID) ? tag.getUUID(KEY_EMPLOYEE_ID) : null;
     }
 
     @Override

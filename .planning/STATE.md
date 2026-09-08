@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-stopped_at: Completed 05-07 (verification + GUI-03 amendment); autonomous overnight run building Phase 6
-last_updated: "2026-09-08T04:35:00.000Z"
+stopped_at: Completed 06-01 (Employee Traits, Death & Firing); autonomous overnight run continuing to Phase 7
+last_updated: "2026-09-08T05:05:00.000Z"
 last_activity: 2026-09-08
 progress:
   total_phases: 10
-  completed_phases: 5
-  total_plans: 20
-  completed_plans: 20
-  percent: 50
+  completed_phases: 6
+  total_plans: 21
+  completed_plans: 21
+  percent: 60
 ---
 
 # Project State
@@ -21,16 +21,26 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-04)
 
 **Core value:** Harvest souls → bind a villager at the Soul Altar → hand-pick its profession and its trades, tier by tier. That loop must be reliable and feel good.
-**Current focus:** Phase 06 — employee-traits-death-firing (autonomous overnight build in progress)
+**Current focus:** Phase 07 — progression-promotion-ritual (autonomous overnight build in progress)
 
 ## Current Position
 
-Phase: 05 (profession-resolution-trade-picker) — COMPLETE (status: human_needed — see 05-VERIFICATION.md; one item, the round-15 scrollable list's live in-client behavior, awaits final user confirmation)
-Next: Phase 06 (Employee Traits, Death & Firing) — being built autonomously (2026-09-08 overnight session, user asleep, explicit autonomous-mode request)
-Plan: 7 of 7 (Phase 5)
+Phase: 06 (employee-traits-death-firing) — COMPLETE (status: human_needed — see 06-VERIFICATION.md; 3 items, all "does this feel right" playtest checks with verified underlying logic, await the user's return)
+Next: Phase 07 (Progression & Promotion Ritual) — being built autonomously (2026-09-08 overnight session, user asleep, explicit autonomous-mode request)
+Plan: 1 of 1 (Phase 6)
 Last activity: 2026-09-08
 
-Progress: [█████░░░░░] 50%
+Progress: [██████░░░░] 60%
+
+**2026-09-08 note (Phase 6, autonomous session):** an earlier dispatch for this phase accidentally
+ran two concurrent agent sessions against the same working tree (one agent silently spawned a
+nested background worker instead of doing the work directly, and the orchestrator dispatched a
+second independent one when the first appeared to have done nothing). Both detected the collision
+and safely aborted with zero corruption — see 06-01-SUMMARY.md "Issues Encountered" for the full
+account and the lesson learned (verify whether a "I've launched a background agent" report from a
+general-purpose agent is real before assuming nothing happened and redispatching). Phase 6 was
+then implemented directly by the orchestrating session itself, in one pass, with no further
+concurrency risk.
 
 **2026-09-08 note (autonomous overnight session):** Phase 5's original design (custom Screen, pick-2-then-confirm, editable name field) was completely superseded across 5 live-iteration redesign rounds (10-15) directly requested by the user in real time, landing on: a vanilla-EnchantmentMenu-derived Binding Altar showing a scrollable "career path" list of the profession's HIGHEST tier trades, granting one picked trade immediately. This is a real, user-approved architectural pivot — see git log 189b1bd..1825e42 and 05-07-SUMMARY.md/05-VERIFICATION.md for full detail before assuming any earlier phase document (05-CONTEXT.md, 05-UI-SPEC.md, 05-06-PLAN.md) still describes the shipped UI. The user then invoked `/gsd-autonomous` and went to sleep, asking Claude to keep building phases 6-10 overnight using its own judgment on open design questions, and to research online before designing Phase 7's progression mechanic (see the saved memory note `second-shift-phase7-tier-gated-trade-idea` for that research + recommended direction).
 
@@ -123,6 +133,11 @@ Relevant to current work:
 - [Phase ?]: MerchantOffer.getCostB() returns ItemStack (not Optional<ItemCost>) -- use ItemStack#isEmpty() for the costB presence check
 - [Phase ?]: AbstractSelectionList's scrollbar-position hook on NeoForge 21.1.248 is getScrollbarPosition(), not scrollBarX()
 - [Phase ?]: AbstractContainerScreen: renderBg/widgets render before the leftPos/topPos pose translate (absolute coords); renderLabels renders after (relative coords) -- verified via javap bytecode disassembly
+- [Phase 05]: EnchantmentScreen's inherited mouseClicked does a hardcoded 3-fixed-row bounding-box check that calls clickMenuButton directly, before any real widget gets a click -- BindingAltarScreen extends AbstractContainerScreen directly instead, once clickMenuButton became genuinely functional (round-15 career-path list)
+- [Phase 05]: getType() on AbstractContainerMenu is not final -- overriding it is how a menu whose superclass constructor hardcodes a MenuType (EnchantmentMenu -> MenuType.ENCHANTMENT) can still redirect the open-screen packet to its own registered MenuType, without touching the vanilla type or every real instance of it in the world
+- [Phase 06]: Villager#canBreed() requires getAge() == 0; AgeableMob#setAge(int) is public -- holding an employee at a positive age (vanilla's own post-breeding cooldown value, 6000) is a Mixin-free breeding-precondition break that defends both sides of VillagerMakeLove's two-partner canBreed() check
+- [Phase 06]: StreamCodec.composite has overloads for exactly 1-6 components in 1.21.1 -- EmployeeData's Phase 6 altarPos field fills the 6th and last slot; Phase 9's happiness/timer fields will need a nested sub-record or a hand-written StreamCodec
+- [Phase 06]: ServerLevel#getEntity(UUID) exists for resolving a stored entity id back to a live entity (used by EmployeeFiring's delayed-smite queue)
 
 ### Pending Todos
 

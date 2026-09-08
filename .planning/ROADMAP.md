@@ -21,7 +21,7 @@ in a jar the user can load in the CurseForge "test" instance and verify in-game.
 - [x] **Phase 3: Menu & Screen Harness (HARD GATE)** - Empty "Binding Altar" screen opens under runClient with no crash (completed 2026-09-04)
 - [x] **Phase 4: Employee Attachment & Spawn** - Binding spawns a persistent, named employee villager with synced EmployeeData (completed 2026-09-04)
 - [x] **Phase 5: Profession Resolution & Trade Picker** - Hand-pick an employee's profession and its career-path trade from the real vanilla pool (amended from tier-1/pick-2 — see 05-VERIFICATION.md)
-- [ ] **Phase 6: Employee Traits, Death & Firing** - Employees are conversion/breed-immune, recoverable on death, removable only via altar destruction
+- [x] **Phase 6: Employee Traits, Death & Firing** - Employees are conversion/breed-immune, recoverable on death, removable only via altar destruction
 - [ ] **Phase 7: Progression & Promotion Ritual** - Vanilla XP unlocks tiers; the player picks each tier's trades at the altar, never seeing unchosen trades
 - [ ] **Phase 8: Mod-Owned Restock** - Employee trades restock on a POI-independent timer
 - [ ] **Phase 9: Quarters & Happiness** - Employees need quarters + food; happiness modulates prices/restock and neglect makes them quit
@@ -151,8 +151,9 @@ Plans:
   4. Employees stay within a bounded area around their altar and do not wander off.
   5. Breaking a bound altar consumes (does not drop) the Soul Block and job block, deals half a heart to the breaking player only with no block or environment damage, and ~0.5s later a cosmetic lightning strike (no fire, no collateral) instakills the bound employee.
 
-**Plans**: TBD
-**Risks**: LOW-confidence spike — breeding suppression has no verified hook (`BabyEntitySpawnEvent` is dead code for villagers). Budget generously: try precondition-breaking (clear `BREED_TARGET`, no bed/`HOME`, no food) first, `FinalizeSpawnEvent` filtered on `BREEDING` second, a documented targeted AT/Mixin only as a last resort. "Keep employee near altar" also has no pre-researched hook — minor spike; avoid faking a `JOB_SITE` memory. `ResetProfession` immunity (XP >= 1) verified here with a walk-away + relog test.
+**Plans**: 1 (06-01, executed directly — see 06-01-SUMMARY.md)
+**Status**: ✅ Complete (2026-09-08, autonomous overnight session)
+**Risks**: LOW-confidence spike — breeding suppression has no verified hook (`BabyEntitySpawnEvent` is dead code for villagers). **Resolved without Mixin**: `Villager#canBreed()` requires `getAge() == 0`; holding an employee at a positive age (`setAge(6000)`, vanilla's own post-breeding cooldown value, re-asserted every 40 ticks) breaks the precondition on both sides of `VillagerMakeLove.isBreedingPossible`. "Keep employee near altar" resolved as a two-radius tether (24 soft / 48 hard) on a periodic `EntityTickEvent.Post` check, not an AI goal (villagers are brain-driven). See `06-CONTEXT.md` D-03/D-04 for full rationale and `06-01-SUMMARY.md` for what shipped. 58/58 GameTests pass; a few mechanics (tether feel, sneak-release ergonomics, the two-lightning-strike timing) are `human_needed` pending the user's own playtest.
 
 ### Phase 7: Progression & Promotion Ritual
 

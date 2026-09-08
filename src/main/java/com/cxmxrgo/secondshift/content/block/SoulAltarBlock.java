@@ -1,6 +1,7 @@
 package com.cxmxrgo.secondshift.content.block;
 
 import com.cxmxrgo.secondshift.content.blockentity.SoulAltarBlockEntity;
+import com.cxmxrgo.secondshift.event.EmployeeFiring;
 import com.cxmxrgo.secondshift.registry.ModItems;
 import com.cxmxrgo.secondshift.trade.ProfessionResolver;
 import net.minecraft.core.BlockPos;
@@ -203,20 +204,24 @@ public class SoulAltarBlock extends Block implements EntityBlock {
     }
 
     /**
-     * D-04 charged-altar break. Runs server-side before the BE is removed, and has the
-     * {@link Player} ref. If the altar holds a Soul Block: spawn a visual-only
-     * {@link LightningBolt} (flash + thunder, no fire, no collateral), deal exactly half a
-     * heart of armour-bypassing magic damage to the breaking player only, mark the BE so
-     * {@link #getDrops} suppresses everything, and clear the socketed stack (the Soul Block
-     * is destroyed).
+     * D-04 / Phase 6 ALTAR-06 charged-altar break. Runs server-side before the BE is removed, and
+     * has the {@link Player} ref. Fires whenever the altar holds a Soul Block OR has a bound
+     * employee (widened from D-04's original "holds a Soul Block" — the Soul Block was already
+     * consumed at bind time on a bound altar, so without this widening, breaking a bound altar
+     * was completely free): spawn a visual-only {@link LightningBolt} (flash + thunder, no fire,
+     * no collateral), deal exactly half a heart of armour-bypassing magic damage to the breaking
+     * player only, mark the BE so {@link #getDrops} suppresses everything, clear the socketed
+     * stack (the Soul Block is destroyed if present), and — if the altar had a bound employee —
+     * schedule a second, delayed strike that instakills it (06-CONTEXT.md D-07).
      *
-     * <p>ALTAR-06 (a charged-altar break ALSO instakilling the bound employee) is Phase 6 —
-     * no {@code EmployeeData} attachment exists yet; do not add it here.
+     * <p>The delay (see {@link EmployeeFiring#SMITE_DELAY_TICKS}) is real, not cosmetic sugar: it
+     * is what makes the two strikes read as cause and effect rather than one event.
      */
     @Override
     public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         if (!level.isClientSide
-                && level.getBlockEntity(pos) instanceof SoulAltarBlockEntity be && !be.isEmpty()) {
+                && level.getBlockEntity(pos) instanceof SoulAltarBlockEntity be
+                && (!be.isEmpty() || be.isEmployeeBound())) {
             LightningBolt bolt = EntityType.LIGHTNING_BOLT.create(level);
             if (bolt != null) {
                 bolt.moveTo(Vec3.atBottomCenterOf(pos));
@@ -225,7 +230,13 @@ public class SoulAltarBlock extends Block implements EntityBlock {
             }
             player.hurt(level.damageSources().magic(), 1.0F);           // half a heart, breaking player only
             be.markBrokenWhileCharged();                                // read by getDrops off this same BE instance
-            be.setHeldSoulBlock(ItemStack.EMPTY);                       // the Soul Block is destroyed
+            be.setHeldSoulBlock(ItemStack.EMPTY);                       // the Soul Block is destroyed, if present
+
+            if (be.isEmployeeBound() && be.getEmployeeId() != null && level instanceof ServerLevel serverLevel) {
+                EmployeeFiring.schedule(serverLevel, be.getEmployeeId());
+            }
+            be.setEmployeeBound(false);
+            be.setEmployeeId(null);
         }
         return super.playerWillDestroy(level, pos, state, player);
     }

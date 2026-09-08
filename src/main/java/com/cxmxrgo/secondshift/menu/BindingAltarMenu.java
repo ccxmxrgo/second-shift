@@ -362,8 +362,10 @@ public class BindingAltarMenu extends EnchantmentMenu {
 
             if (level instanceof ServerLevel serverLevel) {
                 try {
-                    EmployeeManager.bind(serverLevel, pos, profession.get(), chosen, name);
+                    net.minecraft.world.entity.npc.Villager employee =
+                            EmployeeManager.bind(serverLevel, pos, profession.get(), chosen, name);
                     be.setEmployeeBound(true);
+                    be.setEmployeeId(employee.getUUID()); // Phase 6 D-01: altar's half of the bidirectional link
                     be.setChanged();
                     level.sendBlockUpdated(pos, level.getBlockState(pos), level.getBlockState(pos), Block.UPDATE_ALL);
                     sp.closeContainer();

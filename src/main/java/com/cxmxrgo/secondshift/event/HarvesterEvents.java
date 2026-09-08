@@ -2,6 +2,8 @@ package com.cxmxrgo.secondshift.event;
 
 import com.cxmxrgo.secondshift.SecondShift;
 import com.cxmxrgo.secondshift.content.item.HarvesterItem;
+import com.cxmxrgo.secondshift.employee.EmployeeManager;
+import com.cxmxrgo.secondshift.registry.ModAttachments;
 import com.cxmxrgo.secondshift.registry.ModItems;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -114,6 +116,16 @@ public final class HarvesterEvents {
         if (level instanceof ServerLevel serverLevel) {
             Player killer = event.getSource().getEntity() instanceof Player p ? p : null;
             playSoulHarvestFx(serverLevel, target, killer);
+
+            // Phase 6 (ECON-04): the reap yield is unchanged for an employee — exactly 1 Fragment,
+            // same as any villager (D-05: "ECON-04's yield is already correct today"). The only
+            // employee-specific consequence is freeing the altar's one-employee slot, since the
+            // Phase 5 EmployeeData attachment carries the altar link this death would otherwise
+            // leave dangling.
+            if (target.hasData(ModAttachments.EMPLOYEE.get())) {
+                EmployeeManager.releaseAltar(serverLevel,
+                        target.getData(ModAttachments.EMPLOYEE.get()).altarPos(), target.getUUID());
+            }
         }
     }
 
@@ -202,10 +214,12 @@ public final class HarvesterEvents {
      * True only for a server-side kill of a plain {@link Villager} by a player wielding a
      * {@link HarvesterItem}.
      *
-     * <p>Phase 6 (ECON-04): a separate branch keyed on
-     * {@code ((Villager) target).hasData(EMPLOYEE)} drops 1 Fragment, never a Soul Block.
+     * <p>Phase 6 (ECON-04 / EMP-06): package-private (not private) so {@link
+     * com.cxmxrgo.secondshift.event.EmployeeEvents}'s "any OTHER death" drop-recovery handler can
+     * use it as its own discriminator — an employee killed by the Harvester must never also
+     * trigger EMP-06's Soul-Block-and-slimeballs drop.
      */
-    private static boolean isHarvesterKillOfVillager(LivingEntity target, DamageSource src) {
+    static boolean isHarvesterKillOfVillager(LivingEntity target, DamageSource src) {
         if (target.level().isClientSide) {
             return false;
         }

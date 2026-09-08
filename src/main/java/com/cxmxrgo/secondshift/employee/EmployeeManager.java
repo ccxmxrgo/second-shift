@@ -1,6 +1,8 @@
 package com.cxmxrgo.secondshift.employee;
 
+import com.cxmxrgo.secondshift.content.blockentity.SoulAltarBlockEntity;
 import com.cxmxrgo.secondshift.registry.ModAttachments;
+import com.cxmxrgo.secondshift.registry.ModBlocks;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -11,14 +13,19 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.item.trading.MerchantOffers;
+import net.minecraft.world.level.block.Block;
+
+import java.util.Optional;
+import java.util.UUID;
 
 /**
- * Spawns a bound employee villager (EMP-01, EMP-02, EMP-08, D-03, D-05).
+ * Spawns a bound employee villager (EMP-01, EMP-02, EMP-08, D-03, D-05) and manages the
+ * altar↔employee link's lifecycle (Phase 6, 06-CONTEXT.md D-01).
  *
  * <p>{@link #bind(ServerLevel, BlockPos, VillagerProfession, MerchantOffers, String)} is the
  * phase's one genuinely new piece of business logic — the real, permanent infrastructure this
  * roadmap phase exists to deliver. Plan 05-05 gives it its real signature: the caller (now
- * {@code ServerPayloadHandler}) supplies the already-resolved profession, the already-validated
+ * {@code BindingAltarMenu}) supplies the already-resolved profession, the already-validated
  * chosen offers, and the already-sanitized name — this method no longer picks a random profession
  * or rolls a hardcoded default trade pool (superseded by {@link
  * com.cxmxrgo.secondshift.trade.TradePoolCache}).
@@ -32,13 +39,24 @@ import net.minecraft.world.item.trading.MerchantOffers;
  */
 public final class EmployeeManager {
 
+    /**
+     * Phase 6 (06-CONTEXT.md D-03): employees are held at a positive age as a breeding-precondition
+     * break — see {@link com.cxmxrgo.secondshift.event.EmployeeEvents} for the periodic re-assert.
+     * This is exactly vanilla's own post-breeding cooldown value ({@code VillagerMakeLove.breed}
+     * writes the same constant onto both real parents), chosen so a bound employee looks and
+     * behaves identically to any adult villager mid-cooldown — no rendering change, no AI change,
+     * no trade effect, and never mistaken for a baby ({@code isBaby()} is {@code age < 0}).
+     */
+    public static final int BREEDING_LOCK_AGE = 6000;
+
     private EmployeeManager() {}
 
     /**
      * Spawns a fresh, bound employee villager above {@code altarPos} and adds it to {@code level},
      * with the given {@code profession}, live trade {@code chosenOffers}, and display {@code name}
-     * — all three already resolved/validated/sanitized by the caller (PICK-01 upstream for
-     * profession, {@code ServerPayloadHandler}'s trust-boundary validation for offers and name).
+     * — all three already resolved/validated/sanitized by the caller. Records {@code altarPos} on
+     * the spawned employee's {@link EmployeeData} (Phase 6 D-01) and applies the breeding-lock age
+     * (Phase 6 D-03) before the entity ever joins the level.
      */
     public static Villager bind(ServerLevel level, BlockPos altarPos, VillagerProfession profession,
             MerchantOffers chosenOffers, String name) {
@@ -69,10 +87,49 @@ public final class EmployeeManager {
         villager.setCustomName(Component.literal(name).withStyle(ChatFormatting.GREEN));
         villager.setCustomNameVisible(true);
 
+        // Phase 6 D-03: breeding-precondition break. Applied at spawn, before addFreshEntity, so
+        // the employee is never observably breedable even for a single tick.
+        villager.setAge(BREEDING_LOCK_AGE);
+
         ResourceLocation professionId = BuiltInRegistries.VILLAGER_PROFESSION.getKey(profession);
-        villager.setData(ModAttachments.EMPLOYEE.get(), new EmployeeData(1, name, professionId, 1, chosenOffers));
+        villager.setData(ModAttachments.EMPLOYEE.get(),
+                new EmployeeData(1, name, professionId, 1, chosenOffers, Optional.of(altarPos)));
 
         level.addFreshEntity(villager);
         return villager;
+    }
+
+    /**
+     * Phase 6 (06-CONTEXT.md D-01 "release semantics"): frees an altar's one-employee slot so it
+     * can be re-bound. Called from every death/removal path (Harvester recovery, other-death
+     * drop-recovery, altar-destruction firing) via {@link com.cxmxrgo.secondshift.event.EmployeeEvents}.
+     *
+     * <p>Guarded on identity — the altar is only released if its stored {@link
+     * SoulAltarBlockEntity#getEmployeeId()} matches {@code employeeId}, or is {@code null} (a
+     * pre-Phase-6 save with an {@code employeeBound} flag but no recorded UUID). This means a
+     * stale {@code altarPos} on some other altar's employee can never free an altar that
+     * legitimately belongs to a different, living employee. A no-op (not an error) if {@code
+     * altarPos} is absent, the block there is no longer a Soul Altar, or the BE is gone —
+     * an employee that wandered away from a destroyed/replaced altar has nothing left to release.
+     */
+    public static void releaseAltar(ServerLevel level, Optional<BlockPos> altarPos, UUID employeeId) {
+        if (altarPos.isEmpty()) {
+            return;
+        }
+        BlockPos pos = altarPos.get();
+        if (!level.getBlockState(pos).is(ModBlocks.SOUL_ALTAR.get())) {
+            return;
+        }
+        if (!(level.getBlockEntity(pos) instanceof SoulAltarBlockEntity be)) {
+            return;
+        }
+        UUID stored = be.getEmployeeId();
+        if (stored != null && !stored.equals(employeeId)) {
+            return; // belongs to a different, living employee — never released by a stale link
+        }
+        be.setEmployeeBound(false);
+        be.setEmployeeId(null);
+        be.setChanged();
+        level.sendBlockUpdated(pos, level.getBlockState(pos), level.getBlockState(pos), Block.UPDATE_ALL);
     }
 }
