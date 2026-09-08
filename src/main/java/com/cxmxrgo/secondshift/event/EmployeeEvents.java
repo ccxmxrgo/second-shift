@@ -111,10 +111,13 @@ public final class EmployeeEvents {
      * <p>Note: a zombie killing an employee on Easy difficulty never attempts conversion at all —
      * vanilla simply kills the villager. That path is covered by {@link #onOtherDeath}'s drop
      * recovery, not by this immunity.
+     *
+     * <p>POL-06: gated on {@code ModConfig#CONVERSION_IMMUNITY_ENABLED} — an honest opt-out, not a
+     * balance lever (see that config value's own comment).
      */
     @SubscribeEvent
     static void onConversionPre(LivingConversionEvent.Pre event) {
-        if (event.getEntity().hasData(ModAttachments.EMPLOYEE.get())) {
+        if (ModConfig.CONVERSION_IMMUNITY_ENABLED.get() && event.getEntity().hasData(ModAttachments.EMPLOYEE.get())) {
             event.setCanceled(true);
         }
     }
@@ -138,8 +141,9 @@ public final class EmployeeEvents {
             return;
         }
 
-        // D-03: re-assert the breeding-precondition break before it decays too far.
-        if (villager.getAge() < BREEDING_LOCK_REASSERT_FLOOR) {
+        // D-03: re-assert the breeding-precondition break before it decays too far. POL-06:
+        // gated on ModConfig#BREEDING_LOCK_ENABLED — an honest opt-out, not a balance lever.
+        if (ModConfig.BREEDING_LOCK_ENABLED.get() && villager.getAge() < BREEDING_LOCK_REASSERT_FLOOR) {
             villager.setAge(EmployeeManager.BREEDING_LOCK_AGE);
         }
 

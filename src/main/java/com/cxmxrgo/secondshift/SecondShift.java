@@ -33,8 +33,17 @@ public class SecondShift {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
+    /** POL-06: this mod's own {@link ModContainer}, stashed here so {@code ClientModBusEvents}
+     * (a {@code Dist.CLIENT}-only class) can register NeoForge's generic {@code
+     * ConfigurationScreen} against it from {@code FMLClientSetupEvent} without needing its own
+     * separate way to resolve the container. Registration itself must stay client-only —
+     * {@code ConfigurationScreen} is a real GUI class — which is exactly why it's NOT done here
+     * in the constructor (common code, runs on the dedicated server too). */
+    public static ModContainer CONTAINER;
+
     public SecondShift(IEventBus modBus, ModContainer container) {
         LOGGER.info("[SecondShift] loading {} on NeoForge", container.getModInfo().getVersion());
+        CONTAINER = container;
 
         // Register every DeferredRegister on the mod bus here, in one visible block
         // (D-08/D-10). Each new registry/Mod* class MUST be added here and to

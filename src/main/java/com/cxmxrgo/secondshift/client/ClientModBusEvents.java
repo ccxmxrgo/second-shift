@@ -13,6 +13,8 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.neoforged.neoforge.client.gui.ConfigurationScreen;
+import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import org.slf4j.Logger;
 
 /**
@@ -42,6 +44,12 @@ public final class ClientModBusEvents {
 
     @SubscribeEvent
     static void onClientSetup(FMLClientSetupEvent event) {
+        // POL-06: the Mods-menu Config button — NeoForge's own generic ConfigurationScreen reads
+        // every ModConfigSpec this mod registered (see ModConfig), no hand-rolled screen needed.
+        // Deliberately registered here (client-only event) rather than in SecondShift's
+        // constructor (common code, runs on the dedicated server too, where ConfigurationScreen's
+        // GUI classes must never be touched).
+        SecondShift.CONTAINER.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
         LOGGER.info("[SecondShift] client setup ok");
     }
 

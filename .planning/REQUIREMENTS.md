@@ -88,13 +88,13 @@ Requirements for the first shippable version. Each maps to exactly one roadmap p
 ### Polish
 
 - [x] **POL-01**: A creative mode tab contains every mod item and block
-- [ ] **POL-02**: Complete `en_us.json` covering every item, block, GUI title, button, tooltip, chat message, config entry, and advancement
+- [x] **POL-02**: Complete `en_us.json` covering every item, block, GUI title, button, tooltip, chat message, config entry, and advancement
 - [x] **POL-03**: Every item and block has a model and texture (placeholder quality acceptable; missing is not)
 - [x] **POL-04**: Crafting recipes use vanilla recipe types (appear in JEI/EMI automatically) and emit recipe-unlock advancements
-- [ ] **POL-05**: Harvest, bind, and promotion each have sound + particle feedback
-- [ ] **POL-06**: A `ModConfigSpec` + config screen exposes at least: Soul Fragment drop count, restock interval, happiness thresholds, and each trait-immunity toggle
-- [ ] **POL-07**: HR flavour — per-tier job titles (e.g. Intern → Associate → Senior → Lead → Principal) surfaced in the employee name and/or altar GUI
-- [ ] **POL-08**: Every invalid state has a themed `Component.translatable` message: no job block, no Soul Block, unmapped job block, empty pool, altar with no valid quarters
+- [x] **POL-05**: Harvest, bind, and promotion each have sound + particle feedback
+- [x] **POL-06**: A `ModConfigSpec` + config screen exposes at least: Soul Fragment drop count, restock interval, happiness thresholds, and each trait-immunity toggle
+- [x] **POL-07**: HR flavour — per-tier job titles (e.g. Intern → Associate → Senior → Lead → Principal) surfaced in the employee name and/or altar GUI
+- [x] **POL-08**: Every invalid state has a themed `Component.translatable` message: no job block, no Soul Block, unmapped job block, empty pool, altar with no valid quarters
 - [x] **POL-09**: `pack.mcmeta` uses `pack_format` 48; datapack files use the singular 1.21 folder names (`recipe/`, `loot_table/`, `advancement/`)
 
 ## v2 Requirements
@@ -195,18 +195,19 @@ Which phases cover which requirements. Populated during roadmap creation (2026-0
 | HAPP-06 | Phase 9 | Complete |
 | HAPP-07 | Phase 9 | Complete |
 | STOCK-04 | Phase 9 | Complete |
-| POL-02 | Phase 10 | Pending |
-| POL-05 | Phase 10 | Pending |
-| POL-06 | Phase 10 | Pending |
-| POL-07 | Phase 10 | Pending |
-| POL-08 | Phase 10 | Pending |
+| POL-02 | Phase 10 | Complete |
+| POL-05 | Phase 10 | Complete |
+| POL-06 | Phase 10 | Complete |
+| POL-07 | Phase 10 | Complete |
+| POL-08 | Phase 10 | Complete |
 
 **Coverage:**
 
 - v1 requirements: 60 total (the earlier "52" summary count was stale — the enumerated list above has always had 60)
 - Mapped to phases: 60
 - Unmapped: 0 ✓
+- **Complete: 60/60 ✓ — all 10 phases shipped (2026-09-08, autonomous overnight session)**
 
 ---
 *Requirements defined: 2026-09-04*
-*Last updated: 2026-09-04 after roadmap creation — traceability populated, coverage 60/60*
+*Last updated: 2026-09-08 — all 60/60 v1 requirements complete, milestone shipped*

@@ -34,6 +34,11 @@
   "message.secondshift.happiness.cause.none": "quarters and food are both in order.",
   "message.secondshift.employee.quit": "%s has had enough and quit. Their Soul Block hits the ground; the altar is free again.",
 
+  "secondshift.configuration.title": "Second Shift Configuration",
+  "secondshift.configuration.section.employees": "Employees",
+  "secondshift.configuration.section.happiness": "Happiness",
+  "secondshift.configuration.section.economy": "Economy",
+
   "advancement.secondshift.necromantic_apprentice.title": "Necromantic Apprentice",
   "advancement.secondshift.necromantic_apprentice.description": "Hold an emerald and feel the payroll calling. Forge a Harvester — emeralds, bone, and soul soil — and go collect what the village owes you.",
   "advancement.secondshift.first_harvest.title": "First Harvest",

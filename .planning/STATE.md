@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to execute
-stopped_at: Completed 09-01 (Quarters & Happiness); autonomous overnight run continuing to Phase 10
-last_updated: "2026-09-08T06:00:00.000Z"
+status: Milestone complete — all 10 phases shipped
+stopped_at: Completed 10-01 (Polish, Config & Invalid States) — v1.0 milestone complete
+last_updated: "2026-09-08T09:30:00.000Z"
 last_activity: 2026-09-08
 progress:
   total_phases: 10
-  completed_phases: 9
-  total_plans: 24
-  completed_plans: 24
-  percent: 90
+  completed_phases: 10
+  total_plans: 25
+  completed_plans: 25
+  percent: 100
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-04)
 
 **Core value:** Harvest souls → bind a villager at the Soul Altar → hand-pick its profession and its trades, tier by tier. That loop must be reliable and feel good.
-**Current focus:** Phase 10 — polish-config-invalid-states (autonomous overnight build in progress)
+**Current focus:** Milestone v1.0 complete — all 60/60 requirements shipped across 10 phases (2026-09-08, autonomous overnight session). Remaining work is the human_needed playtest backlog across Phases 6/7/9 (see each phase's VERIFICATION.md) — nothing blocking, nothing broken.
 
 ## Current Position
 
-Phase: 09 (quarters-happiness) — COMPLETE (status: human_needed — see 09-VERIFICATION.md; quarters/happiness "feel" items await the user's return)
-Next: Phase 10 (Polish, Config & Invalid States) — the final phase — being built autonomously (2026-09-08 overnight session, user asleep, explicit autonomous-mode request)
-Plan: 1 of 1 (Phase 9)
+Phase: 10 (polish-config-invalid-states) — COMPLETE (fully code-verified, no new human_needed items this phase — see 10-VERIFICATION.md)
+Next: none — this was the final phase. Milestone v1.0 is complete pending the user's own playtest pass over the accumulated human_needed items from Phases 6, 7, and 9.
+Plan: 1 of 1 (Phase 10)
 Last activity: 2026-09-08
 
-Progress: [█████████░] 90%
+Progress: [██████████] 100%
 
 **2026-09-08 note (Phase 6, autonomous session):** an earlier dispatch for this phase accidentally
 ran two concurrent agent sessions against the same working tree (one agent silently spawned a
@@ -152,6 +152,9 @@ Relevant to current work:
 - [Phase 09]: Happiness price modulation reuses vanilla's OWN hero-of-the-village mechanism (MerchantOffer#setSpecialPriceDiff) rather than inventing a new price path
 - [Phase 09]: HAPP-06 quit REVERTS (does not kill) -- removing every Second Shift attachment is sufficient since every Phase 6/7/8/9 handler is already gated on hasData(EMPLOYEE); the villager keeps its trades/name as ordinary vanilla leftover state
 - [Phase 09]: HAPP-07 ("altar GUI shows happiness+cause") satisfied via a chat/action-bar message on the existing "occupied, not promotable" altar interaction, matching Phase 5's GUI-03 precedent (no altar surface yet re-displays bound-employee status) -- a deliberate scope decision
+- [Phase 10]: POL-02 lang-completeness is verified by a build-time key audit (grep every Component.translatable(...) literal, diff against en_us.json), not a GameTest -- GameTest's dedicated server doesn't load client lang JSON as a resource, so no test can meaningfully assert a key resolves
+- [Phase 10]: NeoForge 21.1.248 ships a generic net.neoforged.neoforge.client.gui.ConfigurationScreen + IConfigScreenFactory that auto-builds a config screen from any registered ModConfigSpec -- registered via container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new) from FMLClientSetupEvent (client-only; SecondShift.CONTAINER is a static field stashed in the constructor so the Dist.CLIENT-only ClientModBusEvents can reach it). No hand-rolled config screen needed.
+- [Phase 10]: POL-08 invalid-state coverage was already complete from Phases 2-9 -- confirmed by the same lang audit, no new code needed
 
 ### Pending Todos
 
@@ -166,6 +169,7 @@ None yet.
 - EMP-07 "keep employee near altar" has no pre-researched hook — minor spike in Phase 6.
 - **[Phase 07, non-blocking, pending user]:** the promotion-ready signal (particles + action-bar message) and the Promotion Ritual screen's Confirm-button UX have only been verified by GameTest + a clean client boot — not by an interactive playtest of an employee actually leveling up and being promoted in a live client. See 07-VERIFICATION.md Human Verification items.
 - **[Phase 09, non-blocking, pending user]:** quarters detection (a bounded flood fill, not real structure recognition), the happiness meter's feel/pacing, and the sustained-quit timing have only been verified by GameTest + a clean client boot — not by building a real room+chest in a live client and watching an employee's happiness actually change over real play. See 09-VERIFICATION.md Human Verification items.
+- **[Phase 10, non-blocking, pending user]:** the Mods-menu Config screen (NeoForge's own generic `ConfigurationScreen`) has been confirmed to register without crashing and to read every `ModConfig` value correctly (via `secondshift-common.toml` generation), but has never actually been opened and clicked through in a live client — the autonomous session has no way to visually confirm the screen renders/behaves as expected. See 10-VERIFICATION.md Human Verification items.
 
 ### Quick Tasks Completed
 

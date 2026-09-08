@@ -25,7 +25,7 @@ in a jar the user can load in the CurseForge "test" instance and verify in-game.
 - [x] **Phase 7: Progression & Promotion Ritual** - Vanilla XP unlocks tiers; the player picks each tier's trades at the altar, never seeing unchosen trades (completed 2026-09-08)
 - [x] **Phase 8: Mod-Owned Restock** - Employee trades restock on a POI-independent timer (completed 2026-09-08)
 - [x] **Phase 9: Quarters & Happiness** - Employees need quarters + food; happiness modulates prices/restock and neglect makes them quit (completed 2026-09-08)
-- [ ] **Phase 10: Polish, Config & Invalid States** - Every surface translated, themed, configurable, and failing gracefully
+- [x] **Phase 10: Polish, Config & Invalid States** - Every surface translated, themed, configurable, and failing gracefully (completed 2026-09-08)
 
 ## Phase Details
 
@@ -236,7 +236,8 @@ re-displays bound-employee status) — a deliberate scope decision, not an overs
   4. Every invalid state (no job block, no Soul Block, unmapped block, empty pool, pool <= 2, altar with no valid quarters) shows a themed `Component.translatable` message and never crashes.
   5. Employee names and/or the altar GUI surface per-tier HR job titles (e.g. Intern -> Associate -> Senior -> Lead -> Principal).
 
-**Plans**: TBD
+**Plans**: 1 (implemented directly, autonomous overnight session — see 10-01-SUMMARY.md)
+**Status**: ✅ Complete
 **UI hint**: yes
 
 ## Progress
@@ -251,9 +252,9 @@ Phases 6 and 8 are parallelizable with the 5 → 7 trade chain once Phase 4 land
 | 2. Economy Items & Soul Altar Block | 5/5 | Complete    | 2026-09-04 |
 | 3. Menu & Screen Harness (HARD GATE) | 2/2 | Complete   | 2026-09-04 |
 | 4. Employee Attachment & Spawn | 4/4 | Complete    | 2026-09-05 |
-| 5. Profession Resolution & Trade Picker | 6/7 | In Progress|  |
-| 6. Employee Traits, Death & Firing | 0/TBD | Not started | - |
-| 7. Progression & Promotion Ritual | 0/TBD | Not started | - |
-| 8. Mod-Owned Restock | 0/TBD | Not started | - |
-| 9. Quarters & Happiness | 0/TBD | Not started | - |
-| 10. Polish, Config & Invalid States | 0/TBD | Not started | - |
+| 5. Profession Resolution & Trade Picker | 15+/15+ | Complete (amended — see 05-VERIFICATION.md) | 2026-09-08 |
+| 6. Employee Traits, Death & Firing | 1/1 | Complete    | 2026-09-08 |
+| 7. Progression & Promotion Ritual | 1/1 | Complete    | 2026-09-08 |
+| 8. Mod-Owned Restock | 1/1 | Complete    | 2026-09-08 |
+| 9. Quarters & Happiness | 1/1 | Complete    | 2026-09-08 |
+| 10. Polish, Config & Invalid States | 1/1 | Complete    | 2026-09-08 |

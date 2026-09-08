@@ -210,6 +210,17 @@ public class PromotionRitualMenu extends EnchantmentMenu {
             }
             try {
                 EmployeeManager.installPromotion(employee, data, targetTier, chosenOffers);
+
+                // POL-05: promotion feedback — a brighter, more triumphant burst than the bind FX
+                // (enchant-table sparkle + a level-up-flavored sound) at the employee's own
+                // position, since this is about THEM advancing, not the altar itself.
+                serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.ENCHANT,
+                        employee.getX(), employee.getY() + 1.0D, employee.getZ(), 30, 0.4D, 0.6D, 0.4D, 0.5D);
+                serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.HAPPY_VILLAGER,
+                        employee.getX(), employee.getY() + 1.8D, employee.getZ(), 12, 0.3D, 0.3D, 0.3D, 0.0D);
+                serverLevel.playSound(null, employee.blockPosition(), net.minecraft.sounds.SoundEvents.PLAYER_LEVELUP,
+                        net.minecraft.sounds.SoundSource.NEUTRAL, 0.6F, 1.4F);
+
                 sp.displayClientMessage(Component.translatable(
                         "message.secondshift.employee.promoted", employee.getCustomName(), targetTier), true);
                 sp.closeContainer();

@@ -1,11 +1,13 @@
 package com.cxmxrgo.secondshift.employee;
 
+import com.cxmxrgo.secondshift.config.ModConfig;
 import net.minecraft.network.chat.Component;
 
 /**
  * HAPP-03: the discrete happiness state derived from the 0-100 meter tracked on the
- * {@code secondshift:happiness} attachment. Thirds, rounded to keep the bands simple and
- * symmetric: 0-33 Unhappy, 34-66 OK, 67-100 Happy.
+ * {@code secondshift:happiness} attachment. Band edges are configurable (POL-06:
+ * {@code ModConfig#HAPPINESS_UNHAPPY_MAX}/{@code HAPPINESS_OK_MAX}) — default thirds (0-33
+ * Unhappy, 34-66 OK, 67-100 Happy).
  */
 public enum Happiness {
     UNHAPPY(-1, "message.secondshift.happiness.unhappy"),
@@ -24,10 +26,10 @@ public enum Happiness {
     }
 
     public static Happiness fromMeter(int meter) {
-        if (meter <= 33) {
+        if (meter <= ModConfig.HAPPINESS_UNHAPPY_MAX.get()) {
             return UNHAPPY;
         }
-        if (meter <= 66) {
+        if (meter <= ModConfig.HAPPINESS_OK_MAX.get()) {
             return OK;
         }
         return HAPPY;

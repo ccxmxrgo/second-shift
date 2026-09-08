@@ -1,6 +1,7 @@
 package com.cxmxrgo.secondshift.event;
 
 import com.cxmxrgo.secondshift.SecondShift;
+import com.cxmxrgo.secondshift.config.ModConfig;
 import com.cxmxrgo.secondshift.content.item.HarvesterItem;
 import com.cxmxrgo.secondshift.employee.EmployeeManager;
 import com.cxmxrgo.secondshift.registry.ModAttachments;
@@ -104,10 +105,11 @@ public final class HarvesterEvents {
         }
 
         Level level = target.level();
-        // ECON-02: always exactly 1 Fragment. Looting is intentionally ignored (D-07).
+        // ECON-02: always exactly ModConfig#SOUL_FRAGMENT_DROP_COUNT Fragments (default 1,
+        // POL-06 — configurable). Looting is intentionally ignored (D-07).
         ItemEntity fragment = new ItemEntity(level,
                 target.getX(), target.getY() + 0.5D, target.getZ(),
-                new ItemStack(ModItems.SOUL_FRAGMENT.get()));
+                new ItemStack(ModItems.SOUL_FRAGMENT.get(), ModConfig.SOUL_FRAGMENT_DROP_COUNT.get()));
         fragment.setDefaultPickUpDelay();
         level.addFreshEntity(fragment);
 

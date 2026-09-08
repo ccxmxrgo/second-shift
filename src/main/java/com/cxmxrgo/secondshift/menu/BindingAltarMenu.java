@@ -378,6 +378,19 @@ public class BindingAltarMenu extends EnchantmentMenu {
                     be.setEmployeeId(employee.getUUID()); // Phase 6 D-01: altar's half of the bidirectional link
                     be.setChanged();
                     level.sendBlockUpdated(pos, level.getBlockState(pos), level.getBlockState(pos), Block.UPDATE_ALL);
+
+                    // POL-05: bind feedback — a rising soul burst at the altar plus the villager's
+                    // own arrival sound, matching the harvest/promotion FX's "vanilla sounds and
+                    // particles only" style.
+                    serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.SOUL,
+                            pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D, 20, 0.25D, 0.4D, 0.25D, 0.03D);
+                    serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.HAPPY_VILLAGER,
+                            pos.getX() + 0.5D, pos.getY() + 1.3D, pos.getZ() + 0.5D, 10, 0.3D, 0.3D, 0.3D, 0.0D);
+                    serverLevel.playSound(null, pos, net.minecraft.sounds.SoundEvents.SOUL_ESCAPE.value(),
+                            net.minecraft.sounds.SoundSource.NEUTRAL, 1.0F, 1.1F);
+                    serverLevel.playSound(null, pos, net.minecraft.sounds.SoundEvents.VILLAGER_YES,
+                            net.minecraft.sounds.SoundSource.NEUTRAL, 1.0F, 1.0F);
+
                     sp.closeContainer();
                 } catch (Exception e) {
                     LOGGER.error("EmployeeManager.bind failed for altar at {} — sockets already consumed, "

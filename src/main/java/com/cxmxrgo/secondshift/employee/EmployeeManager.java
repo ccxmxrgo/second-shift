@@ -91,7 +91,8 @@ public final class EmployeeManager {
 
         villager.setOffers(chosenOffers); // LAST among data/offers calls (Pattern 2).
 
-        villager.setCustomName(Component.literal(name).withStyle(ChatFormatting.GREEN));
+        // POL-07: HR flavour — "Intern <name>" at bind, updated on every later promotion.
+        villager.setCustomName(Component.literal(JobTitles.forTier(1) + " " + name).withStyle(ChatFormatting.GREEN));
         villager.setCustomNameVisible(true);
 
         // Phase 6 D-03: breeding-precondition break. Applied at spawn, before addFreshEntity, so
@@ -165,6 +166,12 @@ public final class EmployeeManager {
         villager.setOffers(merged);
         villager.setData(ModAttachments.EMPLOYEE.get(),
                 new EmployeeData(data.version(), data.name(), data.profession(), newTier, merged, data.altarPos()));
+
+        // POL-07: refresh the HR title prefix on every promotion (e.g. "Intern Aldric" ->
+        // "Associate Aldric"). data.name() is always the bare chosen name (never includes a
+        // title), so this never accumulates stale prefixes.
+        villager.setCustomName(Component.literal(JobTitles.forTier(newTier) + " " + data.name())
+                .withStyle(ChatFormatting.GREEN));
     }
 
     /**
