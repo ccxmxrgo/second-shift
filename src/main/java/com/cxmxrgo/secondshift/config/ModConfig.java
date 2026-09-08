@@ -17,6 +17,7 @@ public final class ModConfig {
 
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.ConfigValue<Integer> RESTOCK_INTERVAL_TICKS;
+    public static final ModConfigSpec.ConfigValue<Integer> HAPPINESS_QUIT_THRESHOLD_TICKS;
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -28,6 +29,12 @@ public final class ModConfig {
                         "restock — independent of vanilla's day/night cycle, POI access, or work",
                         "schedule. Default 12000 (10 real minutes).")
                 .defineInRange("restockIntervalTicks", 12000, 200, 480000, Integer.class);
+        HAPPINESS_QUIT_THRESHOLD_TICKS = builder
+                .comment(
+                        "How many CONTINUOUS ticks an employee can stay Unhappy before it quits",
+                        "(drops its Soul Block, reverts to an ordinary villager, frees its altar).",
+                        "Default 12000 (10 real minutes).")
+                .defineInRange("happinessQuitThresholdTicks", 12000, 200, 1000000, Integer.class);
         builder.pop();
 
         SPEC = builder.build();

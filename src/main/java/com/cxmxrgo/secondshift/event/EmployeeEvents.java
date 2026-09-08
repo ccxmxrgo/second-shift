@@ -5,6 +5,9 @@ import com.cxmxrgo.secondshift.config.ModConfig;
 import com.cxmxrgo.secondshift.content.item.HarvesterItem;
 import com.cxmxrgo.secondshift.employee.EmployeeData;
 import com.cxmxrgo.secondshift.employee.EmployeeManager;
+import com.cxmxrgo.secondshift.employee.FoodChecker;
+import com.cxmxrgo.secondshift.employee.Happiness;
+import com.cxmxrgo.secondshift.employee.QuartersChecker;
 import com.cxmxrgo.secondshift.registry.ModAttachments;
 import com.cxmxrgo.secondshift.registry.ModBlocks;
 import com.cxmxrgo.secondshift.registry.ModItems;
@@ -22,6 +25,7 @@ import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.trading.MerchantOffer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingConversionEvent;
@@ -68,6 +72,16 @@ public final class EmployeeEvents {
 
     /** Radius (blocks) the PROG-03 promotion signal reaches real players. */
     private static final double PROMOTION_SIGNAL_RADIUS = 32.0D;
+
+    /** Phase 9 (09-CONTEXT.md D-06): the happiness meter (quarters/food scan + price/streak
+     * update) recomputes on a slower cadence than the 40-tick heartbeat — a flood fill and a
+     * container scan are meaningfully more expensive than the other checks sharing that
+     * heartbeat. A clean multiple of {@link #CHECK_INTERVAL_TICKS} so both gates stay aligned. */
+    private static final int HAPPINESS_CHECK_INTERVAL_TICKS = 400;
+
+    /** HAPP-03: how far the meter moves toward 0 or 100 per {@link #HAPPINESS_CHECK_INTERVAL_TICKS}
+     * check — ~10 checks (~200 real seconds) to swing fully from one extreme to the other. */
+    private static final int HAPPINESS_STEP = 10;
 
     /** Phase 7 (07-CONTEXT.md D-03): non-persisted "has this employee already been signaled for
      * THIS tier" tracker, keyed by employee UUID -> the vanilla level last signaled for. In-memory
@@ -140,15 +154,28 @@ public final class EmployeeEvents {
             }
         }
 
-        // Phase 8 STOCK-01/02/03: mod-owned real-time restock, independent of vanilla's own
-        // POI/work-schedule/day-count restock gating (never calling Villager#shouldRestock() at
-        // all). A single elapsed-vs-interval comparison, resetting the timer to "now" on trigger,
-        // guarantees at most one restock per check regardless of how long the employee was
-        // unloaded (success criterion 4 — no burst). Gated on hasData(EMPLOYEE) at the top of this
+        // Phase 9 (HAPP-01..07, 09-CONTEXT.md D-06): the slower quarters/food/happiness recompute.
+        // Runs (and may quit the employee — HAPP-06) BEFORE the restock check, since STOCK-04
+        // needs this tick's freshly-recomputed happiness, and a just-quit employee must not also
+        // restock or tether-check on the same tick.
+        if (villager.tickCount % HAPPINESS_CHECK_INTERVAL_TICKS == 0
+                && recomputeHappinessAndMaybeQuit(level, villager, data)) {
+            return; // the employee just quit — hasData(EMPLOYEE) is now false, nothing left to do
+        }
+
+        // Phase 8 STOCK-01/02/03, Phase 9 STOCK-04: mod-owned real-time restock, independent of
+        // vanilla's own POI/work-schedule/day-count restock gating (never calling
+        // Villager#shouldRestock() at all). A single elapsed-vs-interval comparison, resetting the
+        // timer to "now" on trigger, guarantees at most one restock per check regardless of how
+        // long the employee was unloaded (success criterion 4 — no burst). Paused entirely while
+        // Unhappy (STOCK-04) — reads the meter attachment directly rather than recomputing it,
+        // since the expensive recompute above already keeps it fresh every
+        // HAPPINESS_CHECK_INTERVAL_TICKS ticks. Gated on hasData(EMPLOYEE) at the top of this
         // method already (STOCK-03) — a wild villager never reaches this line.
         long lastRestock = villager.getData(ModAttachments.RESTOCK_TIMER.get());
         long now = level.getGameTime();
-        if (now - lastRestock >= ModConfig.RESTOCK_INTERVAL_TICKS.get()) {
+        boolean unhappy = Happiness.fromMeter(villager.getData(ModAttachments.HAPPINESS.get())) == Happiness.UNHAPPY;
+        if (!unhappy && now - lastRestock >= ModConfig.RESTOCK_INTERVAL_TICKS.get()) {
             villager.restock();
             villager.setData(ModAttachments.RESTOCK_TIMER.get(), now);
         }
@@ -170,6 +197,48 @@ public final class EmployeeEvents {
         } else if (distSqr > SOFT_TETHER_RADIUS * SOFT_TETHER_RADIUS) {
             villager.getNavigation().moveTo(altar.getX() + 0.5D, altar.getY(), altar.getZ() + 0.5D, WALK_HOME_SPEED);
         }
+    }
+
+    /**
+     * Phase 9 (HAPP-01..07, 09-CONTEXT.md D-01..D-05): the slow happiness recompute — checks
+     * quarters (HAPP-01) and food (HAPP-02), moves the 0-100 meter toward the appropriate extreme
+     * (HAPP-03), applies the resulting price adjustment to every current offer (HAPP-04), tracks
+     * the continuous-Unhappy streak, and quits the employee (HAPP-06) once that streak crosses the
+     * configured threshold. Returns {@code true} if the employee just quit — the caller must stop
+     * touching it as an employee immediately (its {@code EMPLOYEE} attachment is gone).
+     */
+    private static boolean recomputeHappinessAndMaybeQuit(ServerLevel level, Villager villager, EmployeeData data) {
+        boolean conditionsMet = data.altarPos().isPresent()
+                && QuartersChecker.hasValidQuarters(level, data.altarPos().get().above(2))
+                && FoodChecker.tryConsumeFood(level, data.altarPos().get());
+
+        int meter = villager.getData(ModAttachments.HAPPINESS.get());
+        meter = conditionsMet
+                ? Math.min(100, meter + HAPPINESS_STEP)
+                : Math.max(0, meter - HAPPINESS_STEP);
+        villager.setData(ModAttachments.HAPPINESS.get(), meter);
+
+        Happiness tier = Happiness.fromMeter(meter);
+        for (MerchantOffer offer : villager.getOffers()) {
+            offer.setSpecialPriceDiff(tier.priceAdjustment());
+        }
+
+        int streak = villager.getData(ModAttachments.UNHAPPY_STREAK_TICKS.get());
+        streak = (tier == Happiness.UNHAPPY) ? streak + HAPPINESS_CHECK_INTERVAL_TICKS : 0;
+        villager.setData(ModAttachments.UNHAPPY_STREAK_TICKS.get(), streak);
+
+        if (streak >= ModConfig.HAPPINESS_QUIT_THRESHOLD_TICKS.get()) {
+            Component name = villager.getCustomName() != null
+                    ? villager.getCustomName() : Component.translatable("entity.minecraft.villager");
+            EmployeeManager.quit(level, villager, data);
+            clearSignal(villager.getUUID()); // hygiene — matches every other employee-removal path
+            for (ServerPlayer player : level.getEntitiesOfClass(ServerPlayer.class,
+                    villager.getBoundingBox().inflate(PROMOTION_SIGNAL_RADIUS))) {
+                player.sendSystemMessage(Component.translatable("message.secondshift.employee.quit", name));
+            }
+            return true;
+        }
+        return false;
     }
 
     /**

@@ -46,13 +46,13 @@ Requirements for the first shippable version. Each maps to exactly one roadmap p
 
 ### Quarters & Happiness
 
-- [ ] **HAPP-01**: An employee needs "quarters" tied to its altar: an enclosed space of at least 3×3 containing a door
-- [ ] **HAPP-02**: An employee needs access to a nearby chest stocked with food it can draw from
-- [ ] **HAPP-03**: Employee happiness is a discrete state — Unhappy / OK / Happy — derived from quarters validity and food availability
-- [ ] **HAPP-04**: Happy employees sell at reduced emerald prices; OK employees at vanilla prices; Unhappy employees above vanilla prices
-- [ ] **HAPP-05**: Unhappy employees restock slowly or not at all
-- [ ] **HAPP-06**: An employee left Unhappy for a sustained period quits: it drops its Soul Block, reverts to an ordinary unbound villager, and releases its altar
-- [ ] **HAPP-07**: Current happiness state and its cause are shown in the altar GUI
+- [x] **HAPP-01**: An employee needs "quarters" tied to its altar: an enclosed space of at least 3×3 containing a door
+- [x] **HAPP-02**: An employee needs access to a nearby chest stocked with food it can draw from
+- [x] **HAPP-03**: Employee happiness is a discrete state — Unhappy / OK / Happy — derived from quarters validity and food availability
+- [x] **HAPP-04**: Happy employees sell at reduced emerald prices; OK employees at vanilla prices; Unhappy employees above vanilla prices
+- [x] **HAPP-05**: Unhappy employees restock slowly or not at all
+- [x] **HAPP-06**: An employee left Unhappy for a sustained period quits: it drops its Soul Block, reverts to an ordinary unbound villager, and releases its altar
+- [x] **HAPP-07**: Current happiness state and its cause are shown in the altar GUI
 
 ### Trades & Picker
 
@@ -77,7 +77,7 @@ Requirements for the first shippable version. Each maps to exactly one roadmap p
 - [x] **STOCK-01**: Employees restock trades on a mod-owned real-time timer, independent of POI, work schedule, day/night, and dimension
 - [x] **STOCK-02**: The restock interval is configurable
 - [x] **STOCK-03**: Restock logic never touches villagers without the attachment
-- [ ] **STOCK-04**: Restock is slowed or paused while the employee is Unhappy
+- [x] **STOCK-04**: Restock is slowed or paused while the employee is Unhappy
 
 ### GUI / Menu
 
@@ -187,14 +187,14 @@ Which phases cover which requirements. Populated during roadmap creation (2026-0
 | STOCK-01 | Phase 8 | Complete |
 | STOCK-02 | Phase 8 | Complete |
 | STOCK-03 | Phase 8 | Complete |
-| HAPP-01 | Phase 9 | Pending |
-| HAPP-02 | Phase 9 | Pending |
-| HAPP-03 | Phase 9 | Pending |
-| HAPP-04 | Phase 9 | Pending |
-| HAPP-05 | Phase 9 | Pending |
-| HAPP-06 | Phase 9 | Pending |
-| HAPP-07 | Phase 9 | Pending |
-| STOCK-04 | Phase 9 | Pending |
+| HAPP-01 | Phase 9 | Complete |
+| HAPP-02 | Phase 9 | Complete |
+| HAPP-03 | Phase 9 | Complete |
+| HAPP-04 | Phase 9 | Complete |
+| HAPP-05 | Phase 9 | Complete |
+| HAPP-06 | Phase 9 | Complete |
+| HAPP-07 | Phase 9 | Complete |
+| STOCK-04 | Phase 9 | Complete |
 | POL-02 | Phase 10 | Pending |
 | POL-05 | Phase 10 | Pending |
 | POL-06 | Phase 10 | Pending |

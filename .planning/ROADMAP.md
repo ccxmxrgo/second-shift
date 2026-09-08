@@ -24,7 +24,7 @@ in a jar the user can load in the CurseForge "test" instance and verify in-game.
 - [x] **Phase 6: Employee Traits, Death & Firing** - Employees are conversion/breed-immune, recoverable on death, removable only via altar destruction
 - [x] **Phase 7: Progression & Promotion Ritual** - Vanilla XP unlocks tiers; the player picks each tier's trades at the altar, never seeing unchosen trades (completed 2026-09-08)
 - [x] **Phase 8: Mod-Owned Restock** - Employee trades restock on a POI-independent timer (completed 2026-09-08)
-- [ ] **Phase 9: Quarters & Happiness** - Employees need quarters + food; happiness modulates prices/restock and neglect makes them quit
+- [x] **Phase 9: Quarters & Happiness** - Employees need quarters + food; happiness modulates prices/restock and neglect makes them quit (completed 2026-09-08)
 - [ ] **Phase 10: Polish, Config & Invalid States** - Every surface translated, themed, configurable, and failing gracefully
 
 ## Phase Details
@@ -209,9 +209,18 @@ in a first pass on a personal mod.
   3. Happy employees sell below vanilla emerald prices, OK at vanilla, Unhappy above vanilla; Unhappy employees restock slowly or not at all.
   4. An employee left Unhappy for a sustained period quits: it drops its Soul Block, reverts to an ordinary unbound villager, and releases its altar — which can then be re-used for a new bind.
 
-**Plans**: TBD
+**Plans**: 1 (implemented directly, autonomous overnight session — see 09-01-SUMMARY.md)
+**Status**: ✅ Complete
 **UI hint**: yes
-**Risks**: Largest net-new chunk with the least research coverage (quarters/structure detection, food-chest access, price + restock modulation, quit-and-revert). Structure/enclosure detection and "food it can draw from" both need a design spike during planning. Quitting must cleanly reverse every bind side effect (attachment removal, XP, custom name, altar link).
+**Risks**: Largest net-new chunk with the least research coverage (quarters/structure detection, food-chest access, price + restock modulation, quit-and-revert). RESOLVED: quarters detection is a
+bounded 6-connected flood fill (see 09-CONTEXT.md D-01, accepted limitation: cannot distinguish a
+real room from a large enclosed non-room space under its 400-cell cap); food uses vanilla's own
+public `Villager.FOOD_POINTS` map via a container scan; price/restock modulation reuse vanilla's
+own `MerchantOffer#setSpecialPriceDiff` and a direct skip on the Phase 8 restock check; quit
+reverts (does not kill) by removing every Second Shift attachment, since every Phase 6/7/8/9
+handler is already gated on `hasData(EMPLOYEE)`. HAPP-07's "altar GUI" requirement is satisfied via
+a chat/action-bar message, consistent with Phase 5's GUI-03 precedent (no altar surface yet
+re-displays bound-employee status) — a deliberate scope decision, not an oversight.
 
 ### Phase 10: Polish, Config & Invalid States
 

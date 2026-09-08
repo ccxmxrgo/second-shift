@@ -45,5 +45,30 @@ public final class ModAttachments {
                             .serialize(Codec.LONG)
                             .build());
 
+    /**
+     * Phase 9 (HAPP-03, 09-CONTEXT.md D-03): a 0-100 happiness meter, moved gradually toward 100
+     * when quarters+food conditions are met and toward 0 when they aren't (see {@code
+     * Happiness#fromMeter} for the discrete band mapping). Default 50 (OK) — a freshly bound
+     * employee with no quarters set up yet isn't instantly branded Unhappy. No sync: happiness is
+     * currently surfaced only via a chat/action-bar message on altar interaction (see
+     * {@code SoulAltarBlock#useWithoutItem}), not a synced screen widget.
+     */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Integer>> HAPPINESS =
+            ATTACHMENT_TYPES.register("happiness", () ->
+                    AttachmentType.builder(() -> 50)
+                            .serialize(Codec.INT)
+                            .build());
+
+    /**
+     * Phase 9 (HAPP-06, 09-CONTEXT.md D-04): ticks spent continuously at the Unhappy band, reset
+     * to 0 the moment happiness rises out of Unhappy. Once this reaches {@code
+     * ModConfig#HAPPINESS_QUIT_THRESHOLD_TICKS}, the employee quits.
+     */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Integer>> UNHAPPY_STREAK_TICKS =
+            ATTACHMENT_TYPES.register("unhappy_streak_ticks", () ->
+                    AttachmentType.builder(() -> 0)
+                            .serialize(Codec.INT)
+                            .build());
+
     private ModAttachments() {}
 }

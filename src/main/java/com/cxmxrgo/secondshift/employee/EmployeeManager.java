@@ -3,15 +3,20 @@ package com.cxmxrgo.secondshift.employee;
 import com.cxmxrgo.secondshift.content.blockentity.SoulAltarBlockEntity;
 import com.cxmxrgo.secondshift.registry.ModAttachments;
 import com.cxmxrgo.secondshift.registry.ModBlocks;
+import com.cxmxrgo.secondshift.registry.ModItems;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.npc.VillagerProfession;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraft.world.level.block.Block;
@@ -160,5 +165,30 @@ public final class EmployeeManager {
         villager.setOffers(merged);
         villager.setData(ModAttachments.EMPLOYEE.get(),
                 new EmployeeData(data.version(), data.name(), data.profession(), newTier, merged, data.altarPos()));
+    }
+
+    /**
+     * Phase 9 (HAPP-06, 09-CONTEXT.md D-05): a sustained-Unhappy quit. Unlike the ALTAR-06 firing
+     * smite ({@link com.cxmxrgo.secondshift.event.EmployeeFiring#fire}), the villager is NOT
+     * killed — "reverts to an ordinary unbound villager" means it keeps existing, just no longer
+     * tagged as an employee, so every Phase 6/7/8/9 special-case handler (all gated on {@code
+     * hasData(EMPLOYEE)}) naturally stops applying to it from this point on. It keeps its current
+     * profession/trades/name as leftover state — vanilla villagers routinely carry exactly that
+     * combination, so nothing about it reads as broken.
+     */
+    public static void quit(ServerLevel level, Villager employee, EmployeeData data) {
+        ItemEntity soulBlock = new ItemEntity(level, employee.getX(), employee.getY() + 0.5D, employee.getZ(),
+                new ItemStack(ModItems.SOUL_BLOCK_ITEM.get()));
+        soulBlock.setDefaultPickUpDelay();
+        level.addFreshEntity(soulBlock);
+
+        releaseAltar(level, data.altarPos(), employee.getUUID());
+        employee.removeData(ModAttachments.EMPLOYEE.get());
+        employee.removeData(ModAttachments.RESTOCK_TIMER.get());
+        employee.removeData(ModAttachments.HAPPINESS.get());
+        employee.removeData(ModAttachments.UNHAPPY_STREAK_TICKS.get());
+
+        level.playSound(null, employee.getX(), employee.getY(), employee.getZ(),
+                SoundEvents.VILLAGER_NO, SoundSource.NEUTRAL, 1.0F, 0.8F);
     }
 }

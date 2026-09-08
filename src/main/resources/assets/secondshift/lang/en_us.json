@@ -26,6 +26,14 @@
   "message.secondshift.employee.promoted": "%s has been promoted to tier %s.",
   "message.secondshift.altar.no_promotion_pending": "This employee hasn't earned a promotion yet. Keep trading.",
 
+  "message.secondshift.happiness.unhappy": "Unhappy",
+  "message.secondshift.happiness.ok": "OK",
+  "message.secondshift.happiness.happy": "Happy",
+  "message.secondshift.happiness.cause.quarters": "no valid quarters (needs an enclosed 3x3+ room with a door, near the altar).",
+  "message.secondshift.happiness.cause.food": "no food nearby (needs a stocked chest with bread, potato, carrot, or beetroot).",
+  "message.secondshift.happiness.cause.none": "quarters and food are both in order.",
+  "message.secondshift.employee.quit": "%s has had enough and quit. Their Soul Block hits the ground; the altar is free again.",
+
   "advancement.secondshift.necromantic_apprentice.title": "Necromantic Apprentice",
   "advancement.secondshift.necromantic_apprentice.description": "Hold an emerald and feel the payroll calling. Forge a Harvester — emeralds, bone, and soul soil — and go collect what the village owes you.",
   "advancement.secondshift.first_harvest.title": "First Harvest",

@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-stopped_at: Completed 08-01 (Mod-Owned Restock); autonomous overnight run continuing to Phase 9
-last_updated: "2026-09-08T05:45:00.000Z"
+stopped_at: Completed 09-01 (Quarters & Happiness); autonomous overnight run continuing to Phase 10
+last_updated: "2026-09-08T06:00:00.000Z"
 last_activity: 2026-09-08
 progress:
   total_phases: 10
-  completed_phases: 8
-  total_plans: 23
-  completed_plans: 23
-  percent: 80
+  completed_phases: 9
+  total_plans: 24
+  completed_plans: 24
+  percent: 90
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-04)
 
 **Core value:** Harvest souls → bind a villager at the Soul Altar → hand-pick its profession and its trades, tier by tier. That loop must be reliable and feel good.
-**Current focus:** Phase 09 — quarters-happiness (autonomous overnight build in progress)
+**Current focus:** Phase 10 — polish-config-invalid-states (autonomous overnight build in progress)
 
 ## Current Position
 
-Phase: 08 (mod-owned-restock) — COMPLETE (fully code-verified, no human_needed items — see 08-VERIFICATION.md)
-Next: Phase 09 (Quarters & Happiness) — being built autonomously (2026-09-08 overnight session, user asleep, explicit autonomous-mode request)
-Plan: 1 of 1 (Phase 8)
+Phase: 09 (quarters-happiness) — COMPLETE (status: human_needed — see 09-VERIFICATION.md; quarters/happiness "feel" items await the user's return)
+Next: Phase 10 (Polish, Config & Invalid States) — the final phase — being built autonomously (2026-09-08 overnight session, user asleep, explicit autonomous-mode request)
+Plan: 1 of 1 (Phase 9)
 Last activity: 2026-09-08
 
-Progress: [████████░░] 80%
+Progress: [█████████░] 90%
 
 **2026-09-08 note (Phase 6, autonomous session):** an earlier dispatch for this phase accidentally
 ran two concurrent agent sessions against the same working tree (one agent silently spawned a
@@ -147,6 +147,11 @@ Relevant to current work:
 - [Phase 08]: Restock timer is a SEPARATE AttachmentType<Long> (secondshift:restock_timer, no sync -- server-only bookkeeping), not a 7th EmployeeData field, since that record's StreamCodec.composite chain is already full (Phase 6)
 - [Phase 08]: "at most one restock on reload, no burst" falls out for free from `if (now - last >= interval) { restock(); last = now; }` -- no explicit catch-up-N-times logic was ever needed
 - [Phase 08]: First ModConfig.Type.COMMON value added (restockIntervalTicks, ModConfigSpec/registerConfig) -- generates run/config/secondshift-common.toml, verified loading cleanly in both runGameTestServer and a real runClient boot
+- [Phase 09]: Quarters detection is a bounded 6-connected flood fill from the employee's tether-home spawn point (BlockState#getCollisionShape empty = passable, a door treated as wall boundary + adjacency-checked separately, footprint = distinct (x,z) columns >= 9, 400-cell visited cap doubles as the "leaked into the open world" signal) -- vanilla has no generic enclosed-room primitive
+- [Phase 09]: Food uses vanilla's own public Villager.FOOD_POINTS map (bread/potato/carrot/beetroot) via a Container-interface scan (covers chests, barrels, shulker boxes uniformly) within 6 blocks of the altar -- a read-only hasFoodAvailable() exists separately from the consuming tryConsumeFood() so a status check never side-effects
+- [Phase 09]: Happiness price modulation reuses vanilla's OWN hero-of-the-village mechanism (MerchantOffer#setSpecialPriceDiff) rather than inventing a new price path
+- [Phase 09]: HAPP-06 quit REVERTS (does not kill) -- removing every Second Shift attachment is sufficient since every Phase 6/7/8/9 handler is already gated on hasData(EMPLOYEE); the villager keeps its trades/name as ordinary vanilla leftover state
+- [Phase 09]: HAPP-07 ("altar GUI shows happiness+cause") satisfied via a chat/action-bar message on the existing "occupied, not promotable" altar interaction, matching Phase 5's GUI-03 precedent (no altar surface yet re-displays bound-employee status) -- a deliberate scope decision
 
 ### Pending Todos
 
@@ -160,6 +165,7 @@ None yet.
 - Phase 9 (happiness) is the largest net-new chunk with the least research coverage — quarters/structure detection and food-chest access need a design spike during planning.
 - EMP-07 "keep employee near altar" has no pre-researched hook — minor spike in Phase 6.
 - **[Phase 07, non-blocking, pending user]:** the promotion-ready signal (particles + action-bar message) and the Promotion Ritual screen's Confirm-button UX have only been verified by GameTest + a clean client boot — not by an interactive playtest of an employee actually leveling up and being promoted in a live client. See 07-VERIFICATION.md Human Verification items.
+- **[Phase 09, non-blocking, pending user]:** quarters detection (a bounded flood fill, not real structure recognition), the happiness meter's feel/pacing, and the sustained-quit timing have only been verified by GameTest + a clean client boot — not by building a real room+chest in a live client and watching an employee's happiness actually change over real play. See 09-VERIFICATION.md Human Verification items.
 
 ### Quick Tasks Completed
 

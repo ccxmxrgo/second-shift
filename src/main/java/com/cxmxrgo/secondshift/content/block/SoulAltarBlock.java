@@ -2,6 +2,9 @@ package com.cxmxrgo.secondshift.content.block;
 
 import com.cxmxrgo.secondshift.content.blockentity.SoulAltarBlockEntity;
 import com.cxmxrgo.secondshift.employee.EmployeeData;
+import com.cxmxrgo.secondshift.employee.FoodChecker;
+import com.cxmxrgo.secondshift.employee.Happiness;
+import com.cxmxrgo.secondshift.employee.QuartersChecker;
 import com.cxmxrgo.secondshift.event.EmployeeFiring;
 import com.cxmxrgo.secondshift.registry.ModAttachments;
 import com.cxmxrgo.secondshift.registry.ModItems;
@@ -199,7 +202,26 @@ public class SoulAltarBlock extends Block implements EntityBlock {
                     sp.openMenu(be, buf -> buf.writeBlockPos(pos));
                     return InteractionResult.sidedSuccess(false);
                 }
-                player.displayClientMessage(Component.translatable("message.secondshift.altar.no_promotion_pending"), true);
+                // Phase 9 (HAPP-07, 09-CONTEXT.md D-07): not promotable — show the happiness tier
+                // and its cause instead of the bare "no promotion" message. See that class's doc
+                // comment for why this is a chat/action-bar readout rather than a new screen
+                // widget (matches 05-VERIFICATION.md's GUI-03 precedent: no altar surface yet
+                // re-displays a bound employee's status).
+                int meter = employee.getData(ModAttachments.HAPPINESS.get());
+                Happiness tier = Happiness.fromMeter(meter);
+                boolean quartersOk = data.altarPos().isPresent()
+                        && QuartersChecker.hasValidQuarters(serverLevel, data.altarPos().get().above(2));
+                boolean foodOk = data.altarPos().isPresent()
+                        && FoodChecker.hasFoodAvailable(serverLevel, data.altarPos().get());
+                String causeKey = !quartersOk
+                        ? "message.secondshift.happiness.cause.quarters"
+                        : !foodOk
+                                ? "message.secondshift.happiness.cause.food"
+                                : "message.secondshift.happiness.cause.none";
+                player.displayClientMessage(Component.empty()
+                        .append(tier.label())
+                        .append(Component.literal(" — "))
+                        .append(Component.translatable(causeKey)), true);
                 return InteractionResult.CONSUME;
             }
             if (!level.isClientSide) {
