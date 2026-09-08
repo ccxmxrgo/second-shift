@@ -143,6 +143,15 @@ public class BindingAltarMenu extends ChestMenu {
      */
     @Override
     public void clicked(int slotId, int button, ClickType clickType, Player player) {
+        // Drag operations (left/right-click-drag distributing a held stack across many slots)
+        // fire clicked() once per slot the drag passes over. A player dragging items around their
+        // own inventory near the top of the screen could clip a candidate/confirm slot as an
+        // incidental drag target — never treat that as a deliberate selection or bind click.
+        if (clickType == ClickType.QUICK_CRAFT) {
+            super.clicked(slotId, button, clickType, player);
+            return;
+        }
+
         List<MerchantOffer> candidates = altarContainer.getCandidates();
         Set<Integer> selected = altarContainer.getSelected();
         boolean autoLocked = candidates.size() <= 2;
@@ -155,9 +164,11 @@ public class BindingAltarMenu extends ChestMenu {
             if (selected.contains(slotId)) {
                 selected.remove(slotId);
                 altarContainer.refreshCandidateDisplay(slotId);
+                altarContainer.refreshConfirmDisplay();
             } else if (selected.size() < 2) {
                 selected.add(slotId);
                 altarContainer.refreshCandidateDisplay(slotId);
+                altarContainer.refreshConfirmDisplay();
             } else if (player instanceof ServerPlayer sp) {
                 sp.displayClientMessage(Component.translatable("message.secondshift.altar.select_exactly_two"), true);
             }

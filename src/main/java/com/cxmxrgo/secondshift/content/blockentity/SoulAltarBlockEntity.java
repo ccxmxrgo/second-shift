@@ -3,14 +3,17 @@ package com.cxmxrgo.secondshift.content.blockentity;
 import com.cxmxrgo.secondshift.menu.BindingAltarMenu;
 import com.cxmxrgo.secondshift.registry.ModBlockEntities;
 import com.cxmxrgo.secondshift.registry.ModItems;
+import com.cxmxrgo.secondshift.trade.ProfessionResolver;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -21,6 +24,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Soul Altar block entity (D-01 / D-03 / ALTAR-01).
@@ -235,9 +239,20 @@ public class SoulAltarBlockEntity extends BlockEntity implements MenuProvider {
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
+    /**
+     * Round-11 intuitiveness pass: names the open screen after the resolved profession (e.g.
+     * "Binding Altar - Librarian") whenever the socketed job item resolves to one, instead of a
+     * bare "Binding Altar" that gives no hint what role the player is about to staff.
+     */
     @Override
     public Component getDisplayName() {
-        return Component.translatable("container.secondshift.binding_altar");
+        Optional<VillagerProfession> profession = ProfessionResolver.fromItem(heldJobItem);
+        if (profession.isEmpty()) {
+            return Component.translatable("container.secondshift.binding_altar");
+        }
+        String path = BuiltInRegistries.VILLAGER_PROFESSION.getKey(profession.get()).getPath();
+        return Component.translatable("container.secondshift.binding_altar_titled",
+                Component.translatable("entity.minecraft.villager." + path));
     }
 
     @Override

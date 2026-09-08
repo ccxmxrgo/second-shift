@@ -1,13 +1,16 @@
 package com.cxmxrgo.secondshift.menu;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.ItemLore;
 import net.minecraft.world.item.trading.MerchantOffer;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -29,19 +32,27 @@ import java.util.Set;
  * CLIENT's own (separately-constructed, always-empty-candidates) container instance to apply the
  * server's authoritative stacks — exactly like any real chest's backing {@code SimpleContainer}.
  * A no-op {@code setItem()} silently discarded every synced candidate stack, so only the Confirm
- * emerald (built directly, unconditionally, inside the old {@code getItem()}) ever rendered.
+ * emerald (built directly, unconditionally, inside the old {@code getItem()}) ever rendered. This
+ * version instead behaves like a normal mutable item-array container — {@code setItem()} actually
+ * stores the stack, {@code getItem()} just reads it back.
  *
- * <p>This version instead behaves like a normal mutable item-array container — {@code setItem()}
- * actually stores the stack, {@code getItem()} just reads it back — with display stacks
- * pre-computed once at construction (candidates) or on demand via {@link
- * #refreshCandidateDisplay} (selection toggles, called from {@link BindingAltarMenu#clicked}).
- * That mutation is picked up automatically by vanilla's own per-tick {@code
- * AbstractContainerMenu#broadcastChanges()} and synced to the client, the same mechanism every
- * other container-mutating menu (anvils, beacons, looms) already relies on. Extraction/insertion
- * from this container is never legally reachable — {@link BindingAltarMenu#clicked} intercepts
- * every one of its slot indices before falling through to vanilla's default pickup/place logic —
- * so {@link #removeItem}/{@link #removeItemNoUpdate} are trivial stubs, not because the container
- * can't hold real state, but because nothing is ever allowed to ask it to give an item up.
+ * <p><b>Round-11 intuitiveness pass (user feedback: "trades must be more intuitive"):</b> a bare
+ * result item in a chest slot tells the player nothing about what the trade actually costs, or
+ * whether they've selected it. Since a generic {@code Container} only ever gets to influence what
+ * a real vanilla item tooltip shows, every candidate's displayed stack now carries {@link
+ * DataComponents#LORE} listing its real cost item(s) (read straight off the same {@link
+ * MerchantOffer} used to build the eventual bind — no separate "flavor text" to keep in sync) plus
+ * a one-line selection-state hint; the Confirm slot's lore likewise tracks a live "Selected: N/2"
+ * counter and switches between a ready/not-ready line. Both are rebuilt in place ({@link
+ * #refreshCandidateDisplay}, {@link #refreshConfirmDisplay}) whenever the selection set changes, so
+ * vanilla's own per-tick {@code AbstractContainerMenu#broadcastChanges()} re-syncs the new tooltip
+ * text to the client automatically — still zero custom rendering code.
+ *
+ * <p>Extraction/insertion from this container is never legally reachable — {@link
+ * BindingAltarMenu#clicked} intercepts every one of its slot indices before falling through to
+ * vanilla's default pickup/place logic — so {@link #removeItem}/{@link #removeItemNoUpdate} are
+ * trivial stubs, not because the container can't hold real state, but because nothing is ever
+ * allowed to ask it to give an item up.
  */
 public final class BindingAltarContainer implements Container {
 
@@ -61,16 +72,61 @@ public final class BindingAltarContainer implements Container {
         for (int i = 0; i < candidates.size() && i < CONFIRM_SLOT; i++) {
             items[i] = buildCandidateDisplay(i);
         }
+        items[CONFIRM_SLOT] = buildConfirmDisplay();
+    }
 
-        ItemStack confirm = new ItemStack(Items.EMERALD);
-        confirm.set(DataComponents.CUSTOM_NAME, Component.translatable("gui.secondshift.binding_altar.confirm"));
-        items[CONFIRM_SLOT] = confirm;
+    private boolean isAutoLocked() {
+        return candidates.size() <= 2;
     }
 
     private ItemStack buildCandidateDisplay(int index) {
-        ItemStack display = candidates.get(index).getResult().copy();
-        display.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, selected.contains(index));
+        MerchantOffer offer = candidates.get(index);
+        boolean isSelected = selected.contains(index);
+
+        ItemStack display = offer.getResult().copy();
+        display.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, isSelected);
+
+        List<Component> lore = new ArrayList<>();
+        lore.add(costLine(offer.getCostA()));
+        if (!offer.getCostB().isEmpty()) {
+            lore.add(costLine(offer.getCostB()));
+        }
+        lore.add(Component.empty());
+        if (isAutoLocked()) {
+            lore.add(Component.translatable("gui.secondshift.binding_altar.trade_included")
+                    .withStyle(ChatFormatting.GRAY));
+        } else if (isSelected) {
+            lore.add(Component.translatable("gui.secondshift.binding_altar.trade_selected")
+                    .withStyle(ChatFormatting.GREEN));
+        } else {
+            lore.add(Component.translatable("gui.secondshift.binding_altar.trade_click_to_select")
+                    .withStyle(ChatFormatting.GRAY));
+        }
+        display.set(DataComponents.LORE, new ItemLore(lore));
         return display;
+    }
+
+    private static Component costLine(ItemStack cost) {
+        return Component.translatable("gui.secondshift.binding_altar.cost_line",
+                cost.getCount(), cost.getHoverName()).withStyle(ChatFormatting.YELLOW);
+    }
+
+    private ItemStack buildConfirmDisplay() {
+        ItemStack confirm = new ItemStack(Items.EMERALD);
+        confirm.set(DataComponents.CUSTOM_NAME, Component.translatable("gui.secondshift.binding_altar.confirm")
+                .withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD));
+
+        boolean ready = isAutoLocked() || selected.size() == 2;
+        List<Component> lore = new ArrayList<>();
+        lore.add(isAutoLocked()
+                ? Component.translatable("gui.secondshift.binding_altar.confirm_auto").withStyle(ChatFormatting.GRAY)
+                : Component.translatable("gui.secondshift.binding_altar.confirm_selected_count", selected.size())
+                        .withStyle(ChatFormatting.GRAY));
+        lore.add(ready
+                ? Component.translatable("gui.secondshift.binding_altar.confirm_ready").withStyle(ChatFormatting.GREEN)
+                : Component.translatable("gui.secondshift.binding_altar.confirm_not_ready").withStyle(ChatFormatting.RED));
+        confirm.set(DataComponents.LORE, new ItemLore(lore));
+        return confirm;
     }
 
     /**
@@ -83,6 +139,11 @@ public final class BindingAltarContainer implements Container {
         if (index >= 0 && index < candidates.size()) {
             items[index] = buildCandidateDisplay(index);
         }
+    }
+
+    /** Re-renders the Confirm slot's "Selected: N/2" / ready-not-ready lore. See {@link #refreshCandidateDisplay}. */
+    public void refreshConfirmDisplay() {
+        items[CONFIRM_SLOT] = buildConfirmDisplay();
     }
 
     /** The materialized candidate offers this container displays (never mutated here). */
@@ -124,7 +185,7 @@ public final class BindingAltarContainer implements Container {
     public void setItem(int slot, ItemStack stack) {
         // MUST actually store — this is how the client's own container instance receives the
         // server's synced stacks (see class javadoc). Server-side, nothing but this class's own
-        // constructor/refreshCandidateDisplay ever calls this.
+        // constructor/refresh methods ever calls this.
         if (slot >= 0 && slot < SIZE) {
             items[slot] = stack;
         }

@@ -7,9 +7,16 @@
   "itemGroup.secondshift.main": "Second Shift",
 
   "container.secondshift.binding_altar": "Binding Altar",
+  "container.secondshift.binding_altar_titled": "Binding Altar - %s",
   "gui.secondshift.binding_altar.confirm": "Confirm Hire",
-  "gui.secondshift.binding_altar.name_label": "Name:",
-  "gui.secondshift.binding_altar.trade_locked": "(locked)",
+  "gui.secondshift.binding_altar.cost_line": "%1$sx %2$s",
+  "gui.secondshift.binding_altar.trade_included": "Included automatically",
+  "gui.secondshift.binding_altar.trade_selected": "✔ Selected",
+  "gui.secondshift.binding_altar.trade_click_to_select": "Click to select (max 2)",
+  "gui.secondshift.binding_altar.confirm_auto": "All trades above will be granted",
+  "gui.secondshift.binding_altar.confirm_selected_count": "Selected: %1$s/2",
+  "gui.secondshift.binding_altar.confirm_ready": "Click to bind your employee!",
+  "gui.secondshift.binding_altar.confirm_not_ready": "Select exactly 2 trades first",
 
   "message.secondshift.altar.no_job_block": "The position is unfilled. Socket a job-site item into the altar before you file the paperwork.",
   "message.secondshift.altar.not_a_workstation": "That block posts no job. Only a real workstation defines the role.",
