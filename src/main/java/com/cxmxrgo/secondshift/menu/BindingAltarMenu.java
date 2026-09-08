@@ -119,9 +119,10 @@ public class BindingAltarMenu extends EnchantmentMenu {
     public static final int REROLL_SLOT = TRADE_SLOT_BASE + OPTION_COUNT;
 
     /** Screen position of the reroll slot — centered between the two receipt slots (15,47 / 35,47),
-     * well clear of the title text above it. */
-    private static final int REROLL_SLOT_X = 25;
-    private static final int REROLL_SLOT_Y = 20;
+     * well clear of the title text above it. Public so {@code BindingAltarScreen} can draw its
+     * inline label at a matching position without duplicating these numbers. */
+    public static final int REROLL_SLOT_X = 25;
+    public static final int REROLL_SLOT_Y = 20;
 
     private final ContainerLevelAccess access;
     private final Container tradeSlots = new SimpleContainer(OPTION_COUNT);

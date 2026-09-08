@@ -11,6 +11,7 @@
   "gui.secondshift.binding_altar.cost_line": "%1$sx %2$s",
   "gui.secondshift.binding_altar.trade_bind_hint": "Click to bind this employee!",
   "gui.secondshift.binding_altar.reroll": "Reroll Trades",
+  "gui.secondshift.binding_altar.reroll_short": "Reroll",
   "gui.secondshift.binding_altar.reroll_cost": "Costs 1 Soul Fragment",
 
   "message.secondshift.altar.no_job_block": "The position is unfilled. Socket a job-site item into the altar before you file the paperwork.",

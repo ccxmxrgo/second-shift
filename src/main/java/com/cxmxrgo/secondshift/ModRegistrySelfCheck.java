@@ -72,6 +72,7 @@ public final class ModRegistrySelfCheck {
             "gui.secondshift.binding_altar.cost_line",
             "gui.secondshift.binding_altar.trade_bind_hint",
             "gui.secondshift.binding_altar.reroll",
+            "gui.secondshift.binding_altar.reroll_short",
             "gui.secondshift.binding_altar.reroll_cost",
             "message.secondshift.altar.no_job_block",
             "message.secondshift.altar.not_a_workstation",

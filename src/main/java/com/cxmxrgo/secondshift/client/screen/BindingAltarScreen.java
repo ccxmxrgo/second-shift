@@ -76,5 +76,15 @@ public class BindingAltarScreen extends EnchantmentScreen {
             }
         }
         RenderSystem.disableBlend();
+
+        // Round-14 (user feedback): the reroll button's tooltip covered the trade rows below it
+        // whenever hovered (this button sits near the top of the screen, so vanilla's tooltip flips
+        // upward, right over row 0/1). A short always-visible label under the icon means the player
+        // never needs to hover it to know what it does.
+        int rerollCenterX = i + BindingAltarMenu.REROLL_SLOT_X + 8;
+        int rerollLabelY = j + BindingAltarMenu.REROLL_SLOT_Y + 18;
+        guiGraphics.drawCenteredString(this.font,
+                Component.translatable("gui.secondshift.binding_altar.reroll_short"),
+                rerollCenterX, rerollLabelY, 4226832);
     }
 }
