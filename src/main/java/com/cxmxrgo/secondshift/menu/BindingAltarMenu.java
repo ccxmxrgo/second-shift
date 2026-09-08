@@ -56,14 +56,21 @@ import java.util.Optional;
  * way to get those positions right without re-deriving them.
  *
  * <p><b>Round-15 redesign (user-requested "career path" mechanic):</b> instead of showing 3 rolled
- * tier-1 candidates with a Soul-Fragment-cost reroll, the picker now rolls the profession's
- * HIGHEST tier's full listing pool (see {@link TradePoolCache#rollMaxTierCandidates}) and shows
- * ALL of it in a real scrollable list ({@code BindingAltarScreen}'s {@code TradeCandidateList}
- * widget) — the player picks one "career path" trade, which is granted immediately (the
- * leveling/promotion gate that would make this a genuinely earned reward at the employee's max
- * tier is deferred — see the memory note on this — until Phase 7 builds real employee
- * progression). There is no reroll anymore: the whole pool is already visible via scrolling, so
- * there's nothing to reroll.
+ * tier-1 candidates with a Soul-Fragment-cost reroll, the picker shows a full listing pool in a
+ * real scrollable list ({@code BindingAltarScreen}'s {@code TradeCandidateList} widget) instead of
+ * a fixed 3-row layout. There is no reroll anymore: the whole pool is already visible via
+ * scrolling, so there's nothing to reroll.
+ *
+ * <p><b>Phase 7 change (07-CONTEXT.md D-01):</b> this bind-time picker now rolls the profession's
+ * TIER 1 pool (was: the HIGHEST tier's pool, with the chosen trade granted immediately as an
+ * interim stopgap — see the round-15 comment this replaces, and the memory note on the original
+ * "grant only at max tier" balancing idea). Now that Phase 7 builds real employee progression, the
+ * honest version of that same idea is fully general rather than a special case: the employee
+ * starts with a real, earned tier-1 trade chosen here, and {@code PromotionRitualMenu} re-opens
+ * this exact same picker pattern at every LATER tier the employee actually earns through real
+ * vanilla trade XP — including the profession's highest tier, which is never reachable except by
+ * playing there. See {@code EmployeeManager#installPromotion} and {@code EmployeeEvents}'s
+ * periodic tier check.
  *
  * <p><b>Why a scrollable list instead of driving vanilla's {@code costs}/{@code enchantClue}
  * button system:</b> that system is hardwired to a real enchantment-registry tooltip lookup (see
@@ -195,7 +202,10 @@ public class BindingAltarMenu extends EnchantmentMenu {
         if (!be.candidatesRolled()) {
             Optional<VillagerProfession> profession = ProfessionResolver.fromItem(be.getHeldJobItem());
             if (profession.isPresent() && level instanceof ServerLevel serverLevel) {
-                be.setCandidateOffers(TradePoolCache.rollMaxTierCandidates(serverLevel, pos, profession.get()));
+                // Phase 7 (07-CONTEXT.md D-01): tier 1, not the profession's max tier — see this
+                // class's doc comment for why the "grant only at max tier" idea generalizes cleanly
+                // into the Promotion Ritual instead of a one-off gate on this bind-time roll.
+                be.setCandidateOffers(TradePoolCache.rollCandidatesForTier(serverLevel, pos, profession.get(), 1));
                 be.setDefaultName(EmployeeNames.pickRandom(serverLevel.getRandom()));
             } else {
                 be.setCandidateOffers(List.of()); // defensive — should be unreachable

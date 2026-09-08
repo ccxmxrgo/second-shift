@@ -108,6 +108,7 @@ public final class EmployeeFiring {
 
         // EMP-06 must not fire for this death — remove the attachment BEFORE killing (see class doc).
         employee.removeData(ModAttachments.EMPLOYEE.get());
+        EmployeeEvents.clearSignal(employee.getUUID()); // Phase 7 hygiene
         employee.kill();
     }
 }

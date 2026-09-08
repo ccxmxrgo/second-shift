@@ -76,8 +76,11 @@ public final class TradePoolCache {
      * failure is structural to the search position, not transient randomness). Returns {@code
      * List.of()} if the profession has no pool for that tier or the throwaway villager could not
      * be constructed (PICK-08 empty-pool case).
+     *
+     * <p>Public since Phase 7 (07-CONTEXT.md): {@code PromotionRitualMenu} rolls an arbitrary
+     * tier (whichever one the employee just reached), not only tier 1 or the max tier.
      */
-    private static List<MerchantOffer> rollCandidatesForTier(
+    public static List<MerchantOffer> rollCandidatesForTier(
             ServerLevel level, BlockPos altarPos, VillagerProfession profession, int tier) {
         Villager throwaway = EntityType.VILLAGER.create(level);
         if (throwaway == null) {

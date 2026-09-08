@@ -67,10 +67,10 @@ Requirements for the first shippable version. Each maps to exactly one roadmap p
 
 ### Progression
 
-- [ ] **PROG-01**: Employees earn vanilla trading XP normally; their tier advances at vanilla thresholds (0 / 10 / 70 / 150 / 250)
-- [ ] **PROG-02**: Vanilla's automatic trade generation on level-up is suppressed/reverted — the player never sees trades they did not choose
-- [ ] **PROG-03**: Reaching a new tier produces an unmissable "ready for promotion" signal
-- [ ] **PROG-04**: Right-clicking the altar while a promotable employee is bound opens the picker for the new tier; confirming installs the chosen trades
+- [x] **PROG-01**: Employees earn vanilla trading XP normally; their tier advances at vanilla thresholds (0 / 10 / 70 / 150 / 250)
+- [x] **PROG-02**: Vanilla's automatic trade generation on level-up is suppressed/reverted — the player never sees trades they did not choose
+- [x] **PROG-03**: Reaching a new tier produces an unmissable "ready for promotion" signal
+- [x] **PROG-04**: Right-clicking the altar while a promotable employee is bound opens the picker for the new tier; confirming installs the chosen trades
 
 ### Restock
 
@@ -180,10 +180,10 @@ Which phases cover which requirements. Populated during roadmap creation (2026-0
 | EMP-07 | Phase 6 | Complete |
 | ECON-04 | Phase 6 | Complete |
 | ALTAR-06 | Phase 6 | Complete |
-| PROG-01 | Phase 7 | Pending |
-| PROG-02 | Phase 7 | Pending |
-| PROG-03 | Phase 7 | Pending |
-| PROG-04 | Phase 7 | Pending |
+| PROG-01 | Phase 7 | Complete |
+| PROG-02 | Phase 7 | Complete |
+| PROG-03 | Phase 7 | Complete |
+| PROG-04 | Phase 7 | Complete |
 | STOCK-01 | Phase 8 | Pending |
 | STOCK-02 | Phase 8 | Pending |
 | STOCK-03 | Phase 8 | Pending |

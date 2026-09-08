@@ -2,6 +2,7 @@ package com.cxmxrgo.secondshift.registry;
 
 import com.cxmxrgo.secondshift.SecondShift;
 import com.cxmxrgo.secondshift.menu.BindingAltarMenu;
+import com.cxmxrgo.secondshift.menu.PromotionRitualMenu;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.inventory.MenuType;
 import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
@@ -27,6 +28,12 @@ public final class ModMenus {
     public static final DeferredHolder<MenuType<?>, MenuType<BindingAltarMenu>> BINDING_ALTAR =
             MENUS.register("binding_altar",
                     () -> IMenuTypeExtension.create(BindingAltarMenu::new));
+
+    /** Phase 7 (07-CONTEXT.md D-04): the Promotion Ritual picker, opened on a bound altar instead
+     * of {@link #BINDING_ALTAR} once its employee is promotable. */
+    public static final DeferredHolder<MenuType<?>, MenuType<PromotionRitualMenu>> PROMOTION_RITUAL =
+            MENUS.register("promotion_ritual",
+                    () -> IMenuTypeExtension.create(PromotionRitualMenu::new));
 
     private ModMenus() {}
 }

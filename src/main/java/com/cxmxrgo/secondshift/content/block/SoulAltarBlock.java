@@ -1,7 +1,9 @@
 package com.cxmxrgo.secondshift.content.block;
 
 import com.cxmxrgo.secondshift.content.blockentity.SoulAltarBlockEntity;
+import com.cxmxrgo.secondshift.employee.EmployeeData;
 import com.cxmxrgo.secondshift.event.EmployeeFiring;
+import com.cxmxrgo.secondshift.registry.ModAttachments;
 import com.cxmxrgo.secondshift.registry.ModItems;
 import com.cxmxrgo.secondshift.trade.ProfessionResolver;
 import net.minecraft.core.BlockPos;
@@ -17,6 +19,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
+import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
@@ -181,6 +184,24 @@ public class SoulAltarBlock extends Block implements EntityBlock {
         }
 
         if (be.isEmployeeBound()) {
+            // Phase 7 (07-CONTEXT.md D-06): empty-hand right-click on a bound altar opens the
+            // Promotion Ritual instead of the plain "occupied" message, IF the bound employee has
+            // out-leveled its last officially installed tier. Holding any item keeps the plain
+            // "occupied" behavior (useItemOn's own branch, unchanged) — this trigger is
+            // empty-hand-only by design.
+            if (!level.isClientSide && level instanceof ServerLevel serverLevel && player instanceof ServerPlayer sp
+                    && be.getEmployeeId() != null
+                    && serverLevel.getEntity(be.getEmployeeId()) instanceof Villager employee
+                    && employee.hasData(ModAttachments.EMPLOYEE.get())) {
+                EmployeeData data = employee.getData(ModAttachments.EMPLOYEE.get());
+                if (employee.getVillagerData().getLevel() > data.tier()) {
+                    be.requestPromotionRitual();
+                    sp.openMenu(be, buf -> buf.writeBlockPos(pos));
+                    return InteractionResult.sidedSuccess(false);
+                }
+                player.displayClientMessage(Component.translatable("message.secondshift.altar.no_promotion_pending"), true);
+                return InteractionResult.CONSUME;
+            }
             if (!level.isClientSide) {
                 player.displayClientMessage(Component.translatable("message.secondshift.altar.occupied"), true);
             }

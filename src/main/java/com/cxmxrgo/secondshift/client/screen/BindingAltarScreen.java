@@ -37,7 +37,8 @@ import java.util.List;
  *
  * <p>See {@link BindingAltarMenu}'s doc comment for the round-15 "career path" redesign this
  * class implements: a real scrollable list ({@link TradeCandidateList}) of every candidate the
- * profession's top tier offers. This class's job is just: (1) draw the background texture
+ * profession's tier-1 pool offers (Phase 7 D-01 — was the highest tier before Phase 7 built real
+ * employee progression). This class's job is just: (1) draw the background texture
  * (unmodified vanilla enchanting-table art), (2) create and position that list in {@link #init()},
  * reading candidates from the menu's synced (but otherwise off-screen) candidate slots, and (3)
  * route a list-row click to the server via vanilla's existing menu-button RPC

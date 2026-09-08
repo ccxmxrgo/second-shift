@@ -20,6 +20,12 @@
   "message.secondshift.altar.closed.too_far": "You stepped away from the altar. The paperwork goes unfiled.",
   "message.secondshift.altar.empty_pool": "This position has nothing to offer yet. No trades are on file for this role.",
 
+  "container.secondshift.promotion_ritual": "Promotion Ritual",
+  "gui.secondshift.promotion_ritual.confirm": "Confirm (%1$s/%2$s)",
+  "message.secondshift.employee.ready_for_promotion": " is ready for a promotion (tier %s)! Visit the altar to choose their new trades.",
+  "message.secondshift.employee.promoted": "%s has been promoted to tier %s.",
+  "message.secondshift.altar.no_promotion_pending": "This employee hasn't earned a promotion yet. Keep trading.",
+
   "advancement.secondshift.necromantic_apprentice.title": "Necromantic Apprentice",
   "advancement.secondshift.necromantic_apprentice.description": "Hold an emerald and feel the payroll calling. Forge a Harvester — emeralds, bone, and soul soil — and go collect what the village owes you.",
   "advancement.secondshift.first_harvest.title": "First Harvest",

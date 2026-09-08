@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-stopped_at: Completed 06-01 (Employee Traits, Death & Firing); autonomous overnight run continuing to Phase 7
-last_updated: "2026-09-08T05:05:00.000Z"
+stopped_at: Completed 07-01 (Progression & Promotion Ritual); autonomous overnight run continuing to Phase 8
+last_updated: "2026-09-08T05:35:00.000Z"
 last_activity: 2026-09-08
 progress:
   total_phases: 10
-  completed_phases: 6
-  total_plans: 21
-  completed_plans: 21
-  percent: 60
+  completed_phases: 7
+  total_plans: 22
+  completed_plans: 22
+  percent: 70
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-04)
 
 **Core value:** Harvest souls → bind a villager at the Soul Altar → hand-pick its profession and its trades, tier by tier. That loop must be reliable and feel good.
-**Current focus:** Phase 07 — progression-promotion-ritual (autonomous overnight build in progress)
+**Current focus:** Phase 08 — mod-owned-restock (autonomous overnight build in progress)
 
 ## Current Position
 
-Phase: 06 (employee-traits-death-firing) — COMPLETE (status: human_needed — see 06-VERIFICATION.md; 3 items, all "does this feel right" playtest checks with verified underlying logic, await the user's return)
-Next: Phase 07 (Progression & Promotion Ritual) — being built autonomously (2026-09-08 overnight session, user asleep, explicit autonomous-mode request)
-Plan: 1 of 1 (Phase 6)
+Phase: 07 (progression-promotion-ritual) — COMPLETE (status: human_needed — see 07-VERIFICATION.md; the promotion-ready signal's feel and the ritual screen's Confirm-button UX are both "does this feel right" playtest checks with verified underlying logic, awaiting the user's return)
+Next: Phase 08 (Mod-Owned Restock) — being built autonomously (2026-09-08 overnight session, user asleep, explicit autonomous-mode request)
+Plan: 1 of 1 (Phase 7)
 Last activity: 2026-09-08
 
-Progress: [██████░░░░] 60%
+Progress: [███████░░░] 70%
 
 **2026-09-08 note (Phase 6, autonomous session):** an earlier dispatch for this phase accidentally
 ran two concurrent agent sessions against the same working tree (one agent silently spawned a
@@ -138,6 +138,11 @@ Relevant to current work:
 - [Phase 06]: Villager#canBreed() requires getAge() == 0; AgeableMob#setAge(int) is public -- holding an employee at a positive age (vanilla's own post-breeding cooldown value, 6000) is a Mixin-free breeding-precondition break that defends both sides of VillagerMakeLove's two-partner canBreed() check
 - [Phase 06]: StreamCodec.composite has overloads for exactly 1-6 components in 1.21.1 -- EmployeeData's Phase 6 altarPos field fills the 6th and last slot; Phase 9's happiness/timer fields will need a nested sub-record or a hand-written StreamCodec
 - [Phase 06]: ServerLevel#getEntity(UUID) exists for resolving a stored entity id back to a live entity (used by EmployeeFiring's delayed-smite queue)
+- [Phase 07]: "Promotable" is derived (villager's vanilla VillagerData.getLevel() > EmployeeData.tier()), never a persisted boolean -- avoids a 7th EmployeeData field past the StreamCodec.composite 6-component ceiling Phase 6 already hit
+- [Phase 07]: No clean "villager leveled up" event exists (increaseMerchantCareer/updateTrades are private) -- reverting vanilla's auto-appended trades is done via "revert, don't prevent" on the existing Phase 6 40-tick per-employee periodic check, not a new hook or a Mixin
+- [Phase 07]: "Pick 2" at a Promotion Ritual is done with zero new network payloads -- selection toggles client-side only (TradeCandidateList's new toggle mode) and a single Confirm click packs up to 2 chosen indices into one int (idxA*32+idxB) sent through vanilla's existing clickMenuButton RPC, the same one BindingAltarMenu already established
+- [Phase 07]: The Binding Altar's bind-time picker now rolls the profession's TIER 1 pool, not the max tier (Phase 5 round-15 shipped max-tier-immediate-grant as an explicit interim stopgap) -- now that Promotion Ritual infrastructure exists, every tier including the max one is earned the same way, generalizing the user's original "grant only at max tier" balancing idea rather than special-casing it
+- [Phase 07]: MenuProvider#createMenu runs BEFORE getDisplayName() in ServerPlayer#openMenu (verified via decompiled source) -- SoulAltarBlockEntity's one-shot promotionRitualRequested flag must be reset in getDisplayName(), not createMenu(), or the title packet reads the wrong branch
 
 ### Pending Todos
 
@@ -150,6 +155,7 @@ None yet.
 - 4 research spikes are budgeted into phase planning: attachment entity-sync (Phase 4, LIGHT), ItemListing.getOffer side effects (Phase 5), breeding suppression (Phase 6, LOW confidence), offer re-assertion after level-up (Phase 7, MEDIUM).
 - Phase 9 (happiness) is the largest net-new chunk with the least research coverage — quarters/structure detection and food-chest access need a design spike during planning.
 - EMP-07 "keep employee near altar" has no pre-researched hook — minor spike in Phase 6.
+- **[Phase 07, non-blocking, pending user]:** the promotion-ready signal (particles + action-bar message) and the Promotion Ritual screen's Confirm-button UX have only been verified by GameTest + a clean client boot — not by an interactive playtest of an employee actually leveling up and being promoted in a live client. See 07-VERIFICATION.md Human Verification items.
 
 ### Quick Tasks Completed
 

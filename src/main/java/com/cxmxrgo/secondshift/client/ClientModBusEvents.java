@@ -3,6 +3,7 @@ package com.cxmxrgo.secondshift.client;
 import com.cxmxrgo.secondshift.SecondShift;
 import com.cxmxrgo.secondshift.client.render.SoulAltarRenderer;
 import com.cxmxrgo.secondshift.client.screen.BindingAltarScreen;
+import com.cxmxrgo.secondshift.client.screen.PromotionRitualScreen;
 import com.cxmxrgo.secondshift.registry.ModBlockEntities;
 import com.cxmxrgo.secondshift.registry.ModMenus;
 import com.mojang.logging.LogUtils;
@@ -54,5 +55,7 @@ public final class ClientModBusEvents {
     static void onRegisterScreens(RegisterMenuScreensEvent event) {
         event.register(ModMenus.BINDING_ALTAR.get(), BindingAltarScreen::new);
         LOGGER.info("[SecondShift] registered BindingAltarScreen for secondshift:binding_altar");
+        event.register(ModMenus.PROMOTION_RITUAL.get(), PromotionRitualScreen::new);
+        LOGGER.info("[SecondShift] registered PromotionRitualScreen for secondshift:promotion_ritual");
     }
 }

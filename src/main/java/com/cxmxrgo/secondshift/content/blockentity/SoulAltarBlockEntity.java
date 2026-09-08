@@ -1,6 +1,7 @@
 package com.cxmxrgo.secondshift.content.blockentity;
 
 import com.cxmxrgo.secondshift.menu.BindingAltarMenu;
+import com.cxmxrgo.secondshift.menu.PromotionRitualMenu;
 import com.cxmxrgo.secondshift.registry.ModBlockEntities;
 import com.cxmxrgo.secondshift.registry.ModItems;
 import com.cxmxrgo.secondshift.trade.ProfessionResolver;
@@ -47,6 +48,11 @@ import java.util.UUID;
  * <p><b>Plan 03-01 addition:</b> now {@link MenuProvider} — {@link #createMenu} constructs a
  * {@link BindingAltarMenu} against this BE's position (GUI-01). No block-interaction trigger is
  * wired yet (that is Plan 02 / ALTAR-03); this only makes the BE a valid open target.
+ *
+ * <p><b>Phase 7 addition (07-CONTEXT.md D-06):</b> {@link #promotionRitualRequested} is a
+ * transient (never persisted) flag {@code SoulAltarBlock#useWithoutItem} sets immediately before
+ * calling {@code sp.openMenu(be, ...)} for a promotable bound employee, so this single {@link
+ * MenuProvider} can open either screen depending on which interaction triggered it.
  */
 public class SoulAltarBlockEntity extends BlockEntity implements MenuProvider {
 
@@ -97,6 +103,20 @@ public class SoulAltarBlockEntity extends BlockEntity implements MenuProvider {
      * passes it through {@code LootContextParams.BLOCK_ENTITY}). D-04 drop suppression.
      */
     private transient boolean brokenWhileCharged = false;
+
+    /**
+     * Phase 7 (07-CONTEXT.md D-06): transient (never persisted) — set by {@code
+     * SoulAltarBlock#useWithoutItem} immediately before {@code sp.openMenu(be, ...)} for a
+     * promotable bound employee, read (and reset) by {@link #createMenu}/{@link #getDisplayName}
+     * so the very next {@code openMenu} call opens the Promotion Ritual instead of the normal
+     * Binding Altar picker. Reset unconditionally after one read so a later plain reopen (e.g.
+     * after the ritual screen closes) always falls back to the default behavior.
+     */
+    private transient boolean promotionRitualRequested = false;
+
+    public void requestPromotionRitual() {
+        this.promotionRitualRequested = true;
+    }
 
     public SoulAltarBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.SOUL_ALTAR_BE.get(), pos, state);
@@ -274,6 +294,13 @@ public class SoulAltarBlockEntity extends BlockEntity implements MenuProvider {
      */
     @Override
     public Component getDisplayName() {
+        if (promotionRitualRequested) {
+            // Reset HERE, not in createMenu: ServerPlayer#openMenu calls createMenu() first, then
+            // getDisplayName() for the open-screen packet's title — resetting any earlier would
+            // make this branch never actually fire (see 07-CONTEXT.md D-06).
+            promotionRitualRequested = false;
+            return Component.translatable("container.secondshift.promotion_ritual");
+        }
         Optional<VillagerProfession> profession = ProfessionResolver.fromItem(heldJobItem);
         if (profession.isEmpty()) {
             return Component.translatable("container.secondshift.binding_altar");
@@ -285,6 +312,13 @@ public class SoulAltarBlockEntity extends BlockEntity implements MenuProvider {
 
     @Override
     public AbstractContainerMenu createMenu(int containerId, Inventory playerInv, Player player) {
+        if (promotionRitualRequested) {
+            // NOT reset here — createMenu() runs before getDisplayName() in ServerPlayer#openMenu,
+            // so the flag must survive until getDisplayName() reads (and resets) it. See that
+            // method's doc comment.
+            return new PromotionRitualMenu(containerId, playerInv,
+                    ContainerLevelAccess.create(this.getLevel(), this.getBlockPos()), this.getBlockPos());
+        }
         return new BindingAltarMenu(containerId, playerInv,
                 ContainerLevelAccess.create(this.getLevel(), this.getBlockPos()), this.getBlockPos());
     }

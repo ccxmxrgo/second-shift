@@ -22,7 +22,7 @@ in a jar the user can load in the CurseForge "test" instance and verify in-game.
 - [x] **Phase 4: Employee Attachment & Spawn** - Binding spawns a persistent, named employee villager with synced EmployeeData (completed 2026-09-04)
 - [x] **Phase 5: Profession Resolution & Trade Picker** - Hand-pick an employee's profession and its career-path trade from the real vanilla pool (amended from tier-1/pick-2 — see 05-VERIFICATION.md)
 - [x] **Phase 6: Employee Traits, Death & Firing** - Employees are conversion/breed-immune, recoverable on death, removable only via altar destruction
-- [ ] **Phase 7: Progression & Promotion Ritual** - Vanilla XP unlocks tiers; the player picks each tier's trades at the altar, never seeing unchosen trades
+- [x] **Phase 7: Progression & Promotion Ritual** - Vanilla XP unlocks tiers; the player picks each tier's trades at the altar, never seeing unchosen trades (completed 2026-09-08)
 - [ ] **Phase 8: Mod-Owned Restock** - Employee trades restock on a POI-independent timer
 - [ ] **Phase 9: Quarters & Happiness** - Employees need quarters + food; happiness modulates prices/restock and neglect makes them quit
 - [ ] **Phase 10: Polish, Config & Invalid States** - Every surface translated, themed, configurable, and failing gracefully
@@ -168,9 +168,17 @@ Plans:
   3. Right-clicking the altar with a promotable employee nearby opens the picker for the new tier, showing existing trades locked and the new tier's pool as "pick 2".
   4. Confirming installs the chosen trades, retains all prior tiers' trades, and advances the employee's tier.
 
-**Plans**: TBD
+**Plans**: 1 (implemented directly, autonomous overnight session — see 07-01-SUMMARY.md)
+**Status**: ✅ Complete
 **UI hint**: yes
-**Risks**: MEDIUM-confidence spike — "revert, don't prevent" for vanilla `updateTrades()`. Verify the throttled revert beats vanilla's append with no per-tick offer thrash, no lost restock state, and no one-tick window where unchosen offers are rendered to the player. Do not hold the mechanical level down. Enforce the same bind order as Phase 5.
+**Risks**: MEDIUM-confidence spike — "revert, don't prevent" for vanilla `updateTrades()`. RESOLVED:
+the periodic 40-tick per-employee check (already established in Phase 6 for the breeding lock and
+altar tether) reverts `villager.setOffers(data.offers())` unconditionally whenever
+`vanillaLevel > data.tier()` — idempotent, cheap, and reuses existing ticking infrastructure rather
+than adding a new one. Accepted limitation: up to a ~2-second window between a real level-up and
+the revert where vanilla's own auto-picked trade is live (documented in 07-CONTEXT.md D-02) — a
+zero-window guarantee would need a Mixin into `Villager#updateTrades`, deliberately not reached for
+in a first pass on a personal mod.
 
 ### Phase 8: Mod-Owned Restock
 

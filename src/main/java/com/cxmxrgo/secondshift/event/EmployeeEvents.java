@@ -7,8 +7,12 @@ import com.cxmxrgo.secondshift.employee.EmployeeManager;
 import com.cxmxrgo.secondshift.registry.ModAttachments;
 import com.cxmxrgo.secondshift.registry.ModBlocks;
 import com.cxmxrgo.secondshift.registry.ModItems;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
@@ -24,7 +28,11 @@ import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Employee character/lifecycle traits (Phase 6, 06-CONTEXT.md) — conversion immunity, breeding
@@ -57,7 +65,25 @@ public final class EmployeeEvents {
 
     private static final double WALK_HOME_SPEED = 0.6D;
 
+    /** Radius (blocks) the PROG-03 promotion signal reaches real players. */
+    private static final double PROMOTION_SIGNAL_RADIUS = 32.0D;
+
+    /** Phase 7 (07-CONTEXT.md D-03): non-persisted "has this employee already been signaled for
+     * THIS tier" tracker, keyed by employee UUID -> the vanilla level last signaled for. In-memory
+     * by design (same acceptable-to-lose-on-restart pattern as {@link EmployeeFiring}'s pending
+     * queue) — losing this on restart just means one redundant re-signal, never a silently
+     * dropped promotion. */
+    private static final Map<UUID, Integer> lastSignaledLevel = new ConcurrentHashMap<>();
+
     private EmployeeEvents() {}
+
+    /** Hygiene hook — called by every other employee-removal path ({@link HarvesterEvents},
+     * {@link EmployeeFiring}) so {@link #lastSignaledLevel} never retains an entry for a UUID that
+     * will never tick again. Public (not package-private) so the {@code gametest} package can
+     * exercise it directly. */
+    public static void clearSignal(UUID employeeId) {
+        lastSignaledLevel.remove(employeeId);
+    }
 
     /**
      * EMP-03 / EMP-04: cancel every conversion (zombie AND witch, deliberately not filtered by
@@ -102,11 +128,21 @@ public final class EmployeeEvents {
             villager.setAge(EmployeeManager.BREEDING_LOCK_AGE);
         }
 
+        // Phase 7 PROG-02/03 (07-CONTEXT.md D-02/D-03): revert vanilla's auto-appended trades the
+        // instant a level-up is observed, and signal the player once per newly-reached tier.
+        EmployeeData data = villager.getData(ModAttachments.EMPLOYEE.get());
+        int vanillaLevel = villager.getVillagerData().getLevel();
+        if (vanillaLevel > data.tier()) {
+            villager.setOffers(data.offers()); // idempotent — safe every check until the ritual resolves it
+            if (!Integer.valueOf(vanillaLevel).equals(lastSignaledLevel.put(villager.getUUID(), vanillaLevel))) {
+                signalPromotable(level, villager, vanillaLevel);
+            }
+        }
+
         // D-04: the altar tether. Suspended while the player is moving the employee deliberately.
         if (villager.isPassenger() || villager.isLeashed()) {
             return;
         }
-        EmployeeData data = villager.getData(ModAttachments.EMPLOYEE.get());
         Optional<BlockPos> altarPos = data.altarPos();
         if (altarPos.isEmpty() || !level.getBlockState(altarPos.get()).is(ModBlocks.SOUL_ALTAR.get())) {
             return; // no recorded altar, or it's gone/replaced — behaves like a normal villager
@@ -119,6 +155,31 @@ public final class EmployeeEvents {
                     villager.getYRot(), villager.getXRot());
         } else if (distSqr > SOFT_TETHER_RADIUS * SOFT_TETHER_RADIUS) {
             villager.getNavigation().moveTo(altar.getX() + 0.5D, altar.getY(), altar.getZ() + 0.5D, WALK_HOME_SPEED);
+        }
+    }
+
+    /**
+     * PROG-03: the "unmissable" promotion-ready signal — {@code HAPPY_VILLAGER} particles above
+     * the employee (server-broadcast, no per-player targeting needed) plus an action-bar message
+     * to every real player within {@link #PROMOTION_SIGNAL_RADIUS} blocks, naming the employee and
+     * its new tier so the player knows which altar to visit.
+     */
+    private static void signalPromotable(ServerLevel level, Villager villager, int newTier) {
+        level.sendParticles(ParticleTypes.HAPPY_VILLAGER,
+                villager.getX(), villager.getY() + 2.2D, villager.getZ(), 12, 0.3D, 0.3D, 0.3D, 0.0D);
+
+        Component name = villager.getCustomName() != null ? villager.getCustomName()
+                : Component.translatable("entity.minecraft.villager");
+        Component message = Component.empty()
+                .append(name.copy().withStyle(ChatFormatting.GREEN))
+                .append(Component.translatable("message.secondshift.employee.ready_for_promotion", newTier)
+                        .withStyle(ChatFormatting.YELLOW));
+
+        List<ServerPlayer> nearby = level.getEntitiesOfClass(ServerPlayer.class,
+                villager.getBoundingBox().inflate(PROMOTION_SIGNAL_RADIUS));
+        for (ServerPlayer player : nearby) {
+            player.displayClientMessage(message, true);
+            player.sendSystemMessage(message);
         }
     }
 
@@ -194,6 +255,7 @@ public final class EmployeeEvents {
 
         EmployeeData data = villager.getData(ModAttachments.EMPLOYEE.get());
         EmployeeManager.releaseAltar(level, data.altarPos(), villager.getUUID());
+        lastSignaledLevel.remove(villager.getUUID()); // Phase 7 hygiene — no leak for a dead employee
 
         ItemEntity soulBlock = new ItemEntity(level, villager.getX(), villager.getY() + 0.5D, villager.getZ(),
                 new ItemStack(ModItems.SOUL_BLOCK_ITEM.get()));

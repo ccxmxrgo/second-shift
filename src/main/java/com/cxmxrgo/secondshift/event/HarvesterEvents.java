@@ -125,6 +125,7 @@ public final class HarvesterEvents {
             if (target.hasData(ModAttachments.EMPLOYEE.get())) {
                 EmployeeManager.releaseAltar(serverLevel,
                         target.getData(ModAttachments.EMPLOYEE.get()).altarPos(), target.getUUID());
+                EmployeeEvents.clearSignal(target.getUUID()); // Phase 7 hygiene
             }
         }
     }

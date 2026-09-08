@@ -12,9 +12,11 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.npc.VillagerProfession;
+import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraft.world.level.block.Block;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -131,5 +133,27 @@ public final class EmployeeManager {
         be.setEmployeeId(null);
         be.setChanged();
         level.sendBlockUpdated(pos, level.getBlockState(pos), level.getBlockState(pos), Block.UPDATE_ALL);
+    }
+
+    /**
+     * Phase 7 (07-CONTEXT.md D-05): confirms a Promotion Ritual. Merges {@code chosenOffers} onto
+     * a copy of {@code data.offers()} — never drops or re-litigates a prior tier's trades
+     * (ROADMAP Phase 7 success criterion 4) — applies the merged list to the live {@code villager}
+     * immediately, and writes back an updated {@link EmployeeData} with {@code tier = newTier}.
+     *
+     * <p>Once {@code data.tier()} (now {@code newTier}) catches up to the villager's own vanilla
+     * {@code VillagerData.getLevel()}, {@code EmployeeEvents}'s periodic revert (D-02) naturally
+     * stops touching this employee's offers until it levels again.
+     */
+    public static void installPromotion(Villager villager, EmployeeData data, int newTier,
+            List<MerchantOffer> chosenOffers) {
+        MerchantOffers merged = new MerchantOffers();
+        merged.addAll(data.offers());
+        for (MerchantOffer offer : chosenOffers) {
+            merged.add(offer);
+        }
+        villager.setOffers(merged);
+        villager.setData(ModAttachments.EMPLOYEE.get(),
+                new EmployeeData(data.version(), data.name(), data.profession(), newTier, merged, data.altarPos()));
     }
 }
