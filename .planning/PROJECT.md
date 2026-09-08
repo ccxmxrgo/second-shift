@@ -25,22 +25,22 @@ its trades at each level. If everything else is cut, this loop has to be reliabl
 - [x] The Binding Altar screen opens correctly and safely, with zero trade logic — *Validated in Phase 3: Menu & Screen Harness (HARD GATE)* (GUI-01, ALTAR-03). `secondshift:binding_altar` `MenuType`/`AbstractContainerMenu`/`AbstractContainerScreen` registered and proven under `runClient`/`runServer` (the exact unbound-`MenuType` crash class that killed the prior draft is now structurally prevented, guardrail-covered, and deliberately reproduced+restored). Runtime `ProfessionResolver` (POI→profession, no hardcoded list) gates the open trigger; right-click with a Soul Block + a real job-site block on top sockets it and opens the screen in one action; no-job/no-block right-clicks are harmless themed no-ops; `stillValid` rejects a broken/moved-away session and force-closes with a themed message (14/14 GameTests green). Code review found and fixed one real gap: the display-only slot's invariant is now enforced at the BE/Container layer, not just the UI layer. Human UAT passed 3/3.
 - [x] Employee spawns as a `minecraft:villager` carrying a NeoForge data attachment (no custom entity type) — *Validated in Phase 4: Employee Attachment & Spawn* (EMP-01, EMP-02, EMP-08, EMP-09). `EmployeeData` (name/profession/tier/offers, versioned CODEC/STREAM_CODEC) attaches via `ModAttachments.EMPLOYEE`; `EmployeeManager.bind` spawns a real `minecraft:villager` with `villagerXp >= 1`, a random one of 3 fixed professions, and an always-visible green name — confirmed persisting across a save/quit/relaunch and a 300-block chunk-unload round trip, confirmed client-synced (the LIGHT spike: `AttachmentType.Builder#sync` empirically proven to deliver attachment data to the client in NeoForge 21.1.248), confirmed renameable via a vanilla Name Tag, and confirmed zero effect on a separate wild villager in the same world. One real bug (spawn position overlapping the job-site block) found and fixed during manual verification. 20/20 GameTests green.
 
+- [x] Soul Altar item-socket binding flow: pick a profession from a socketed job item, choose a real vanilla-pool trade in a scrollable "career path" picker (reusing vanilla's own `EnchantmentMenu`/`EnchantmentScreen`), and bind — *Validated in Phase 5: Profession Resolution & Trade Picker* (amended across 5 live-iteration redesign rounds from the original plan — see 05-VERIFICATION.md for the full shipped-vs-planned account). GUI-03's "show a bound employee's status back at the altar" was explicitly descoped, not shipped.
+- [x] Employee traits: immune to zombie/witch conversion, cannot breed (Mixin-free precondition break), tethered to its altar, recoverable via a Harvester sneak-release or any other death's drop-recovery, removable only by destroying the altar — *Validated in Phase 6: Employee Traits, Death & Firing* (EMP-03…07, ECON-04, ALTAR-06).
+- [x] Leveling: trading grants real vanilla XP to unlock a tier; vanilla's auto-appended trades are reverted within one periodic check; the player performs a Promotion Ritual at the altar (reusing the same "career path" picker pattern) to choose each new tier's trades — *Validated in Phase 7: Progression & Promotion Ritual* (PROG-01…04).
+- [x] Trades restock on a mod-owned real-time timer, independent of POI/work-schedule/day-night/dimension, and configurable — *Validated in Phase 8: Mod-Owned Restock* (STOCK-01…03).
+- [x] Happiness system: an employee needs quarters (a real enclosed 3×3+ room with a door, bounded-flood-fill detected) and a stocked food chest; a gradual Unhappy/OK/Happy meter modulates emerald prices (vanilla's own hero-of-the-village mechanism) and restock speed, and sustained neglect makes the employee quit (drops its Soul Block, reverts to a wild villager, frees its altar) — *Validated in Phase 9: Quarters & Happiness* (HAPP-01…07, STOCK-04).
+- [x] Every player-facing surface translated, themed, configurable (a real Mods-menu Config screen), and failing gracefully; HR job titles on every employee's name — *Validated in Phase 10: Polish, Config & Invalid States* (POL-02/05/06/07/08).
+
+Full requirement list: `.planning/REQUIREMENTS.md` (60 v1 requirements — all 60/60 complete as of 2026-09-08).
+
 ### Active
 
 <!-- Current scope. All hypotheses until shipped and validated. -->
 
-- [ ] Soul Altar block: placing a job-site block on top and inserting a Soul Block begins binding *(altar block + socket shipped in Phase 2; the empty Binding Altar screen + POI→profession resolver + open-trigger wiring shipped in Phase 3 — GUI-01, ALTAR-03. Still Active: the actual binding flow behind that screen, and Phase 5 additionally reworks "job-site block on top" into an item-socket + hovering render per the G-2 design decision in STATE.md.)*
-- [ ] Binding flow: choose profession (from the job-site block), name the employee, choose level-1 trades
-- [ ] Trade choices are drawn from the bound profession's real vanilla trade pool for that tier
-- [ ] Leveling: trading grants vanilla XP to unlock a tier; player then performs an altar ritual to choose that tier's trades
-- [ ] Employee traits: cannot be zombified, not converted by lightning, cannot breed
-- [ ] Employee drops its Soul Block (plus slime) when killed by anything other than the player's Harvester
-- [ ] Employees stay near their altar (bound area); each altar owns exactly one employee
-- [ ] Happiness system: an employee needs quarters (3×3 + door) and a stocked food chest; Unhappy/OK/Happy tiers modulate emerald prices and restock speed, and sustained neglect makes the employee quit (drops its Soul Block, reverts to a wild villager)
-- [ ] Firing is only possible by destroying the altar — a player-only ½-heart blast (no block damage), then a cosmetic lightning strike instakills the bound employee; Soul Block and job block are lost
-- [ ] Trades restock on a mod-owned timer (vanilla POI restock never reaches an altar-bound employee)
-
-Full requirement list: `.planning/REQUIREMENTS.md` (60 v1 requirements).
+None — v1.0 milestone complete. Remaining work is exclusively the `human_needed` playtest backlog
+recorded in each phase's `VERIFICATION.md` (Phases 6, 7, 9, 10) — real-play "does it feel right"
+checks with verified underlying logic, not open implementation work.
 
 ### Out of Scope
 
@@ -123,4 +123,12 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-05 — Phase 4 (Employee Attachment & Spawn) complete: EmployeeData attachment + registration, EmployeeManager.bind spawn logic, network bind trigger with server-side trust-boundary hardening (client-position spoofing, double-bind race), and a manual verification checkpoint confirming persistence, client-side attachment sync (LIGHT spike resolved YES), Name Tag rename behavior, and wild-villager non-interference in a real client. Two bugs (spawn-position overlap, sync-diagnostic timing) found and fixed mid-checkpoint via quick task 260905-0yg. 20/20 GameTests green. One locked design decision for Phase 5 remains (G-2: job-site block becomes an item-socket + hovering/spinning render, replacing "place a real block on top" — this will also resolve the interim spawn-offset fix).*
+*Last updated: 2026-09-08 — v1.0 milestone COMPLETE: all 10 phases and all 60/60 v1 requirements
+shipped. Phases 5-10 (Profession Resolution & Trade Picker through Polish, Config & Invalid
+States) built in one `/gsd-autonomous` overnight session while the user slept — see each phase's
+own SUMMARY.md/VERIFICATION.md for full detail, and STATE.md's Decisions log for every
+cross-phase technical call made along the way. The bind-an-employee-and-choose-its-trades core
+loop is complete end to end: harvest → bind → pick trades → level via real vanilla XP → promote
+→ maintain quarters/happiness → restock/fire/quit, all configurable and themed. Remaining work is
+exclusively the accumulated human_needed playtest backlog (Phases 6, 7, 9, 10) — real-play "does
+it feel right" checks, not open implementation.*
