@@ -272,13 +272,14 @@ public final class BindingAltarGameTests {
     }
 
     /**
-     * Round-12 note: {@link BindingAltarMenu} snapshots (and, when the real pool exceeds {@link
-     * BindingAltarMenu#OPTION_COUNT}, shuffles-and-caps) its displayed candidate list from the
-     * block entity once, at construction time — mirroring round-10's "menu snapshots once" note,
-     * now with an explicit cap since the enchanting-table-style UI only ever shows 3 rows.
+     * Round-15 note: {@link BindingAltarMenu} snapshots its FULL "career path" candidate list
+     * (the profession's highest tier, no capping/shuffling) from the block entity once, at
+     * construction time — the scrollable {@code TradeCandidateList} widget shows all of it, so
+     * there's no fixed-row cap to test anymore, just that a real pool of any size shows in full
+     * (up to the generous {@link BindingAltarMenu#MAX_CANDIDATE_SLOTS} reservation).
      */
     @GameTest(template = "empty")
-    public static void binding_altar_displayed_candidates_capped_at_option_count(GameTestHelper helper) {
+    public static void binding_altar_displayed_candidates_show_the_full_pool(GameTestHelper helper) {
         helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());
         BlockPos absAltarPos = helper.absolutePos(ALTAR_POS);
         SoulAltarBlockEntity be = setupFullySocketedAltar(helper, absAltarPos);
@@ -288,22 +289,14 @@ public final class BindingAltarGameTests {
 
         MerchantOffer offerA = new MerchantOffer(new ItemCost(Items.EMERALD), new ItemStack(Items.BREAD), 1, 1, 0.05F);
         MerchantOffer offerB = new MerchantOffer(new ItemCost(Items.EMERALD), new ItemStack(Items.PAPER), 1, 1, 0.05F);
-
-        be.setCandidateOffers(List.of(offerA, offerB));
-        BindingAltarMenu twoCandidateMenu = new BindingAltarMenu(0, player.getInventory(),
-                ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
-        helper.assertTrue(twoCandidateMenu.getDisplayedCandidates().size() == 2,
-                "a 2-candidate real pool must show all 2, got " + twoCandidateMenu.getDisplayedCandidates().size());
-
         MerchantOffer offerC = new MerchantOffer(new ItemCost(Items.EMERALD), new ItemStack(Items.BOOK), 1, 1, 0.05F);
         MerchantOffer offerD = new MerchantOffer(new ItemCost(Items.EMERALD), new ItemStack(Items.MAP), 1, 1, 0.05F);
         MerchantOffer offerE = new MerchantOffer(new ItemCost(Items.EMERALD), new ItemStack(Items.COMPASS), 1, 1, 0.05F);
         be.setCandidateOffers(List.of(offerA, offerB, offerC, offerD, offerE));
-        BindingAltarMenu fiveCandidateMenu = new BindingAltarMenu(1, player.getInventory(),
+        BindingAltarMenu menu = new BindingAltarMenu(0, player.getInventory(),
                 ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
-        helper.assertTrue(fiveCandidateMenu.getDisplayedCandidates().size() == BindingAltarMenu.OPTION_COUNT,
-                "a 5-candidate real pool must be capped down to " + BindingAltarMenu.OPTION_COUNT + ", got "
-                        + fiveCandidateMenu.getDisplayedCandidates().size());
+        helper.assertTrue(menu.getDisplayedCandidates().size() == 5,
+                "a 5-candidate real pool must show all 5, got " + menu.getDisplayedCandidates().size());
         helper.succeed();
     }
 

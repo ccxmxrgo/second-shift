@@ -10,9 +10,6 @@
   "container.secondshift.binding_altar_titled": "Binding Altar - %s",
   "gui.secondshift.binding_altar.cost_line": "%1$sx %2$s",
   "gui.secondshift.binding_altar.trade_bind_hint": "Click to bind this employee!",
-  "gui.secondshift.binding_altar.reroll": "Reroll Trades",
-  "gui.secondshift.binding_altar.reroll_short": "Reroll",
-  "gui.secondshift.binding_altar.reroll_cost": "Costs 1 Soul Fragment",
 
   "message.secondshift.altar.no_job_block": "The position is unfilled. Socket a job-site item into the altar before you file the paperwork.",
   "message.secondshift.altar.not_a_workstation": "That block posts no job. Only a real workstation defines the role.",
@@ -22,7 +19,6 @@
   "message.secondshift.altar.closed.job_gone": "The workstation was removed. The position is rescinded.",
   "message.secondshift.altar.closed.too_far": "You stepped away from the altar. The paperwork goes unfiled.",
   "message.secondshift.altar.empty_pool": "This position has nothing to offer yet. No trades are on file for this role.",
-  "message.secondshift.altar.reroll_not_enough_fragments": "Not enough Soul Fragments to reroll. Bring one to try new trades.",
 
   "advancement.secondshift.necromantic_apprentice.title": "Necromantic Apprentice",
   "advancement.secondshift.necromantic_apprentice.description": "Hold an emerald and feel the payroll calling. Forge a Harvester — emeralds, bone, and soul soil — and go collect what the village owes you.",

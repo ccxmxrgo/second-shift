@@ -14,16 +14,18 @@ import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
- * GUI-02 GameTest suite — round-12 redesign, replacing round-10/11's selection-toggle tests with
- * the "click a row, bind immediately" mechanic that comes from reusing vanilla's real enchanting
- * table menu (see {@link BindingAltarMenu}'s doc comment for the full rationale). Every trust-
- * boundary property earlier rounds' payload/menu code used to guard is still enforced inside
- * {@link BindingAltarMenu#clicked}, exercised here directly the way a real click packet would.
+ * GUI-02 GameTest suite — round-15 "career path" redesign: the player now picks one candidate
+ * from the profession's full HIGHEST-tier pool, shown in a real scrollable list on the client and
+ * routed to the server via vanilla's {@code clickMenuButton} RPC (see {@link BindingAltarMenu}'s
+ * doc comment for the full rationale). Every trust-boundary property earlier rounds' payload/menu
+ * code used to guard is still enforced inside {@link BindingAltarMenu#clickMenuButton}/{@link
+ * BindingAltarMenu#clicked}, exercised here directly the way a real click/button packet would be.
  *
  * <p>Mirrors {@link BindingAltarGameTests}'s idiom exactly — {@code helper.assertTrue}/{@code
  * assertFalse}/{@code succeed()}, no raw JUnit assertions.
@@ -56,15 +58,14 @@ public final class BindingAltarMenuGameTests {
     }
 
     /**
-     * Round-14 fix: an Enchanted Book's real item name is always the generic "Enchanted Book" —
-     * vanilla only ever shows WHICH enchantment as a separate tooltip line, never in the name
-     * itself. Librarian's tier-1 pool is fixed as [Paper, Enchanted Book, Bookshelf] (see {@code
-     * VillagerTrades}) and is exactly {@link BindingAltarMenu#OPTION_COUNT}, so with no shuffling
-     * needed row 1 is always the Enchanted Book listing — this asserts its row display name is
-     * NOT the bare generic name, i.e. {@link BindingAltarMenu} resolved the real enchantment.
+     * Regression test (originally written for the fixed-3-row design, kept for the new
+     * variable-count one): every reserved candidate slot up to {@link
+     * BindingAltarMenu#MAX_CANDIDATE_SLOTS} must be reachable via {@code getSlot} without
+     * throwing — {@code BindingAltarScreen}'s real client-side rendering scans exactly this range
+     * to build its candidate list.
      */
     @GameTest(template = "empty")
-    public static void enchanted_book_row_shows_the_real_enchantment_not_a_generic_name(GameTestHelper helper) {
+    public static void every_reserved_candidate_slot_is_reachable(GameTestHelper helper) {
         helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());
         BlockPos absAltarPos = helper.absolutePos(ALTAR_POS);
         setupFullySocketedAltar(helper, absAltarPos);
@@ -75,61 +76,58 @@ public final class BindingAltarMenuGameTests {
         BindingAltarMenu menu = new BindingAltarMenu(0, player.getInventory(),
                 ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
 
-        ItemStack bookRow = menu.getSlot(BindingAltarMenu.TRADE_SLOT_BASE + 1).getItem();
-        helper.assertTrue(bookRow.is(net.minecraft.world.item.Items.ENCHANTED_BOOK),
-                "row 1 of a Librarian altar must be the Enchanted Book listing, got " + bookRow);
-
-        String genericName = new ItemStack(net.minecraft.world.item.Items.ENCHANTED_BOOK).getHoverName().getString();
-        String rowDisplayName = bookRow.getHoverName().getString();
-        helper.assertFalse(rowDisplayName.startsWith(genericName),
-                "the row's display name must show the real enchantment, not the generic '" + genericName
-                        + "' name, got '" + rowDisplayName + "'");
-        helper.succeed();
-    }
-
-    /**
-     * Regression test: round-13's refactor of trade-slot population into {@code
-     * refreshTradeSlots()} briefly dropped the {@code addSlot(...)} calls that actually register
-     * the 3 trade rows AND the reroll slot with the menu's own slot list, since {@code
-     * BindingAltarMenu#clicked} routes trade-row/reroll clicks by raw index arithmetic and never
-     * consults {@code this.slots} — so every other GameTest in this suite kept passing even
-     * though {@code BindingAltarScreen}'s real client-side rendering (which DOES call {@code
-     * menu.getSlot(...)}) crashed with an {@code IndexOutOfBoundsException} the moment the altar
-     * screen tried to render. This test calls {@code getSlot} directly for every row plus the
-     * reroll slot, exactly like the screen does, so a repeat of that specific mistake fails loudly
-     * here instead of only in a live client.
-     */
-    @GameTest(template = "empty")
-    public static void every_trade_row_and_the_reroll_slot_are_actually_registered(GameTestHelper helper) {
-        helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());
-        BlockPos absAltarPos = helper.absolutePos(ALTAR_POS);
-        setupFullySocketedAltar(helper, absAltarPos);
-
-        ServerPlayer player = helper.makeMockServerPlayerInLevel();
-        player.teleportTo(absAltarPos.getX() + 0.5D, absAltarPos.getY(), absAltarPos.getZ() + 0.5D);
-
-        BindingAltarMenu menu = new BindingAltarMenu(0, player.getInventory(),
-                ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
-
-        for (int row = 0; row < BindingAltarMenu.OPTION_COUNT; row++) {
+        for (int i = 0; i < BindingAltarMenu.MAX_CANDIDATE_SLOTS; i++) {
             // Must not throw IndexOutOfBoundsException — that's the entire point of this test.
-            menu.getSlot(BindingAltarMenu.TRADE_SLOT_BASE + row);
+            menu.getSlot(BindingAltarMenu.CANDIDATE_SLOT_BASE + i);
         }
-        helper.assertTrue(!menu.getSlot(BindingAltarMenu.REROLL_SLOT).getItem().isEmpty(),
-                "the reroll slot must be registered and show its Soul Fragment display item");
+        helper.assertTrue(!menu.getDisplayedCandidates().isEmpty(),
+                "a fully-socketed Librarian altar must roll at least one displayed candidate");
         helper.succeed();
     }
 
     /**
-     * Round-14 fix: several professions' tier-1 pool is exactly {@link BindingAltarMenu#OPTION_COUNT}
-     * fixed item types (e.g. Librarian: Paper/Enchanted Book/Bookshelf, always in that order), so a
-     * reroll never changes WHICH items show — only their randomized price, which used to be
-     * hover-tooltip-only. This asserts the row's own display name (read by {@code
-     * BindingAltarScreen}'s inline row text via {@code getHoverName()}) now bakes the cost in, so a
-     * reroll is visibly different even when the item type repeats.
+     * An Enchanted Book's real item name is always the generic "Enchanted Book" — vanilla only
+     * ever shows WHICH enchantment as a separate tooltip line, never in the name itself. Forces a
+     * synthetic enchanted-book candidate directly onto the BE (Librarian's own MAX-tier pool
+     * doesn't happen to include one — see {@code VillagerTrades}, tier 5 is Name Tag only) to
+     * assert {@link BindingAltarMenu} resolves the real enchantment for display regardless of
+     * which profession/tier a book candidate actually came from.
      */
     @GameTest(template = "empty")
-    public static void trade_row_display_name_includes_its_cost(GameTestHelper helper) {
+    public static void an_enchanted_book_candidate_shows_the_real_enchantment(GameTestHelper helper) {
+        helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());
+        BlockPos absAltarPos = helper.absolutePos(ALTAR_POS);
+        SoulAltarBlockEntity be = setupFullySocketedAltar(helper, absAltarPos);
+
+        ItemStack book = new ItemStack(Items.ENCHANTED_BOOK);
+        net.minecraft.world.item.enchantment.ItemEnchantments.Mutable mutableEnchantments =
+                new net.minecraft.world.item.enchantment.ItemEnchantments.Mutable(
+                        net.minecraft.world.item.enchantment.ItemEnchantments.EMPTY);
+        mutableEnchantments.set(helper.getLevel().registryAccess()
+                .registryOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT)
+                .getHolderOrThrow(net.minecraft.world.item.enchantment.Enchantments.SHARPNESS), 3);
+        book.set(net.minecraft.core.component.DataComponents.STORED_ENCHANTMENTS, mutableEnchantments.toImmutable());
+        be.setCandidateOffers(java.util.List.of(new net.minecraft.world.item.trading.MerchantOffer(
+                new net.minecraft.world.item.trading.ItemCost(Items.EMERALD), book, 1, 1, 0.05F)));
+
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        player.teleportTo(absAltarPos.getX() + 0.5D, absAltarPos.getY(), absAltarPos.getZ() + 0.5D);
+
+        BindingAltarMenu menu = new BindingAltarMenu(0, player.getInventory(),
+                ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
+
+        String genericName = new ItemStack(Items.ENCHANTED_BOOK).getHoverName().getString();
+        ItemStack candidate = menu.getSlot(BindingAltarMenu.CANDIDATE_SLOT_BASE).getItem();
+        helper.assertFalse(candidate.getHoverName().getString().startsWith(genericName),
+                "an Enchanted Book candidate's display name must show the real enchantment, not the generic '"
+                        + genericName + "' name, got '" + candidate.getHoverName().getString() + "'");
+        helper.succeed();
+    }
+
+    /** Baking the cost into the display name means every candidate's row text differs from just
+     * its bare item name. */
+    @GameTest(template = "empty")
+    public static void candidate_display_name_includes_its_cost(GameTestHelper helper) {
         helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());
         BlockPos absAltarPos = helper.absolutePos(ALTAR_POS);
         setupFullySocketedAltar(helper, absAltarPos);
@@ -140,15 +138,15 @@ public final class BindingAltarMenuGameTests {
         BindingAltarMenu menu = new BindingAltarMenu(0, player.getInventory(),
                 ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
 
-        ItemStack rowItem = menu.getSlot(BindingAltarMenu.TRADE_SLOT_BASE).getItem();
-        String displayName = rowItem.getHoverName().getString();
+        ItemStack candidate = menu.getSlot(BindingAltarMenu.CANDIDATE_SLOT_BASE).getItem();
+        String displayName = candidate.getHoverName().getString();
         helper.assertTrue(displayName.contains("(") && displayName.contains(")"),
-                "the row's display name must bake in the cost (parenthesized), got '" + displayName + "'");
+                "a candidate's display name must bake in the cost (parenthesized), got '" + displayName + "'");
         helper.succeed();
     }
 
     @GameTest(template = "empty")
-    public static void clicking_a_trade_row_binds_exactly_one_employee(GameTestHelper helper) {
+    public static void clicking_a_candidate_via_click_menu_button_binds_exactly_one_employee(GameTestHelper helper) {
         helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());
         BlockPos absAltarPos = helper.absolutePos(ALTAR_POS);
         SoulAltarBlockEntity be = setupFullySocketedAltar(helper, absAltarPos);
@@ -163,24 +161,23 @@ public final class BindingAltarMenuGameTests {
         helper.assertTrue(!menu.getDisplayedCandidates().isEmpty(),
                 "a fully-socketed Librarian altar must roll at least one displayed candidate");
 
-        menu.clicked(BindingAltarMenu.TRADE_SLOT_BASE, 0, ClickType.PICKUP, player);
+        helper.assertTrue(menu.clickMenuButton(player, 0), "clickMenuButton must accept a valid candidate index");
 
         helper.assertTrue(employeeCount(helper, absAltarPos) == 1,
-                "exactly one employee must exist after clicking row 0 once, got "
-                        + employeeCount(helper, absAltarPos));
+                "exactly one employee must exist after picking candidate 0, got " + employeeCount(helper, absAltarPos));
         helper.assertTrue(be.isEmployeeBound(), "the altar must be marked employeeBound after a successful bind");
         helper.assertTrue(be.isEmpty() && be.isJobItemEmpty(), "both sockets must be empty after a successful bind");
         helper.succeed();
     }
 
     /**
-     * Double-confirm race (T-05-11 / ALTAR-05), re-verified against the round-12 immediate-bind
-     * path: two rapid clicks on the same (or different) trade row must never spawn a second
+     * Double-confirm race (T-05-11 / ALTAR-05), re-verified against the round-15 career-path
+     * bind path: two rapid picks (same or different candidate index) must never spawn a second
      * employee — the atomic {@code employeeBound} guard inside {@code attemptBind} must reject the
-     * second one, exactly like every prior round's equivalent test.
+     * second one.
      */
     @GameTest(template = "empty")
-    public static void double_click_does_not_spawn_a_second_employee(GameTestHelper helper) {
+    public static void double_pick_does_not_spawn_a_second_employee(GameTestHelper helper) {
         helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());
         BlockPos absAltarPos = helper.absolutePos(ALTAR_POS);
         SoulAltarBlockEntity be = setupFullySocketedAltar(helper, absAltarPos);
@@ -192,37 +189,26 @@ public final class BindingAltarMenuGameTests {
                 ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
         player.containerMenu = menu;
 
-        menu.clicked(BindingAltarMenu.TRADE_SLOT_BASE, 0, ClickType.PICKUP, player);
-        menu.clicked(BindingAltarMenu.TRADE_SLOT_BASE, 0, ClickType.PICKUP, player);
-        // Also try a second row, in case a naive implementation only guarded per-row rather than
-        // altar-wide.
+        menu.clickMenuButton(player, 0);
+        menu.clickMenuButton(player, 0);
         if (menu.getDisplayedCandidates().size() > 1) {
-            menu.clicked(BindingAltarMenu.TRADE_SLOT_BASE + 1, 0, ClickType.PICKUP, player);
+            menu.clickMenuButton(player, 1);
         }
 
         helper.assertTrue(employeeCount(helper, absAltarPos) == 1,
-                "exactly one employee must exist after multiple rapid clicks on the same altar, got "
+                "exactly one employee must exist after multiple rapid picks on the same altar, got "
                         + employeeCount(helper, absAltarPos));
         helper.assertTrue(be.isEmployeeBound(), "the altar must be marked employeeBound after the first successful bind");
         helper.succeed();
     }
 
-    /**
-     * Clicking a row beyond the real candidate count (an empty/inactive row, when the rolled pool
-     * is smaller than {@link BindingAltarMenu#OPTION_COUNT}) must be a safe no-op — no bind, no
-     * crash.
-     */
+    /** An out-of-range candidate index (beyond the real rolled pool) must be a safe no-op — no
+     * bind, no crash, and {@code clickMenuButton} reports it as unhandled ({@code false}). */
     @GameTest(template = "empty")
-    public static void clicking_an_empty_row_is_a_safe_no_op(GameTestHelper helper) {
+    public static void picking_an_out_of_range_index_is_a_safe_no_op(GameTestHelper helper) {
         helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());
         BlockPos absAltarPos = helper.absolutePos(ALTAR_POS);
         SoulAltarBlockEntity be = setupFullySocketedAltar(helper, absAltarPos);
-        // Force a 1-candidate pool (this also short-circuits the menu's own lazy roll — see
-        // candidatesRolled()) so rows 1 and 2 are guaranteed empty, independent of any real
-        // profession's actual tier-1 pool size.
-        be.setCandidateOffers(java.util.List.of(new net.minecraft.world.item.trading.MerchantOffer(
-                new net.minecraft.world.item.trading.ItemCost(net.minecraft.world.item.Items.EMERALD),
-                new ItemStack(net.minecraft.world.item.Items.BREAD), 1, 1, 0.05F)));
 
         ServerPlayer player = helper.makeMockServerPlayerInLevel();
         player.teleportTo(absAltarPos.getX() + 0.5D, absAltarPos.getY(), absAltarPos.getZ() + 0.5D);
@@ -231,17 +217,14 @@ public final class BindingAltarMenuGameTests {
                 ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
         player.containerMenu = menu;
 
-        int emptyRow = menu.getDisplayedCandidates().size(); // first row past the real candidates
-        helper.assertTrue(emptyRow < BindingAltarMenu.OPTION_COUNT,
-                "expected a forced 1-candidate pool to leave an empty row, got "
-                        + menu.getDisplayedCandidates().size() + " displayed candidates");
+        int outOfRange = BindingAltarMenu.MAX_CANDIDATE_SLOTS; // always beyond any real pool
+        helper.assertFalse(menu.clickMenuButton(player, outOfRange),
+                "an out-of-range candidate index must be reported as unhandled");
 
-        menu.clicked(BindingAltarMenu.TRADE_SLOT_BASE + emptyRow, 0, ClickType.PICKUP, player);
-
-        helper.assertFalse(be.isEmployeeBound(), "clicking an empty row must never bind an employee");
+        helper.assertFalse(be.isEmployeeBound(), "an out-of-range pick must never bind an employee");
         helper.assertTrue(!be.isEmpty() && !be.isJobItemEmpty(), "both altar sockets must remain intact");
         helper.assertTrue(employeeCount(helper, absAltarPos) == 0,
-                "no employee must spawn from clicking an empty row, got " + employeeCount(helper, absAltarPos));
+                "no employee must spawn from an out-of-range pick, got " + employeeCount(helper, absAltarPos));
         helper.succeed();
     }
 
@@ -257,31 +240,35 @@ public final class BindingAltarMenuGameTests {
         BindingAltarMenu menu = new BindingAltarMenu(0, player.getInventory(),
                 ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
 
-        helper.assertTrue(menu.quickMoveStack(player, BindingAltarMenu.TRADE_SLOT_BASE).isEmpty(),
-                "D-06: shift-clicking a trade row in this read-only menu must never move a real item");
+        helper.assertTrue(menu.quickMoveStack(player, BindingAltarMenu.CANDIDATE_SLOT_BASE).isEmpty(),
+                "D-06: shift-clicking a candidate slot in this read-only menu must never move a real item");
         helper.succeed();
     }
 
-    /** clickMenuButton is deliberately disabled (round-12) — vanilla's mouseClicked would try it
-     * first, and it must always fall through to normal slot-click routing instead. */
+    /** The candidate slots are locked against direct slot-click pickup too (defensive — they're
+     * off-screen and unreachable via a real mouse click, but a forged packet could still target
+     * them directly). */
     @GameTest(template = "empty")
-    public static void click_menu_button_is_always_disabled(GameTestHelper helper) {
+    public static void candidate_slots_are_locked_against_direct_slot_clicks(GameTestHelper helper) {
         helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());
         BlockPos absAltarPos = helper.absolutePos(ALTAR_POS);
-        setupFullySocketedAltar(helper, absAltarPos);
+        SoulAltarBlockEntity be = setupFullySocketedAltar(helper, absAltarPos);
 
         ServerPlayer player = helper.makeMockServerPlayerInLevel();
         player.teleportTo(absAltarPos.getX() + 0.5D, absAltarPos.getY(), absAltarPos.getZ() + 0.5D);
 
         BindingAltarMenu menu = new BindingAltarMenu(0, player.getInventory(),
                 ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
+        player.containerMenu = menu;
 
-        helper.assertFalse(menu.clickMenuButton(player, 0),
-                "clickMenuButton must always return false so EnchantmentScreen's mouseClicked falls through to normal slot clicks");
+        menu.clicked(BindingAltarMenu.CANDIDATE_SLOT_BASE, 0, ClickType.PICKUP, player);
+
+        helper.assertFalse(be.isEmployeeBound(), "a direct slot click on a candidate slot must never bind an employee");
+        helper.assertTrue(menu.getCarried().isEmpty(), "a direct slot click on a candidate slot must never populate the cursor");
         helper.succeed();
     }
 
-    // --- round-13: receipt slots + reroll ---
+    // --- receipt slots (unchanged from the round-13 design) ---
 
     @GameTest(template = "empty")
     public static void receipt_slots_show_socketed_items_and_are_locked(GameTestHelper helper) {
@@ -340,59 +327,6 @@ public final class BindingAltarMenuGameTests {
         helper.assertTrue(itemEntitiesAfter == itemEntitiesBefore,
                 "closing the menu must not drop the receipt slots' display copies as item entities, before="
                         + itemEntitiesBefore + " after=" + itemEntitiesAfter);
-        helper.succeed();
-    }
-
-    @GameTest(template = "empty")
-    public static void reroll_with_a_soul_fragment_changes_candidates_and_consumes_it(GameTestHelper helper) {
-        helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());
-        BlockPos absAltarPos = helper.absolutePos(ALTAR_POS);
-        SoulAltarBlockEntity be = setupFullySocketedAltar(helper, absAltarPos);
-
-        ServerPlayer player = helper.makeMockServerPlayerInLevel();
-        player.teleportTo(absAltarPos.getX() + 0.5D, absAltarPos.getY(), absAltarPos.getZ() + 0.5D);
-        player.getInventory().add(new ItemStack(ModItems.SOUL_FRAGMENT.get(), 1));
-
-        BindingAltarMenu menu = new BindingAltarMenu(0, player.getInventory(),
-                ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
-        player.containerMenu = menu;
-
-        java.util.List<net.minecraft.world.item.trading.MerchantOffer> beforeRoll = be.getCandidateOffers();
-
-        menu.clicked(BindingAltarMenu.REROLL_SLOT, 0, ClickType.PICKUP, player);
-
-        helper.assertTrue(player.getInventory().countItem(ModItems.SOUL_FRAGMENT.get()) == 0,
-                "a successful reroll must consume exactly the 1 Soul Fragment the player had");
-        helper.assertTrue(be.getCandidateOffers() != beforeRoll,
-                "a successful reroll must produce a freshly rolled candidate list on the BE");
-        helper.assertFalse(be.isEmployeeBound(), "rerolling must never bind an employee");
-        helper.assertTrue(!be.isEmpty() && !be.isJobItemEmpty(), "rerolling must never touch the altar's sockets");
-        helper.succeed();
-    }
-
-    @GameTest(template = "empty")
-    public static void reroll_without_a_soul_fragment_is_rejected(GameTestHelper helper) {
-        helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());
-        BlockPos absAltarPos = helper.absolutePos(ALTAR_POS);
-        SoulAltarBlockEntity be = setupFullySocketedAltar(helper, absAltarPos);
-
-        ServerPlayer player = helper.makeMockServerPlayerInLevel();
-        player.teleportTo(absAltarPos.getX() + 0.5D, absAltarPos.getY(), absAltarPos.getZ() + 0.5D);
-        // Deliberately no Soul Fragment in inventory.
-
-        BindingAltarMenu menu = new BindingAltarMenu(0, player.getInventory(),
-                ContainerLevelAccess.create(helper.getLevel(), absAltarPos), absAltarPos);
-        player.containerMenu = menu;
-
-        java.util.List<net.minecraft.world.item.trading.MerchantOffer> beforeRoll = be.getCandidateOffers();
-        java.util.List<net.minecraft.world.item.trading.MerchantOffer> beforeDisplayed = menu.getDisplayedCandidates();
-
-        menu.clicked(BindingAltarMenu.REROLL_SLOT, 0, ClickType.PICKUP, player);
-
-        helper.assertTrue(be.getCandidateOffers() == beforeRoll,
-                "a rejected reroll (no Soul Fragment) must never change the BE's rolled candidates");
-        helper.assertTrue(menu.getDisplayedCandidates() == beforeDisplayed,
-                "a rejected reroll must never change the menu's displayed candidates");
         helper.succeed();
     }
 }

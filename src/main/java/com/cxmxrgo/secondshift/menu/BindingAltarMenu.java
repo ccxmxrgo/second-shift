@@ -4,7 +4,6 @@ import com.cxmxrgo.secondshift.content.blockentity.SoulAltarBlockEntity;
 import com.cxmxrgo.secondshift.employee.EmployeeManager;
 import com.cxmxrgo.secondshift.employee.EmployeeNames;
 import com.cxmxrgo.secondshift.registry.ModBlocks;
-import com.cxmxrgo.secondshift.registry.ModItems;
 import com.cxmxrgo.secondshift.registry.ModMenus;
 import com.cxmxrgo.secondshift.trade.ProfessionResolver;
 import com.cxmxrgo.secondshift.trade.TradePoolCache;
@@ -19,9 +18,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.npc.VillagerProfession;
@@ -48,91 +44,71 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Binding Altar container menu — round-12 redesign (2026-09-08): reuses vanilla's real
- * enchanting-table menu/screen ({@link EnchantmentMenu} / the client-side {@code
- * EnchantmentScreen}) per the user's explicit request, instead of the generic {@code ChestMenu}
- * used in round-10.
+ * Binding Altar container menu — reuses vanilla's real enchanting-table menu ({@link
+ * EnchantmentMenu}) per the user's explicit request to make the altar "work with the enchanting
+ * table GUI", instead of the generic {@code ChestMenu} used in an earlier redesign round.
  *
- * <p><b>Why extend {@code EnchantmentMenu} specifically:</b> the vanilla {@code EnchantmentScreen}
- * class is hard-typed to {@code AbstractContainerScreen<EnchantmentMenu>} — reusing that screen
- * (its background texture and slot positions) requires our menu to actually BE an {@code
- * EnchantmentMenu}, the same constraint that made {@code ChestMenu} the anchor for the round-10
- * design.
+ * <p><b>Why extend {@code EnchantmentMenu} specifically, even though {@code BindingAltarScreen} no
+ * longer extends its screen counterpart ({@code EnchantmentScreen}, dropped — see that class's
+ * doc comment for why):</b> its constructor already adds exactly the two receipt slots (the "item
+ * to enchant" / "lapis" slots at 15,47 and 35,47) at the precise coordinates the real
+ * {@code enchanting_table.png} texture bakes those slot outlines into — reusing it is the cheapest
+ * way to get those positions right without re-deriving them.
  *
- * <p><b>Why the mechanic changed from "pick 2 of N, then confirm" to "pick 1 of up to 3,
- * immediately":</b> {@code EnchantmentMenu} has no concept of a toggleable multi-select plus a
- * separate confirm action — its entire menu-button system (see the now-disabled {@link
- * #clickMenuButton}) is built around exactly 3 options where clicking one immediately performs
- * the action. Reusing vanilla's real slot/click machinery instead of that button system (see
- * below) lets the picker still work through completely standard, well-tested vanilla code paths
- * — just with the accepted rule change to "1 of up to 3" rather than trying to bolt a
- * pick-2-then-confirm flow onto a widget that was never built for it.
+ * <p><b>Round-15 redesign (user-requested "career path" mechanic):</b> instead of showing 3 rolled
+ * tier-1 candidates with a Soul-Fragment-cost reroll, the picker now rolls the profession's
+ * HIGHEST tier's full listing pool (see {@link TradePoolCache#rollMaxTierCandidates}) and shows
+ * ALL of it in a real scrollable list ({@code BindingAltarScreen}'s {@code TradeCandidateList}
+ * widget) — the player picks one "career path" trade, which is granted immediately (the
+ * leveling/promotion gate that would make this a genuinely earned reward at the employee's max
+ * tier is deferred — see the memory note on this — until Phase 7 builds real employee
+ * progression). There is no reroll anymore: the whole pool is already visible via scrolling, so
+ * there's nothing to reroll.
  *
- * <p><b>How the 3 trade rows actually work:</b> rather than driving {@code EnchantmentMenu}'s own
- * {@code costs}/{@code enchantClue}/{@code levelClue} arrays (which only exist to describe a real
- * enchantment, and whose tooltip in vanilla's screen does a REAL enchantment-registry lookup — see
- * {@code costs} handling below for why that matters), this class adds 3 ordinary real {@link Slot}s
- * at the exact same screen coordinates vanilla uses for its enchant-option rows (x=60,
- * y=14+19*row, matching {@code EnchantmentMenu}'s own {@code EnchantingTableBlock}-derived layout
- * exactly), backed by a small container this class owns. Because they are ordinary slots holding
- * ordinary {@link ItemStack}s (the real trade result, with cost info attached as {@link
- * DataComponents#LORE}), vanilla's own generic per-slot rendering, hover-highlight, and
- * item-tooltip machinery in {@code AbstractContainerScreen} handles the icon, the hover overlay,
- * and the tooltip completely for free — genuinely zero custom tooltip code, unlike the vanilla
- * enchant rows' scrambled-rune-text + wrong-registry-lookup problem this design sidesteps
- * entirely. The client-side screen ({@code BindingAltarScreen}) only needs to draw each row's
- * enabled/disabled parchment-bar background sprite.
- *
- * <p>{@link #costs} (inherited, public, mutable) is deliberately left at its default all-zero
- * state forever — {@code EnchantmentScreen.render()}'s own inline tooltip loop (which performs
- * the real, unrelated {@code Registries.ENCHANTMENT} lookup) is guarded by {@code costs[row] > 0},
- * so leaving it at 0 permanently and unconditionally suppresses that broken vanilla codepath
- * without touching it at all. {@link #slotsChanged} is overridden to a no-op specifically so a
- * curious player fiddling with the two "receipt" input/lapis slots (see {@link #REROLL_SLOT}'s
- * neighbors below) can never trigger vanilla's real bookshelf-scanning enchant-cost calculation,
- * which would otherwise repopulate {@code costs[]} with a nonzero value and revive that same
- * broken tooltip.
- *
- * <p><b>Round-13 (user feedback pass, same day):</b> the two real slots {@code EnchantmentMenu}'s
- * own constructor adds (its "item to enchant" and "lapis" slots, at 15,47 and 35,47) now show a
- * read-only, locked "receipt" of what's actually socketed on the altar — a copy of {@link
- * SoulAltarBlockEntity#getHeldSoulBlock()} and {@link SoulAltarBlockEntity#getHeldJobItem()}
- * respectively, since the real items are already consumed by the block-interaction socketing step
- * before this menu ever opens (there is no drag-to-socket flow in this GUI — see {@link #clicked}
- * for the lock). A third real slot ({@link #REROLL_SLOT}, in the enchanting table's now-otherwise-
- * empty book area) lets the player spend one real {@code minecraft:soul_fragment} from their own
- * inventory to re-roll the 3 displayed trades without closing the menu (see {@link #attemptReroll}).
+ * <p><b>Why a scrollable list instead of driving vanilla's {@code costs}/{@code enchantClue}
+ * button system:</b> that system is hardwired to a real enchantment-registry tooltip lookup (see
+ * the {@link #clickMenuButton} doc) and fixed at exactly 3 options — neither fits an
+ * open-ended, scrollable "show everything" list. Instead:
+ * <ul>
+ *   <li>Every rolled candidate gets a real, off-screen {@link Slot} (backed by {@link
+ *   #candidateSlots}, added after the reserved {@link #MAX_CANDIDATE_SLOTS} count so client and
+ *   server always agree on slot layout regardless of how many real candidates exist — see that
+ *   field's doc). This reuses the exact same server-authoritative sync mechanism (vanilla's
+ *   container-content sync calling {@code Slot#set}/{@code Container#setItem}) that already
+ *   proved out for the fixed-3-row design, just decoupled from any specific on-screen position.</li>
+ *   <li>The screen's {@code TradeCandidateList} widget reads those synced slots directly to build
+ *   its visible rows (icon + name + cost, via this class's {@link #buildCandidateDisplay}), and
+ *   routes a row click through {@code Minecraft#gameMode#handleInventoryButtonClick} — vanilla's
+ *   own existing "non-slot button inside a container menu" RPC, arriving here as {@link
+ *   #clickMenuButton}, which this class re-enables (with a real implementation) specifically for
+ *   this purpose. No new network payload needed.</li>
+ * </ul>
  */
 public class BindingAltarMenu extends EnchantmentMenu {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    /** How many of the rolled tier-1 candidates are ever shown/pickable at once (vanilla's fixed row count). */
-    public static final int OPTION_COUNT = 3;
-
     /**
-     * The slot index of trade row 0 — 2 (EnchantmentMenu's own input+lapis slots) + 27 (player
-     * inventory) + 9 (hotbar) = 38, added by {@code EnchantmentMenu}'s constructor before this
-     * class's own constructor body runs. Verified against the decompiled {@code
-     * EnchantmentMenu} constructor and defensively asserted in this class's own constructor
-     * below — if a future NeoForge/vanilla update changes that layout, the assertion fails loudly
-     * instead of silently misrouting clicks.
+     * A generous fixed reservation for candidate-display slots, added after {@code
+     * EnchantmentMenu}'s own 38 (2 input/lapis + 27 inventory + 9 hotbar). Client and server must
+     * agree on the TOTAL slot count at construction time (before any network round-trip can tell
+     * the client how many real candidates there are), so both always reserve exactly this many —
+     * unused ones just hold {@code ItemStack.EMPTY}. Vanilla professions' single-tier pools are
+     * small (2-3 real listings is typical, per {@code VillagerTrades}); this is set well above
+     * that to comfortably absorb whatever other mods' {@code VillagerTradesEvent} listeners might
+     * add to the pool. Public so {@code BindingAltarScreen} knows how many slots to scan when
+     * building its candidate list.
      */
-    public static final int TRADE_SLOT_BASE = 38;
+    public static final int MAX_CANDIDATE_SLOTS = 24;
 
-    /** The reroll button's slot index — right after the 3 trade rows. */
-    public static final int REROLL_SLOT = TRADE_SLOT_BASE + OPTION_COUNT;
-
-    /** Screen position of the reroll slot — centered between the two receipt slots (15,47 / 35,47),
-     * well clear of the title text above it. Public so {@code BindingAltarScreen} can draw its
-     * inline label at a matching position without duplicating these numbers. */
-    public static final int REROLL_SLOT_X = 25;
-    public static final int REROLL_SLOT_Y = 20;
+    /** The slot index of candidate 0 — right after {@code EnchantmentMenu}'s own 38 slots.
+     * Verified against the decompiled {@code EnchantmentMenu} constructor and defensively
+     * asserted in this class's own constructor below. */
+    public static final int CANDIDATE_SLOT_BASE = 38;
 
     private final ContainerLevelAccess access;
-    private final Container tradeSlots = new SimpleContainer(OPTION_COUNT);
-    private final Container rerollSlot = new SimpleContainer(1);
-    private List<MerchantOffer> displayedCandidates;
+    private final Container candidateSlots = new SimpleContainer(MAX_CANDIDATE_SLOTS);
+    private final List<MerchantOffer> displayedCandidates;
 
     /** D-12: guards forced-close messaging so a menu failing {@code stillValid} across multiple
      * ticks sends exactly one action-bar message, not one per failing tick. */
@@ -172,49 +148,42 @@ public class BindingAltarMenu extends EnchantmentMenu {
         this.access = access;
         this.displayedCandidates = resolveDisplayedCandidates(playerInv, pos);
 
-        if (this.slots.size() != TRADE_SLOT_BASE) {
+        if (this.slots.size() != CANDIDATE_SLOT_BASE) {
             throw new IllegalStateException("EnchantmentMenu's slot layout changed — expected "
-                    + TRADE_SLOT_BASE + " slots before the trade rows, found " + this.slots.size());
+                    + CANDIDATE_SLOT_BASE + " slots before the candidate slots, found " + this.slots.size());
+        }
+        if (displayedCandidates.size() > MAX_CANDIDATE_SLOTS) {
+            LOGGER.warn("Binding Altar rolled {} candidates, truncating to MAX_CANDIDATE_SLOTS={}",
+                    displayedCandidates.size(), MAX_CANDIDATE_SLOTS);
         }
 
         // Round-13: the "item to enchant" / "lapis" slots become a locked, read-only receipt of
         // what's actually socketed on the altar below — never populated on the client (server-only
-        // BE read; the real stacks sync to the client the same way the trade rows do).
+        // BE read; the real stacks sync to the client the same way the candidate slots do).
         if (!playerInv.player.level().isClientSide()
                 && playerInv.player.level().getBlockEntity(pos) instanceof SoulAltarBlockEntity receiptBe) {
             this.getSlot(0).set(receiptBe.getHeldSoulBlock().copy());
             this.getSlot(1).set(receiptBe.getHeldJobItem().copy());
         }
 
-        refreshTradeSlots();
-        for (int row = 0; row < OPTION_COUNT; row++) {
-            this.addSlot(new Slot(tradeSlots, row, 60, 14 + 19 * row));
-        }
-
-        rerollSlot.setItem(0, buildRerollDisplay());
-        this.addSlot(new Slot(rerollSlot, 0, REROLL_SLOT_X, REROLL_SLOT_Y));
-    }
-
-    /** (Re)writes all {@link #OPTION_COUNT} trade-row slot CONTENTS from {@link
-     * #displayedCandidates} — does not touch the menu's slot list; the 3 trade {@link Slot}s
-     * themselves are added exactly once, in the constructor. */
-    private void refreshTradeSlots() {
-        for (int row = 0; row < OPTION_COUNT; row++) {
-            ItemStack display = row < displayedCandidates.size()
-                    ? buildCandidateDisplay(displayedCandidates.get(row))
+        for (int i = 0; i < MAX_CANDIDATE_SLOTS; i++) {
+            ItemStack display = i < displayedCandidates.size()
+                    ? buildCandidateDisplay(displayedCandidates.get(i))
                     : ItemStack.EMPTY;
-            tradeSlots.setItem(row, display);
+            candidateSlots.setItem(i, display);
+            // Off-screen — these exist purely to sync candidate data to the client via vanilla's
+            // normal slot-content sync; TradeCandidateList reads them to build its visible rows.
+            this.addSlot(new Slot(candidateSlots, i, -2000, -2000));
         }
     }
 
     /**
      * Resolves (and, server-side only, rolls-once-and-persists — PICK-02/04/07/08) the candidate
-     * trade pool, then caps it down to {@link #OPTION_COUNT} for display via {@link
-     * #sampleUpToOptionCount}.
+     * trade pool from the profession's HIGHEST tier (the full "career path" set).
      *
-     * <p>On the CLIENT, this always returns an empty list purely for slot-count bookkeeping —
-     * vanilla's own container-sync protocol fills in the real per-slot item stacks immediately
-     * after open, exactly like {@link #TRADE_SLOT_BASE}'s doc comment describes.
+     * <p>On the CLIENT, this always returns an empty list — vanilla's own container-sync protocol
+     * fills in the real per-slot item stacks immediately after open, exactly like {@link
+     * #CANDIDATE_SLOT_BASE}'s doc comment describes.
      */
     private static List<MerchantOffer> resolveDisplayedCandidates(Inventory playerInv, BlockPos pos) {
         Level level = playerInv.player.level();
@@ -224,49 +193,24 @@ public class BindingAltarMenu extends EnchantmentMenu {
         }
 
         if (!be.candidatesRolled()) {
-            rollFreshCandidates(be, (ServerLevel) level, pos);
+            Optional<VillagerProfession> profession = ProfessionResolver.fromItem(be.getHeldJobItem());
+            if (profession.isPresent() && level instanceof ServerLevel serverLevel) {
+                be.setCandidateOffers(TradePoolCache.rollMaxTierCandidates(serverLevel, pos, profession.get()));
+                be.setDefaultName(EmployeeNames.pickRandom(serverLevel.getRandom()));
+            } else {
+                be.setCandidateOffers(List.of()); // defensive — should be unreachable
+            }
         }
 
-        return sampleUpToOptionCount(be.getCandidateOffers(), (ServerLevel) level);
-    }
-
-    private static void rollFreshCandidates(SoulAltarBlockEntity be, ServerLevel level, BlockPos pos) {
-        Optional<VillagerProfession> profession = ProfessionResolver.fromItem(be.getHeldJobItem());
-        if (profession.isPresent()) {
-            be.setCandidateOffers(TradePoolCache.rollTier1Candidates(level, pos, profession.get()));
-            be.setDefaultName(EmployeeNames.pickRandom(level.getRandom()));
-        } else {
-            be.setCandidateOffers(List.of()); // defensive — should be unreachable
-        }
-    }
-
-    /** A shuffled sample of at most {@link #OPTION_COUNT} offers, so a profession with more than 3
-     * tier-1 listings doesn't always show the same 3 (vanilla's tier1 array order is fixed). */
-    private static List<MerchantOffer> sampleUpToOptionCount(List<MerchantOffer> all, ServerLevel level) {
-        if (all.size() <= OPTION_COUNT) {
-            return all;
-        }
-        List<MerchantOffer> shuffled = new ArrayList<>(all);
-        RandomSource random = level.getRandom();
-        for (int i = shuffled.size() - 1; i > 0; i--) {
-            int j = random.nextInt(i + 1);
-            MerchantOffer tmp = shuffled.get(i);
-            shuffled.set(i, shuffled.get(j));
-            shuffled.set(j, tmp);
-        }
-        return List.copyOf(shuffled.subList(0, OPTION_COUNT));
+        List<MerchantOffer> all = be.getCandidateOffers();
+        return all.size() <= MAX_CANDIDATE_SLOTS ? all : List.copyOf(all.subList(0, MAX_CANDIDATE_SLOTS));
     }
 
     /**
-     * Round-14 fix: several professions' entire tier-1 pool is exactly {@link #OPTION_COUNT} real
-     * listings (Librarian's is Paper/Enchanted Book/Bookshelf, always in that order — see {@code
-     * VillagerTrades}), so rerolling never changes WHICH items appear, only their randomized
-     * price. Since the row's inline label used to be the bare item name, a reroll of such a pool
-     * looked completely unchanged at a glance — the price only ever showed in the hover tooltip.
-     * Baking the cost into the display item's own {@code CUSTOM_NAME} (which {@link
-     * BindingAltarScreen}'s row text reads via {@code getHoverName()}) makes every reroll visibly
-     * different, since the randomized price is exactly the part {@link TradePoolCache#rollTier1Candidates}
-     * actually re-rolls even when the item type repeats.
+     * Bakes the trade's cost into the display item's own {@code CUSTOM_NAME} (read by {@code
+     * BindingAltarScreen}'s {@code TradeCandidateList} row rendering) so the player never needs to
+     * hover to see the price, and resolves an Enchanted Book's real enchantment name (see {@link
+     * #resolveDisplayName}) instead of the generic "Enchanted Book".
      */
     private static ItemStack buildCandidateDisplay(MerchantOffer offer) {
         ItemStack display = offer.getResult().copy();
@@ -298,7 +242,7 @@ public class BindingAltarMenu extends EnchantmentMenu {
      * An Enchanted Book's (or any pre-enchanted item's) real item name is always the generic
      * "Enchanted Book" — the actual enchantment only ever shows as a separate tooltip line vanilla
      * adds via {@code ItemEnchantments}' own {@code TooltipProvider}, which a display item's own
-     * {@code getHoverName()} never includes. Since a player picking between trade rows needs to
+     * {@code getHoverName()} never includes. Since a player picking between candidates needs to
      * know WHICH enchantment a given "Enchanted Book" row actually is without hovering, this reads
      * {@code DataComponents#STORED_ENCHANTMENTS} (books) / {@code ENCHANTMENTS} (already-applied,
      * for completeness) directly and builds the real "Sharpness III"-style name vanilla's own
@@ -330,37 +274,27 @@ public class BindingAltarMenu extends EnchantmentMenu {
         return combined;
     }
 
-    private static ItemStack buildRerollDisplay() {
-        ItemStack display = new ItemStack(ModItems.SOUL_FRAGMENT.get());
-        display.set(DataComponents.CUSTOM_NAME, Component.translatable("gui.secondshift.binding_altar.reroll")
-                .withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD));
-        List<Component> lore = new ArrayList<>();
-        lore.add(Component.translatable("gui.secondshift.binding_altar.reroll_cost").withStyle(ChatFormatting.GRAY));
-        display.set(DataComponents.LORE, new ItemLore(lore));
-        return display;
-    }
-
     /**
-     * Disables vanilla's real enchant-button mechanism entirely. {@code EnchantmentScreen}'s
-     * inherited {@code mouseClicked} always tries this FIRST for a click inside a row's bounding
-     * box, before ever falling through to the normal slot-click path that would route to our own
-     * {@link #clicked}. Returning {@code false} unconditionally makes every row-click fall through
-     * to that normal path instead, where {@link #clicked} does the real work.
+     * Round-15: re-enabled (was permanently disabled while the picker used real, on-screen,
+     * clickable candidate slots) — {@code id} is a candidate index, sent by {@code
+     * TradeCandidateList}'s row click handler via {@code Minecraft#gameMode#handleInventoryButtonClick},
+     * vanilla's existing RPC for exactly this "non-slot button inside a container menu" case (the
+     * same one {@code EnchantmentScreen} itself uses for its 3 real enchant options).
      */
     @Override
     public boolean clickMenuButton(Player player, int id) {
-        return false;
+        if (id < 0 || id >= displayedCandidates.size()) {
+            return false;
+        }
+        if (player instanceof ServerPlayer sp) {
+            attemptBind(sp, displayedCandidates.get(id));
+        }
+        return true;
     }
 
-    /**
-     * No-op: this altar has no real enchantment cost to compute. Overridden specifically to stop
-     * vanilla's own bookshelf-scanning enchant-cost logic from ever running against the two
-     * receipt input/lapis slots (see class doc) — that logic would repopulate {@link #costs} with
-     * a nonzero value and revive {@code EnchantmentScreen}'s broken enchantment-registry tooltip
-     * lookup, which {@link #costs} being permanently 0 otherwise suppresses. It also happens to be
-     * exactly what we want anyway, since we drive those slots' contents ourselves via {@code
-     * Slot#set} in the constructor and never expect vanilla's own change-tracking to fire for them.
-     */
+    /** No-op: this altar has no real enchantment cost to compute, and nothing here uses {@code
+     * EnchantmentMenu}'s own bookshelf-scanning cost calculation. Overridden specifically to stop
+     * a player fiddling with the two receipt input/lapis slots from ever triggering it. */
     @Override
     public void slotsChanged(Container inventory) {
         // Intentionally empty.
@@ -368,8 +302,7 @@ public class BindingAltarMenu extends EnchantmentMenu {
 
     @Override
     public void clicked(int slotId, int button, ClickType clickType, Player player) {
-        // Drag operations fire clicked() once per slot the drag passes over — never treat an
-        // incidental drag-through as a deliberate bind/reroll click (mirrors the round-10/11 guard).
+        // Drag operations fire clicked() once per slot the drag passes over.
         if (clickType == ClickType.QUICK_CRAFT) {
             super.clicked(slotId, button, clickType, player);
             return;
@@ -381,30 +314,21 @@ public class BindingAltarMenu extends EnchantmentMenu {
             return;
         }
 
-        if (slotId == REROLL_SLOT) {
-            if (player instanceof ServerPlayer sp) {
-                attemptReroll(sp);
-            }
+        // The candidate slots are off-screen and only ever reachable via a forged packet (never
+        // via a real mouse click) — lock them the same way, defensively.
+        if (slotId >= CANDIDATE_SLOT_BASE && slotId < CANDIDATE_SLOT_BASE + MAX_CANDIDATE_SLOTS) {
             return;
-        }
-
-        int row = slotId - TRADE_SLOT_BASE;
-        if (row >= 0 && row < OPTION_COUNT) {
-            if (row < displayedCandidates.size() && player instanceof ServerPlayer sp) {
-                attemptBind(sp, displayedCandidates.get(row));
-            }
-            return; // no-op for an empty/inactive row, or any non-ServerPlayer caller
         }
 
         super.clicked(slotId, button, clickType, player);
     }
 
     /**
-     * The bind attempt — runs entirely server-side. Preserves every safety property from the
-     * round-10/11 implementation: the atomic occupancy guard first, consume-both-sockets-before-
-     * bind, {@code employeeBound} set ONLY after a successful {@link EmployeeManager#bind} call,
-     * and a caught/logged failure path that leaves the altar in a recoverable (if item-losing)
-     * state rather than crashing.
+     * The bind attempt — runs entirely server-side. Preserves every safety property from earlier
+     * rounds: the atomic occupancy guard first, consume-both-sockets-before-bind, {@code
+     * employeeBound} set ONLY after a successful {@link EmployeeManager#bind} call, and a
+     * caught/logged failure path that leaves the altar in a recoverable (if item-losing) state
+     * rather than crashing.
      */
     private void attemptBind(ServerPlayer sp, MerchantOffer chosenOffer) {
         if (!stillValid(sp)) {
@@ -452,40 +376,6 @@ public class BindingAltarMenu extends EnchantmentMenu {
     }
 
     /**
-     * Round-13: spends one real {@code minecraft:soul_fragment} from the player's own inventory
-     * (not a menu slot — the reroll button is a display, not a payment slot) to re-roll the tier-1
-     * pool and refresh the 3 displayed trade rows in place, without closing the menu. Rejects with
-     * a themed message if the player doesn't have a Soul Fragment on hand; never touches the altar
-     * sockets or {@code employeeBound}.
-     */
-    private void attemptReroll(ServerPlayer sp) {
-        if (!stillValid(sp)) {
-            return;
-        }
-
-        access.execute((level, pos) -> {
-            if (!(level.getBlockEntity(pos) instanceof SoulAltarBlockEntity be) || be.isEmployeeBound()
-                    || !(level instanceof ServerLevel serverLevel)) {
-                return;
-            }
-
-            if (sp.getInventory().countItem(ModItems.SOUL_FRAGMENT.get()) < 1) {
-                sp.displayClientMessage(Component.translatable("message.secondshift.altar.reroll_not_enough_fragments"), true);
-                return;
-            }
-            sp.getInventory().clearOrCountMatchingItems(
-                    stack -> stack.is(ModItems.SOUL_FRAGMENT.get()), 1, new SimpleContainer(0));
-
-            rollFreshCandidates(be, serverLevel, pos);
-            this.displayedCandidates = sampleUpToOptionCount(be.getCandidateOffers(), serverLevel);
-            refreshTradeSlots();
-
-            level.playSound(null, pos, SoundEvents.SOUL_ESCAPE.value(), SoundSource.BLOCKS, 0.8F,
-                    0.9F + serverLevel.getRandom().nextFloat() * 0.2F);
-        });
-    }
-
-    /**
      * Prevents {@code EnchantmentMenu.removed()} (called via {@code super.removed()} right below)
      * from dropping the receipt slots' display copies back into the world on close — those are
      * copies of already-consumed altar materials, not real held items, and {@code
@@ -499,7 +389,7 @@ public class BindingAltarMenu extends EnchantmentMenu {
         super.removed(player);
     }
 
-    /** Read-only trade/reroll rows, and no shift-click routing for them — full override of
+    /** Read-only candidate slots, and no shift-click routing for them — full override of
      * {@code EnchantmentMenu}'s own version to keep the two receipt slots' quirky default
      * shift-click behavior from ever reaching our own slots. */
     @Override
@@ -528,7 +418,9 @@ public class BindingAltarMenu extends EnchantmentMenu {
 
     // --- GUI-03 / test-facing accessors ---
 
-    /** The (already capped-to-{@link #OPTION_COUNT}) candidate offers actually shown this open. */
+    /** The full career-path candidate pool actually shown this open (server-side truth — on the
+     * client, read the synced slots via {@link #getSlot} instead, e.g. from {@code
+     * CANDIDATE_SLOT_BASE}). */
     public List<MerchantOffer> getDisplayedCandidates() {
         return displayedCandidates;
     }
