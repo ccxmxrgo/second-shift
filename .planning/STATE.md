@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-stopped_at: Completed 05-05-PLAN.md
-last_updated: "2026-09-05T04:48:06.246Z"
-last_activity: 2026-09-05
+stopped_at: Completed 05-07 (verification + GUI-03 amendment); autonomous overnight run building Phase 6
+last_updated: "2026-09-08T04:35:00.000Z"
+last_activity: 2026-09-08
 progress:
   total_phases: 10
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 20
-  completed_plans: 19
-  percent: 40
+  completed_plans: 20
+  percent: 50
 ---
 
 # Project State
@@ -21,16 +21,18 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-04)
 
 **Core value:** Harvest souls → bind a villager at the Soul Altar → hand-pick its profession and its trades, tier by tier. That loop must be reliable and feel good.
-**Current focus:** Phase 05 — profession-resolution-trade-picker
+**Current focus:** Phase 06 — employee-traits-death-firing (autonomous overnight build in progress)
 
 ## Current Position
 
-Phase: 05 (profession-resolution-trade-picker) — EXECUTING
-Next: Phase 4 (Employee Attachment & Spawn) — discuss or plan
-Plan: 7 of 7
-Last activity: 2026-09-05
+Phase: 05 (profession-resolution-trade-picker) — COMPLETE (status: human_needed — see 05-VERIFICATION.md; one item, the round-15 scrollable list's live in-client behavior, awaits final user confirmation)
+Next: Phase 06 (Employee Traits, Death & Firing) — being built autonomously (2026-09-08 overnight session, user asleep, explicit autonomous-mode request)
+Plan: 7 of 7 (Phase 5)
+Last activity: 2026-09-08
 
-Progress: [███░░░░░░░] 30%
+Progress: [█████░░░░░] 50%
+
+**2026-09-08 note (autonomous overnight session):** Phase 5's original design (custom Screen, pick-2-then-confirm, editable name field) was completely superseded across 5 live-iteration redesign rounds (10-15) directly requested by the user in real time, landing on: a vanilla-EnchantmentMenu-derived Binding Altar showing a scrollable "career path" list of the profession's HIGHEST tier trades, granting one picked trade immediately. This is a real, user-approved architectural pivot — see git log 189b1bd..1825e42 and 05-07-SUMMARY.md/05-VERIFICATION.md for full detail before assuming any earlier phase document (05-CONTEXT.md, 05-UI-SPEC.md, 05-06-PLAN.md) still describes the shipped UI. The user then invoked `/gsd-autonomous` and went to sleep, asking Claude to keep building phases 6-10 overnight using its own judgment on open design questions, and to research online before designing Phase 7's progression mechanic (see the saved memory note `second-shift-phase7-tier-gated-trade-idea` for that research + recommended direction).
 
 ## Performance Metrics
 
@@ -128,6 +130,7 @@ None yet.
 
 ### Blockers/Concerns
 
+- **[Phase 05, non-blocking, pending user]:** The round-15 Binding Altar redesign (scrollable career-path trade list) has only been confirmed to boot without crashing and pass all 44 GameTests. It has NOT been interactively confirmed by the user actually scrolling/clicking it in a live client — please check this when you're back (see 05-VERIFICATION.md Human Verification item 1). If it's already been checked and works, no action needed.
 - REQUIREMENTS.md previously stated "52 total"; the enumerated list is actually 60. Roadmap and traceability use 60. Non-blocking; noted for the record.
 - 4 research spikes are budgeted into phase planning: attachment entity-sync (Phase 4, LIGHT), ItemListing.getOffer side effects (Phase 5), breeding suppression (Phase 6, LOW confidence), offer re-assertion after level-up (Phase 7, MEDIUM).
 - Phase 9 (happiness) is the largest net-new chunk with the least research coverage — quarters/structure detection and food-chest access need a design spike during planning.

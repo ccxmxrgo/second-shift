@@ -20,7 +20,7 @@ in a jar the user can load in the CurseForge "test" instance and verify in-game.
 - [x] **Phase 2: Economy Items & Soul Altar Block** - Harvester, Soul Fragment/Block, and the Soul Altar block exist and behave (completed 2026-09-04)
 - [x] **Phase 3: Menu & Screen Harness (HARD GATE)** - Empty "Binding Altar" screen opens under runClient with no crash (completed 2026-09-04)
 - [x] **Phase 4: Employee Attachment & Spawn** - Binding spawns a persistent, named employee villager with synced EmployeeData (completed 2026-09-04)
-- [ ] **Phase 5: Profession Resolution & Trade Picker** - Hand-pick an employee's profession and tier-1 trades from the real vanilla pool
+- [x] **Phase 5: Profession Resolution & Trade Picker** - Hand-pick an employee's profession and its career-path trade from the real vanilla pool (amended from tier-1/pick-2 — see 05-VERIFICATION.md)
 - [ ] **Phase 6: Employee Traits, Death & Firing** - Employees are conversion/breed-immune, recoverable on death, removable only via altar destruction
 - [ ] **Phase 7: Progression & Promotion Ritual** - Vanilla XP unlocks tiers; the player picks each tier's trades at the altar, never seeing unchosen trades
 - [ ] **Phase 8: Mod-Owned Restock** - Employee trades restock on a POI-independent timer
@@ -116,9 +116,9 @@ in a jar the user can load in the CurseForge "test" instance and verify in-game.
 **Requirements**: ALTAR-02, ALTAR-04, ALTAR-05, PICK-01, PICK-02, PICK-03, PICK-04, PICK-05, PICK-06, PICK-07, PICK-08, GUI-02, GUI-03
 **Success Criteria** (what must be TRUE):
 
-  1. Placing a lectern on the altar and inserting a Soul Block opens "Binding Altar" showing "Librarian" and the real librarian-novice pool as materialized offers with concrete items and prices (including exactly one freshly-rolled enchanted-book offer).
-  2. The player edits the pre-filled name, selects exactly 2 offers (or all of them, auto-locked, when the pool is <= 2) and confirms; the Soul Block and the lectern are consumed and a named librarian employee spawns offering exactly those trades at the shown prices.
-  3. Trading with the new employee shows only the chosen offers — never vanilla's lazy 2-trade fabrication — and the altar GUI shows the employee's name, profession, tier, and chosen trades.
+  1. ~~Placing a lectern on the altar and inserting a Soul Block opens "Binding Altar" showing "Librarian" and the real librarian-novice pool~~ — **AMENDED**: opens a vanilla-enchanting-table-styled Binding Altar showing "Librarian" (title bar) and the profession's real HIGHEST-tier pool (career-path picker) as a scrollable list of materialized offers with concrete items, prices, and (for books) real enchantment names — per user-requested round-15 redesign. See 05-VERIFICATION.md.
+  2. ~~The player edits the pre-filled name, selects exactly 2 offers... and confirms~~ — **AMENDED**: the player picks ONE trade from the scrollable list and it's granted immediately (no name field, no 2-of-N select+confirm) — the Soul Block and job item are consumed and a default-named employee spawns offering exactly that trade. See 05-07-SUMMARY.md key-decisions and 05-VERIFICATION.md overrides.
+  3. Trading with the new employee shows only the chosen offer — never vanilla's lazy 2-trade fabrication. ~~and the altar GUI shows the employee's name, profession, tier, and chosen trades~~ — **AMENDED (GUI-03)**: the altar deliberately never reopens a screen once occupied, by explicit user direction ("the altar is only for choosing the trades"); see REQUIREMENTS.md GUI-03 amendment note.
   4. A job block that maps to no profession, or a profession with an empty tier pool, shows a themed message and never crashes; a modded job-site block resolves to its profession.
   5. Each altar holds exactly one employee — a second bind is refused — and the altar/employee link survives save/load.
 
@@ -131,8 +131,8 @@ Plans:
 - [x] 05-03-PLAN.md — G-2 hovering/spinning job-item render (SoulAltarRenderer)
 - [x] 05-04-PLAN.md — BindingAltarMenu real candidate materialization (roll-once via TradePoolCache), GUI-03 accessor contract
 - [x] 05-05-PLAN.md — SelectTradesPayload trust-boundary rewrite (GUI-02) + EmployeeManager's real bind signature, replacing BindEmployeePayload
-- [x] 05-06-PLAN.md — Real BindingAltarScreen UI: name field, click-to-toggle candidate rows, Confirm wiring, lang/guardrail sweep
-- [ ] 05-07-PLAN.md — Manual verification checkpoint: G-2 render distinctness, Binding Altar screen contents, enchanted-book trade display
+- [x] 05-06-PLAN.md — Real BindingAltarScreen UI: name field, click-to-toggle candidate rows, Confirm wiring, lang/guardrail sweep (superseded by rounds 10-15 — see 05-07-SUMMARY.md)
+- [x] 05-07-PLAN.md — Manual verification checkpoint (closed via 05-07-SUMMARY.md + 05-VERIFICATION.md; status `human_needed` — round-15 scrollable-list live behavior pending final user confirmation, everything else independently verified)
 
 **UI hint**: yes
 **Risks**: Spike `ItemListing.getOffer(realVillager, random)` for side effects and null returns across every profession x tier — write it as a GameTest asserting no exception, no null leak, and preview offer == committed offer. Server must re-validate chosen indices and altar proximity against its own candidate list — never trust the client payload. Enforce bind order: `setVillagerData` -> `refreshBrain` -> `setVillagerXp` -> `setOffers` last.
