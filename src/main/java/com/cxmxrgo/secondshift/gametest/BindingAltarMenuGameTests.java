@@ -268,6 +268,79 @@ public final class BindingAltarMenuGameTests {
         helper.succeed();
     }
 
+    /**
+     * Regression test for the live-user-reported "empty pool" bug (see
+     * .planning/debug/resolved/binding-altar-empty-pool.md): the actual root cause was purely
+     * client-side (BindingAltarScreen#init() reading the client menu's candidate slots before the
+     * separate container-content sync packet populates them — see that class's doc comment) and
+     * is therefore not directly reproducible from a server-only GameTest (no real client
+     * connection/screen exists in this harness). This test instead exercises the REAL two-click
+     * socket-fill sequence through {@link com.cxmxrgo.secondshift.content.block.SoulAltarBlock
+     * SoulAltarBlock}'s actual {@code useItemOn} interaction path (not the direct BE-setter
+     * shortcut {@link #setupFullySocketedAltar} uses) for BOTH fill orders, confirming the
+     * server-side roll this bug's investigation ruled out as the cause is — and stays — correct
+     * end-to-end via the real interaction, not just the end state.
+     */
+    @GameTest(template = "empty")
+    public static void real_two_click_soul_then_job_rolls_a_non_empty_pool(GameTestHelper helper) {
+        helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());
+        BlockPos absAltarPos = helper.absolutePos(ALTAR_POS);
+
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        player.teleportTo(absAltarPos.getX() + 0.5D, absAltarPos.getY(), absAltarPos.getZ() + 0.5D);
+
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,
+                new ItemStack(ModItems.SOUL_BLOCK_ITEM.get()));
+        helper.useBlock(ALTAR_POS, player);
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,
+                new ItemStack(Blocks.LECTERN.asItem()));
+        // The second click's socket-fill mutation (setHeldJobItem/setChanged) runs and completes
+        // BEFORE SoulAltarBlock#openIfBothSocketsFilled's sp.openMenu(...) call — the roll itself
+        // (inside BindingAltarMenu's constructor, invoked by createMenu()) also completes before
+        // vanilla attempts to actually send the open-screen packet. Only that final packet-send
+        // step fails here (GameTestHelper's mock player has no real client connection to receive
+        // it) — harmless for what this test verifies (the real interaction's socket + roll state).
+        try {
+            helper.useBlock(ALTAR_POS, player);
+        } catch (Exception expectedMockPlayerPacketSendFailure) {
+            // Expected — see comment above. The BE mutation already happened synchronously.
+        }
+
+        helper.assertTrue(
+                helper.getLevel().getBlockEntity(absAltarPos) instanceof SoulAltarBlockEntity be
+                        && be.bothSocketsFilled() && be.candidatesRolled() && !be.getCandidateOffers().isEmpty(),
+                "socketing Soul Block THEN job item via the real useItemOn path must roll a non-empty pool");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void real_two_click_job_then_soul_rolls_a_non_empty_pool(GameTestHelper helper) {
+        helper.setBlock(ALTAR_POS, ModBlocks.SOUL_ALTAR.get());
+        BlockPos absAltarPos = helper.absolutePos(ALTAR_POS);
+
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        player.teleportTo(absAltarPos.getX() + 0.5D, absAltarPos.getY(), absAltarPos.getZ() + 0.5D);
+
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,
+                new ItemStack(Blocks.LECTERN.asItem()));
+        helper.useBlock(ALTAR_POS, player);
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,
+                new ItemStack(ModItems.SOUL_BLOCK_ITEM.get()));
+        // See the mirror-order test above for why this is expected to throw on packet-send only,
+        // after the real socket-fill + roll already completed synchronously.
+        try {
+            helper.useBlock(ALTAR_POS, player);
+        } catch (Exception expectedMockPlayerPacketSendFailure) {
+            // Expected — see comment above.
+        }
+
+        helper.assertTrue(
+                helper.getLevel().getBlockEntity(absAltarPos) instanceof SoulAltarBlockEntity be
+                        && be.bothSocketsFilled() && be.candidatesRolled() && !be.getCandidateOffers().isEmpty(),
+                "socketing the job item THEN Soul Block via the real useItemOn path must roll a non-empty pool");
+        helper.succeed();
+    }
+
     // --- receipt slots (unchanged from the round-13 design) ---
 
     @GameTest(template = "empty")

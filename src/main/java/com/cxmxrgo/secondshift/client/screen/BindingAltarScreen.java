@@ -65,6 +65,14 @@ public class BindingAltarScreen extends AbstractContainerScreen<BindingAltarMenu
 
     private TradeCandidateList candidateList;
 
+    /**
+     * Tracks how many real candidates the list was last built from, so {@link #containerTick()}
+     * can detect the moment the server's content-sync packet actually lands and rebuild the
+     * widget — see that method's doc comment for why a single {@link #init()}-time read is not
+     * enough. {@code -1} means "never built yet".
+     */
+    private int lastBuiltCandidateCount = -1;
+
     public BindingAltarScreen(BindingAltarMenu menu, Inventory playerInv, Component title) {
         super(menu, playerInv, title);
     }
@@ -72,7 +80,36 @@ public class BindingAltarScreen extends AbstractContainerScreen<BindingAltarMenu
     @Override
     protected void init() {
         super.init();
+        rebuildCandidateList();
+    }
 
+    /**
+     * Root-cause fix (live-user-reported "empty pool" bug): {@link #init()} runs synchronously
+     * inside the client's handling of {@code ClientboundOpenScreenPacket} — the packet that
+     * constructs this very screen. Vanilla sends the SEPARATE {@code
+     * ClientboundContainerSetContentPacket} that actually populates {@link #menu}'s candidate
+     * slots only afterward (via {@code ServerPlayer#initMenu}/{@code addSlotListener}), and the
+     * client always finishes processing the open-screen packet (including this class's whole
+     * {@code init()}) before it even receives that follow-up packet. A single {@code init()}-time
+     * read of the candidate slots is therefore ALWAYS empty on a real client, no matter what the
+     * server rolled (see {@code BindingAltarMenu#resolveDisplayedCandidates}'s client branch,
+     * which deliberately returns an empty list and relies on that later sync).
+     *
+     * <p>{@link AbstractContainerScreen#containerTick()} is called every client tick this screen
+     * is open (the same lifecycle hook vanilla's own container screens use to react to
+     * server-driven content changes) — re-reading the slots here and rebuilding the widget only
+     * when the real candidate count changes picks up the synced data the moment it actually
+     * arrives, with no new network payload.
+     */
+    @Override
+    protected void containerTick() {
+        super.containerTick();
+        if (readCandidates().size() != lastBuiltCandidateCount) {
+            rebuildCandidateList();
+        }
+    }
+
+    private List<ItemStack> readCandidates() {
         List<ItemStack> candidates = new ArrayList<>();
         for (int i = 0; i < BindingAltarMenu.MAX_CANDIDATE_SLOTS; i++) {
             ItemStack stack = this.menu.getSlot(BindingAltarMenu.CANDIDATE_SLOT_BASE + i).getItem();
@@ -81,12 +118,20 @@ public class BindingAltarScreen extends AbstractContainerScreen<BindingAltarMenu
             }
             candidates.add(stack);
         }
+        return candidates;
+    }
 
+    private void rebuildCandidateList() {
+        List<ItemStack> candidates = readCandidates();
+        if (this.candidateList != null) {
+            this.removeWidget(this.candidateList);
+        }
         this.candidateList = new TradeCandidateList(this.minecraft, LIST_WIDTH, LIST_HEIGHT,
                 topPos + LIST_Y, LIST_ITEM_HEIGHT, candidates,
                 index -> this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, index));
         this.candidateList.setX(leftPos + LIST_X);
         this.addRenderableWidget(this.candidateList);
+        this.lastBuiltCandidateCount = candidates.size();
     }
 
     @Override

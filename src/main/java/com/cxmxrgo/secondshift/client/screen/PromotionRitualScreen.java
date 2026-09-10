@@ -35,6 +35,11 @@ public class PromotionRitualScreen extends AbstractContainerScreen<PromotionRitu
     private TradeCandidateList candidateList;
     private Button confirmButton;
 
+    /** See {@code BindingAltarScreen#lastBuiltCandidateCount}'s doc comment — same root-cause fix
+     * applied here (identical reused init()-time-snapshot pattern, same client packet-ordering
+     * bug). {@code -1} means "never built yet". */
+    private int lastBuiltCandidateCount = -1;
+
     public PromotionRitualScreen(PromotionRitualMenu menu, Inventory playerInv, Component title) {
         super(menu, playerInv, title);
     }
@@ -43,6 +48,28 @@ public class PromotionRitualScreen extends AbstractContainerScreen<PromotionRitu
     protected void init() {
         super.init();
 
+        this.confirmButton = Button.builder(confirmLabel(0, this.menu.getPickCount()), b -> onConfirm())
+                .bounds(leftPos + LIST_X, topPos + CONFIRM_Y, LIST_WIDTH, CONFIRM_HEIGHT)
+                .build();
+        this.confirmButton.active = false;
+        this.addRenderableWidget(this.confirmButton);
+
+        rebuildCandidateList();
+    }
+
+    /** See {@code BindingAltarScreen#containerTick()}'s doc comment for the full root-cause
+     * explanation: {@link #init()} runs before the server's content-sync packet ever arrives, so
+     * the candidate slots read there are always empty on a real client. Re-read every tick and
+     * rebuild only when the real candidate count changes. */
+    @Override
+    protected void containerTick() {
+        super.containerTick();
+        if (readCandidates().size() != lastBuiltCandidateCount) {
+            rebuildCandidateList();
+        }
+    }
+
+    private List<ItemStack> readCandidates() {
         List<ItemStack> candidates = new ArrayList<>();
         for (int i = 0; i < PromotionRitualMenu.MAX_CANDIDATE_SLOTS; i++) {
             ItemStack stack = this.menu.getSlot(PromotionRitualMenu.CANDIDATE_SLOT_BASE + i).getItem();
@@ -51,19 +78,21 @@ public class PromotionRitualScreen extends AbstractContainerScreen<PromotionRitu
             }
             candidates.add(stack);
         }
+        return candidates;
+    }
 
+    private void rebuildCandidateList() {
+        List<ItemStack> candidates = readCandidates();
         int pickCount = this.menu.getPickCount();
+        if (this.candidateList != null) {
+            this.removeWidget(this.candidateList);
+        }
         this.candidateList = new TradeCandidateList(this.minecraft, LIST_WIDTH, LIST_HEIGHT,
                 topPos + LIST_Y, LIST_ITEM_HEIGHT, candidates, pickCount, index -> {});
         this.candidateList.setX(leftPos + LIST_X);
         this.candidateList.setOnSelectionChanged(this::updateConfirmButton);
         this.addRenderableWidget(this.candidateList);
-
-        this.confirmButton = Button.builder(confirmLabel(0, pickCount), b -> onConfirm())
-                .bounds(leftPos + LIST_X, topPos + CONFIRM_Y, LIST_WIDTH, CONFIRM_HEIGHT)
-                .build();
-        this.confirmButton.active = false;
-        this.addRenderableWidget(this.confirmButton);
+        this.lastBuiltCandidateCount = candidates.size();
     }
 
     private void updateConfirmButton() {
